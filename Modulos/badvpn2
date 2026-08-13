@@ -108,7 +108,7 @@ echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━�
             fun_badvpn
 	    else
             clear
-            echo -e "\033[1;31mFUNCIÓN NO DISPONIBLE\n\n\033[1;37mACTIVE BADVPN PRIMERO.\033[1;37m"
+            echo -e "\033[1;31mFUNCION NO DISPONIBLE\n\n\033[1;37mACTIVE BADVPN PRIMERO.\033[1;37m"
             sleep 2
             fun_badvpn
         fi

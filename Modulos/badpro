@@ -100,7 +100,7 @@ fun_badvpn() {
             fun_badvpn
         else
             clear
-            echo -e "\033[1;31mFUNCIÓN NO DISPONIBLE\n\n\033[1;33mACTIVE BADVPN PRIMERO.\033[1;33m"
+            echo -e "\033[1;31mFUNCION NO DISPONIBLE\n\n\033[1;33mACTIVE BADVPN PRIMERO.\033[1;33m"
             sleep 2
             fun_badvpn
         fi

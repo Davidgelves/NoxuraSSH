@@ -1990,18 +1990,6 @@ PY
 				fun_socks
 			fi
         elif [[ "$resposta" = '2' ]]; then
-			clear
-			if [[ ! -x /bin/websocket.sh ]] || ! grep -q 'lang=es websocket.sh' /bin/websocket.sh 2>/dev/null; then
-				wget -qO /bin/websocket.sh "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/websocket.sh" && chmod +x /bin/websocket.sh
-			fi
-			if [[ -x /bin/websocket.sh ]]; then
-				/bin/websocket.sh
-			else
-				echo -e "\033[1;31mNo se pudo abrir el gestor WebSocket.\033[0m"
-				sleep 2
-			fi
-			fun_socks
-			return 0
 			if pgrep -f '/etc/SSHPlus/wsproxy.py' >/dev/null 2>&1; then
 				clear
 				echo -e "\E[44;1;37m         WEBSOCKET — YA ESTÁ ACTIVO          \E[0m"

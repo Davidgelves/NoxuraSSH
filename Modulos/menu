@@ -37,10 +37,10 @@ _sshplus_sync_sshplus_lang
 _sshplus_cols="$(tput cols 2>/dev/null || echo 80)"
 [[ ! "$_sshplus_cols" =~ ^[0-9]+$ ]] && _sshplus_cols=80
 if [[ "$_sshplus_cols" -lt 64 ]]; then
-	_SSHPLUS_IW=50
+	_SSHPLUS_IW=52
 	_SSHPLUS_COMPACT=1
 else
-	_SSHPLUS_IW=62
+	_SSHPLUS_IW=64
 	_SSHPLUS_COMPACT=0
 fi
 _SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
@@ -57,19 +57,19 @@ _sshplus_pad66() {
 	echo -n "$s"
 }
 _sshplus_hbar() { local i; for ((i=0;i<_SSHPLUS_IW;i++)); do printf '='; done; }
-_sshplus_box_top() { _sshplus_frame_pre; printf '%b||' "$_SSHPLUS_CYAN"; _sshplus_hbar; printf '||\033[0m%s\n' "$_sshplus_K"; }
-_sshplus_box_bot() { _sshplus_frame_pre; printf '%b||' "$_SSHPLUS_CYAN"; _sshplus_hbar; printf '||\033[0m%s\n' "$_sshplus_K"; }
-_sshplus_box_sep() { _sshplus_frame_pre; printf '%b||' "$_SSHPLUS_CYAN"; _sshplus_hbar; printf '||\033[0m%s\n' "$_sshplus_K"; }
+_sshplus_box_top() { _sshplus_frame_pre; printf '%b|' "$_SSHPLUS_CYAN"; _sshplus_hbar; printf '|\033[0m%s\n' "$_sshplus_K"; }
+_sshplus_box_bot() { _sshplus_frame_pre; printf '%b|' "$_SSHPLUS_CYAN"; _sshplus_hbar; printf '|\033[0m%s\n' "$_sshplus_K"; }
+_sshplus_box_sep() { _sshplus_frame_pre; printf '%b|' "$_SSHPLUS_CYAN"; _sshplus_hbar; printf '|\033[0m%s\n' "$_sshplus_K"; }
 _sshplus_box_triple() { _sshplus_box_sep; }
 _sshplus_box_triple_mid() { _sshplus_box_sep; }
 _sshplus_box_triple_bot() { _sshplus_box_sep; }
-_sshplus_line() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; printf '%b||\033[0m\033[1;37m%s\033[0m%b||\033[0m%s\n' "$_SSHPLUS_CYAN" "$s" "$_SSHPLUS_CYAN" "$_sshplus_K"; }
-_sshplus_line_g() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; printf '%b||\033[0m\033[1;32m%s\033[0m%b||\033[0m%s\n' "$_SSHPLUS_CYAN" "$s" "$_SSHPLUS_CYAN" "$_sshplus_K"; }
-_sshplus_line_c() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; printf '%b||\033[0m\033[1;36m%s\033[0m%b||\033[0m%s\n' "$_SSHPLUS_CYAN" "$s" "$_SSHPLUS_CYAN" "$_sshplus_K"; }
+_sshplus_line() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; printf '%b|\033[0m\033[1;37m%s\033[0m%b|\033[0m%s\n' "$_SSHPLUS_CYAN" "$s" "$_SSHPLUS_CYAN" "$_sshplus_K"; }
+_sshplus_line_g() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; printf '%b|\033[0m\033[1;32m%s\033[0m%b|\033[0m%s\n' "$_SSHPLUS_CYAN" "$s" "$_SSHPLUS_CYAN" "$_sshplus_K"; }
+_sshplus_line_c() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; printf '%b|\033[0m\033[1;36m%s\033[0m%b|\033[0m%s\n' "$_SSHPLUS_CYAN" "$s" "$_SSHPLUS_CYAN" "$_sshplus_K"; }
 _sshplus_title() {
 	local t="SSH-PRO" w=${#t} l=$(( (_SSHPLUS_IW - w) / 2 )) r=$(( _SSHPLUS_IW - w - l ))
 	_sshplus_frame_pre
-	printf '%b||\033[0m%*s\033[1;34m%s\033[0m%*s%b||\033[0m%s\n' "$_SSHPLUS_CYAN" "$l" '' "$t" "$r" '' "$_SSHPLUS_CYAN" "$_sshplus_K"
+	printf '%b|\033[0m%*s\033[1;34m%s\033[0m%*s%b|\033[0m%s\n' "$_SSHPLUS_CYAN" "$l" '' "$t" "$r" '' "$_SSHPLUS_CYAN" "$_sshplus_K"
 }
 _sshplus_cell20() {
 	local s="${1:0:18}"

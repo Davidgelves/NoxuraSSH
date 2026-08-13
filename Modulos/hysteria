@@ -42,6 +42,20 @@ hyst_load_env() {
 	[[ -f "$HYST_ENV" ]] && . "$HYST_ENV"
 }
 
+hyst_client_ranges() {
+	local value="${1// /}"
+	echo "${value//:/-}"
+}
+
+hyst_migrate_old_port() {
+	hyst_load_env
+	if [[ "${HYST_PORT:-}" = "1" && -n "${HYST_RULES:-}" && -n "${HYST_USER:-}" && -n "${HYST_PASS:-}" ]]; then
+		hyst_write_config "36712" "$HYST_RULES" "${HYST_OBFS:-$(hyst_rand 18)}" "$HYST_USER" "$HYST_PASS"
+		hyst_write_service
+		systemctl restart hysteria-server >/dev/null 2>&1
+	fi
+}
+
 hyst_status_mark() {
 	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}o${NC}" || echo -e "${RED}x${NC}"
 }
@@ -201,13 +215,14 @@ EOF
 }
 
 hyst_show_info() {
+	hyst_migrate_old_port
 	hyst_load_env
 	local ip
 	ip="$(hyst_public_ip)"
 	echo -e "${GREEN}Puerto principal:${NC} ${HYST_PORT:-N/A}"
 	echo -e "${GREEN}Rangos iptables:${NC} ${HYST_RULES:-N/A}"
 	echo -e "${GREEN}OBFS:${NC} ${HYST_OBFS:-N/A}"
-	echo -e "${GREEN}Servidor:${NC} ${ip:-IP_DEL_VPS}:${HYST_PORT:-PUERTO}"
+	echo -e "${GREEN}Servidor:${NC} ${ip:-IP_DEL_VPS}:$(hyst_client_ranges "${HYST_RULES:-${HYST_PORT:-PUERTO}}")"
 	echo -e "${YELLOW}TLS usa certificado propio; en el cliente active insecure/allowInsecure.${NC}"
 }
 

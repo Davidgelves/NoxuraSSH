@@ -47,6 +47,9 @@ _SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 _SSHPLUS_NUM=$'\033[38;2;0;255;127m'
 _sshplus_frame_pre() { :; }
 _sshplus_K=$'\033[K'
+_sshplus_clear() {
+	printf '\033[H\033[2J\033[3J'
+}
 _sshplus_pad24() {
 	local s="${1:0:24}"
 	while [[ ${#s} -lt 24 ]]; do s+=' '; done
@@ -477,7 +480,7 @@ swap3="${swap3//[[:space:]]/}"
 [[ -z "${swap1// }" ]] && swap1='0B'
 [[ -z "${swap2// }" ]] && swap2='0B'
 [[ -z "${swap3// }" ]] && swap3='0B'
-clear
+_sshplus_clear
 [[ ! -e /tmp/att ]]  && {
     var01='*'
 } || {
@@ -606,7 +609,7 @@ swap3="${swap3//[[:space:]]/}"
 [[ -z "${swap1// }" ]] && swap1='0B'
 [[ -z "${swap2// }" ]] && swap2='0B'
 [[ -z "${swap3// }" ]] && swap3='0B'
-clear
+_sshplus_clear
 _sshplus_box_top
 _sshplus_title
 _sshplus_box_sep

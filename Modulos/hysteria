@@ -49,8 +49,12 @@ hyst_client_ranges() {
 
 hyst_migrate_old_port() {
 	hyst_load_env
-	if [[ "${HYST_PORT:-}" = "1" && -n "${HYST_RULES:-}" && -n "${HYST_USER:-}" && -n "${HYST_PASS:-}" ]]; then
-		hyst_write_config "36712" "$HYST_RULES" "${HYST_OBFS:-$(hyst_rand 18)}" "$HYST_USER" "$HYST_PASS"
+	if [[ "${HYST_PORT:-}" = "1" && -n "${HYST_RULES:-}" ]]; then
+		hyst_write_config "36712" "$HYST_RULES" "${HYST_OBFS:-$(hyst_rand 18)}" || return 0
+		hyst_write_service
+		systemctl restart hysteria-server >/dev/null 2>&1
+	elif grep -q 'type: password' "$HYST_CONF" 2>/dev/null || grep -q '^HYST_USER=' "$HYST_ENV" 2>/dev/null; then
+		hyst_write_config "${HYST_PORT:-36712}" "${HYST_RULES:-1:65535}" "${HYST_OBFS:-$(hyst_rand 18)}" || return 0
 		hyst_write_service
 		systemctl restart hysteria-server >/dev/null 2>&1
 	fi
@@ -96,12 +100,27 @@ hyst_shell_quote() {
 	printf '%q' "$1"
 }
 
+hyst_build_userpass() {
+	local db="/root/usuarios.db" pass_dir="/etc/SSHPlus/senha" user pass found=0
+	[[ -f "$db" ]] || return 1
+	while read -r user _; do
+		[[ -z "$user" ]] && continue
+		[[ -f "$pass_dir/$user" ]] || continue
+		pass="$(cat "$pass_dir/$user" 2>/dev/null)"
+		[[ -z "$pass" ]] && continue
+		printf '    %s: %s\n' "$(hyst_yaml_quote "$user")" "$(hyst_yaml_quote "$pass")"
+		found=1
+	done <"$db"
+	[[ "$found" = "1" ]]
+}
+
 hyst_install_binary() {
-	if command -v hysteria >/dev/null 2>&1; then
-		HYST_BIN="$(command -v hysteria)"
+	if [[ -x /usr/local/bin/hysteria ]]; then
+		HYST_BIN="/usr/local/bin/hysteria"
 		return 0
 	fi
-	if [[ -x "$HYST_BIN" ]]; then
+	if [[ -x /usr/bin/hysteria ]]; then
+		HYST_BIN="/usr/bin/hysteria"
 		return 0
 	fi
 	echo -e "${YELLOW}Descargando Hysteria 2...${NC}"
@@ -113,8 +132,8 @@ hyst_install_binary() {
 		echo -e "${RED}Necesita curl o wget para instalar Hysteria.${NC}"
 		return 1
 	fi
-	command -v hysteria >/dev/null 2>&1 && HYST_BIN="$(command -v hysteria)"
-	[[ -x "$HYST_BIN" ]] || [[ -x "$(command -v hysteria 2>/dev/null)" ]]
+	[[ -x /usr/local/bin/hysteria ]] && HYST_BIN="/usr/local/bin/hysteria"
+	[[ -x "$HYST_BIN" ]]
 }
 
 hyst_write_service() {
@@ -141,7 +160,8 @@ EOF
 }
 
 hyst_write_config() {
-	local port="$1" rules="$2" obfs="$3" user="$4" pass="$5"
+	local port="$1" rules="$2" obfs="$3" userpass_block
+	userpass_block="$(hyst_build_userpass)" || return 2
 	mkdir -p "$HYST_DIR"
 	if [[ ! -f "$HYST_CERT" || ! -f "$HYST_KEY" ]]; then
 		openssl req -x509 -newkey rsa:2048 -days 3650 -nodes \
@@ -157,7 +177,7 @@ tls:
 auth:
   type: userpass
   userpass:
-    $(hyst_yaml_quote "$user"): $(hyst_yaml_quote "$pass")
+${userpass_block}
 
 obfs:
   type: salamander
@@ -174,8 +194,6 @@ EOF
 HYST_PORT=$(hyst_shell_quote "$port")
 HYST_RULES=$(hyst_shell_quote "$rules")
 HYST_OBFS=$(hyst_shell_quote "$obfs")
-HYST_USER=$(hyst_shell_quote "$user")
-HYST_PASS=$(hyst_shell_quote "$pass")
 EOF
 	cat >"$HYST_IPTABLES" <<'EOF'
 #!/bin/bash
@@ -214,6 +232,17 @@ EOF
 	chmod 600 "$HYST_CONF" "$HYST_ENV" "$HYST_KEY" 2>/dev/null
 }
 
+hyst_sync_users() {
+	[[ -f "$HYST_ENV" ]] || return 0
+	hyst_load_env
+	if ! hyst_build_userpass >/dev/null; then
+		systemctl stop hysteria-server >/dev/null 2>&1 || true
+		return 0
+	fi
+	hyst_write_config "${HYST_PORT:-36712}" "${HYST_RULES:-1:65535}" "${HYST_OBFS:-$(hyst_rand 18)}" || return 0
+	systemctl restart hysteria-server >/dev/null 2>&1 || true
+}
+
 hyst_show_info() {
 	hyst_migrate_old_port
 	hyst_load_env
@@ -230,7 +259,13 @@ hyst_configure() {
 	hyst_clear
 	echo -e "${BLUE}                 INSTALAR HYSTERIA UDP${NC}"
 	hyst_line
-	local port rules obfs user pass
+	local port rules obfs
+	if ! hyst_build_userpass >/dev/null; then
+		echo -e "${RED}No hay usuarios SSH con contrasena guardada.${NC}"
+		echo -e "${YELLOW}Cree usuarios desde el menu principal y vuelva a instalar Hysteria.${NC}"
+		hyst_pause
+		return
+	fi
 	echo -ne "${GREEN}Puerto principal Hysteria [36712]: ${NC}"
 	read -r port
 	[[ -z "$port" ]] && port="36712"
@@ -247,21 +282,6 @@ hyst_configure() {
 		sleep 2
 		return
 	fi
-	echo -ne "${GREEN}Usuario SSH para Hysteria: ${NC}"
-	read -r user
-	[[ -z "$user" ]] && {
-		echo -e "${RED}Usuario invalido.${NC}"
-		sleep 2
-		return
-	}
-	echo -ne "${GREEN}Contrasena SSH para Hysteria: ${NC}"
-	read -rs pass
-	echo ""
-	[[ -z "$pass" ]] && {
-		echo -e "${RED}Contrasena invalida.${NC}"
-		sleep 2
-		return
-	}
 	echo -ne "${GREEN}OBFS salamander [aleatorio]: ${NC}"
 	read -r obfs
 	[[ -z "$obfs" ]] && obfs="$(hyst_rand 18)"
@@ -269,7 +289,11 @@ hyst_configure() {
 		hyst_pause
 		return
 	}
-	hyst_write_config "$port" "$rules" "$obfs" "$user" "$pass"
+	hyst_write_config "$port" "$rules" "$obfs" || {
+		echo -e "${RED}No se pudo sincronizar usuarios SSH para Hysteria.${NC}"
+		hyst_pause
+		return
+	}
 	hyst_write_service
 	systemctl restart hysteria-server >/dev/null 2>&1
 	hyst_line
@@ -283,7 +307,7 @@ hyst_change_obfs() {
 	echo -ne "${GREEN}Nuevo OBFS salamander: ${NC}"
 	read -r new_obfs
 	[[ -z "$new_obfs" ]] && return
-	hyst_write_config "${HYST_PORT:-36712}" "${HYST_RULES:-1:65535}" "$new_obfs" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
+	hyst_write_config "${HYST_PORT:-36712}" "${HYST_RULES:-1:65535}" "$new_obfs"
 	systemctl restart hysteria-server >/dev/null 2>&1
 }
 
@@ -317,7 +341,7 @@ hyst_change_range() {
 					sleep 2
 					continue
 				fi
-				hyst_write_config "${HYST_PORT:-36712}" "$new_rules" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
+				hyst_write_config "${HYST_PORT:-36712}" "$new_rules" "${HYST_OBFS:-$(hyst_rand 18)}"
 				systemctl restart hysteria-server >/dev/null 2>&1
 				;;
 			2)
@@ -329,7 +353,7 @@ hyst_change_range() {
 					sleep 2
 					continue
 				fi
-				hyst_write_config "${HYST_PORT:-36712}" "$new_rules" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
+				hyst_write_config "${HYST_PORT:-36712}" "$new_rules" "${HYST_OBFS:-$(hyst_rand 18)}"
 				systemctl restart hysteria-server >/dev/null 2>&1
 				;;
 			0|00) return ;;
@@ -383,4 +407,7 @@ hyst_menu() {
 	done
 }
 
-hyst_menu
+case "${1:-}" in
+	--sync) hyst_sync_users ;;
+	*) hyst_menu ;;
+esac

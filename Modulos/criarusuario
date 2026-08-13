@@ -322,6 +322,7 @@ useradd -e $final -M -s /bin/false -p $pass $username >/dev/null 2>&1 &
 echo "$namee" >>/root/namee
 echo "$password" >/etc/SSHPlus/senha/$username
 echo "$username $sshlimiter" >>/root/usuarios.db
+[[ -x /bin/hysteria ]] && /bin/hysteria --sync >/dev/null 2>&1 || true
 [[ -e /etc/openvpn/server.conf ]] && {
 	echo -ne "\033[1;32mGerar Arquivo Ovpn \033[1;31m? \033[1;33m[s/n]:\033[1;37m "; read resp
 	[[ "$resp" = @(s|S) ]] && {

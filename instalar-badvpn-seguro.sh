@@ -7,9 +7,10 @@ set -Eeuo pipefail
 # - Configura servicio systemd (sin screen ni /etc/autostart).
 
 detect_lang() {
-  local raw="${LANG_CHOICE:-${LANG:-es}}"
+  local raw="${LANG_CHOICE:-${LC_ALL:-${LC_MESSAGES:-${LANG:-es}}}}"
   case "${raw,,}" in
-    en|en_*|english) echo "en" ;;
+    en|en_*|en-*|english) echo "en" ;;
+    es|es_*|es-*|spanish|espanol) echo "es" ;;
     *) echo "es" ;;
   esac
 }
@@ -76,7 +77,7 @@ NC='\033[0m'
 aptq() { DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"; }
 is_on() { systemctl is-active "$1" >/dev/null 2>&1; }
 mark() { is_on "$1" && printf "${GREEN}o${NC}" || printf "${RED}x${NC}"; }
-pause() { read -r -p "Pressione ENTER para continuar..." _; }
+pause() { read -r -p "Presione ENTER para continuar..." _; }
 
 confirm_install() {
   local title="$1"

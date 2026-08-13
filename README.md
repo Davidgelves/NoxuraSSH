@@ -21,12 +21,14 @@ sudo ./ssh-plus
 
 ## Idioma / Language
 
-El instalador permite seleccionar idioma al iniciar:
+El idioma se detecta automaticamente desde `LANG_CHOICE`, `LC_ALL`,
+`LC_MESSAGES` o `LANG`:
 
-- `1` Espanol
-- `2` English
+- `en`, `en_US`, `en_GB`, etc. usan English.
+- `es`, `es_CO`, `es_ES`, etc. usan Espanol.
+- Cualquier otro idioma usa Espanol como respaldo.
 
-Tambien puedes forzar idioma por variable:
+Tambien puedes forzarlo por variable:
 
 ```bash
 sudo LANG_CHOICE=es ./ssh-plus

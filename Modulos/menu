@@ -78,6 +78,13 @@ _sshplus_line_c() { local s; s=$(_sshplus_pad66 "$1"); _sshplus_frame_pre; print
 _sshplus_dash_label() { printf '%b%s\033[0m' "$_SSHPLUS_SECTION" "$1"; }
 _sshplus_dash_value() { printf '%b%s\033[0m' "$_SSHPLUS_DATA" "$1"; }
 _sshplus_dash_counter() { printf '%b%s\033[0m' "$_SSHPLUS_COUNTER" "$1"; }
+_sshplus_status_mark() {
+	"$@" >/dev/null 2>&1 && printf '\033[1;32mo\033[0m' || printf '\033[1;31mx\033[0m'
+}
+_sshplus_trim_label() {
+	local text="$1" max="$2"
+	[[ "$text" == *$'\033'* ]] && printf '%s' "$text" || printf '%s' "${text:0:max}"
+}
 _sshplus_dash_pad() {
 	local text="$1" width="$2" plain="$3"
 	printf '%b' "$text"
@@ -170,20 +177,24 @@ _sshplus_pair() {
 	[[ -z "$d1" ]] && d1="0"
 	[[ -z "$d2" ]] && d2="0"
 	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
-		printf -v left '[%s] - %-15.15s' "$d1" "$l1"
-		printf -v right '[%s] - %-15.15s' "$d2" "$l2"
+		l1="$(_sshplus_trim_label "$l1" 15)"
+		l2="$(_sshplus_trim_label "$l2" 15)"
+		printf -v left '[%s] - %-15s' "$d1" "$l1"
+		printf -v right '[%s] - %-15s' "$d2" "$l2"
 		_sshplus_frame_pre
-		printf '  %b%s\033[0m\033[1;37m%s\033[0m  %b%s\033[0m\033[1;37m%s\033[0m%s\n' \
-			"$_SSHPLUS_NUM" "${left:0:4}" "${left:4:17}" \
-			"$_SSHPLUS_NUM" "${right:0:4}" "${right:4:17}" "$_sshplus_K"
+		printf '  %b%s\033[0m\033[1;37m%b\033[0m  %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
+			"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
+			"$_SSHPLUS_NUM" "${right:0:4}" "${right:4}" "$_sshplus_K"
 		return
 	fi
-	printf -v left '[%s] - %-21.21s' "$d1" "$l1"
-	printf -v right '[%s] - %-21.21s' "$d2" "$l2"
+	l1="$(_sshplus_trim_label "$l1" 21)"
+	l2="$(_sshplus_trim_label "$l2" 21)"
+	printf -v left '[%s] - %-21s' "$d1" "$l1"
+	printf -v right '[%s] - %-21s' "$d2" "$l2"
 	_sshplus_frame_pre
-	printf '  %b%s\033[0m\033[1;37m%s\033[0m  %b%s\033[0m\033[1;37m%s\033[0m%s\n' \
-		"$_SSHPLUS_NUM" "${left:0:4}" "${left:4:23}" \
-		"$_SSHPLUS_NUM" "${right:0:4}" "${right:4:23}" "$_sshplus_K"
+	printf '  %b%s\033[0m\033[1;37m%b\033[0m  %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
+		"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
+		"$_SSHPLUS_NUM" "${right:0:4}" "${right:4}" "$_sshplus_K"
 }
 _sshplus_line_00() {
 	local s
@@ -676,8 +687,8 @@ while true $x != "ok"
 do
 _sshplus_sync_sshplus_lang
 [[ -f /bin/sshplus_lang ]] && . /bin/sshplus_lang
-stsl=$(ps x | grep "limiter" | grep -v grep > /dev/null && echo "o" || echo "x")
-stsu=$(ps x | grep "udpvpn" | grep -v grep > /dev/null && echo "o" || echo "x")
+stsl="$(_sshplus_status_mark pgrep -f limiter)"
+stsu="$(_sshplus_status_mark pgrep -f udpvpn)"
 if [[ "$(grep -c "Ubuntu" /etc/issue.net)" = "1" ]]; then
 system=$(cut -d' ' -f1 /etc/issue.net)
 system+=$(echo ' ')

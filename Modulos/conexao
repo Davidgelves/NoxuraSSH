@@ -2563,6 +2563,11 @@ echo -e "\033[1;34m                       CONEXION\033[0m"
 			} || {
 				xv2ray="\033[1;31mx "
 			}
+			[[ "$(systemctl is-active hysteria-server 2>/dev/null)" = "active" ]] && {
+				hysteriasts="\033[1;32mo "
+			} || {
+				hysteriasts="\033[1;31mx "
+			}
 						echo -e "\033[38;2;76;228;255m============================================================\033[0m"
 			sshplus_opt "01" "OPENSSH" "$sts6"
 			sshplus_opt "02" "SQUID PROXY" "$sts1"
@@ -2574,11 +2579,12 @@ echo -e "\033[1;34m                       CONEXION\033[0m"
 			sshplus_opt "08" "CHISEL" "$sts8"
 			sshplus_opt "09" "SLOWDNS" "$sts9"
 			sshplus_opt "10" "V2RAY" "$xv2ray"
-			sshplus_opt "11" "TROJAN-GO" "$trojansts"
-			sshplus_opt "12" "WEBSOCKET - CORRECTOR" "$sts3"
-			sshplus_opt "13" "LIMPIAR V2RAY" ""
-			sshplus_opt "14" "PANEL WEB V2RAY" ""
-			sshplus_opt "15" "MENU APACHE" ""
+			sshplus_opt "11" "HYSTERIA UDP" "$hysteriasts"
+			sshplus_opt "12" "TROJAN-GO" "$trojansts"
+			sshplus_opt "13" "WEBSOCKET - CORRECTOR" "$sts3"
+			sshplus_opt "14" "LIMPIAR V2RAY" ""
+			sshplus_opt "15" "PANEL WEB V2RAY" ""
+			sshplus_opt "16" "MENU APACHE" ""
 			sshplus_opt "00" "VOLVER <<<" ""
 			echo -e "\033[38;2;76;228;255m============================================================\033[0m"
 			tput civis
@@ -2619,23 +2625,26 @@ echo -e "\033[1;34m                       CONEXION\033[0m"
 			exit
 			;;
 			11 | 11)
-			trojan-go
+			hysteria
 			;;
 			12 | 12)
-			websocket.sh
+			trojan-go
 			;;
 			13 | 13)
+			websocket.sh
+			;;
+			14 | 14)
 			echo -e "\E[44;1;37m             LIMPIAR V2RAY              \E[0m"
 			echo -e "\033[1;31mEsta opcion libera memoria en disco similar a la RAM.\033[0m"
 			echo -e "\033[1;31mSi tenia estadisticas de consumo, se pondran a cero; no se pierden usuarios ni la configuracion.\033[0m"
 			v2ray clean
 			echo -ne "\n\033[1;31mENTER \033[1;33mpara volver al \033[1;32mMENU\033[0m"; read
 			;;
-			14 | 14)
+			15 | 15)
 			clear
 			painelv2ray 
 			;;
-			15 | 15)
+			16 | 16)
 			clear
 			apache2menu
 			;;

@@ -1,0 +1,250 @@
+#!/bin/bash
+# Hysteria 2 manager for SSH-Plus
+
+NC='\033[0m'
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+CYAN='\033[38;2;76;228;255m'
+
+HYST_BIN="/usr/local/bin/hysteria"
+HYST_DIR="/etc/hysteria"
+HYST_CONF="${HYST_DIR}/config.yaml"
+HYST_ENV="${HYST_DIR}/sshplus.env"
+HYST_CERT="${HYST_DIR}/server.crt"
+HYST_KEY="${HYST_DIR}/server.key"
+HYST_SERVICE="/etc/systemd/system/hysteria-server.service"
+
+hyst_clear() {
+	printf '\033c\033[3J\033[H\033[2J'
+}
+
+hyst_line() {
+	echo -e "${CYAN}============================================================${NC}"
+}
+
+hyst_pause() {
+	echo -ne "\n${RED}ENTER ${YELLOW}para volver${NC}"
+	read -r _
+}
+
+hyst_rand() {
+	tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${1:-16}"
+}
+
+hyst_public_ip() {
+	curl -4fsS --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}'
+}
+
+hyst_load_env() {
+	[[ -f "$HYST_ENV" ]] && . "$HYST_ENV"
+}
+
+hyst_status_mark() {
+	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}o${NC}" || echo -e "${RED}x${NC}"
+}
+
+hyst_valid_range() {
+	local value="$1" first last
+	[[ "$value" =~ ^[0-9]+(-[0-9]+)?$ ]] || return 1
+	first="${value%-*}"
+	last="${value#*-}"
+	[[ "$value" != *-* ]] && last="$first"
+	(( first >= 1 && first <= 65535 && last >= 1 && last <= 65535 && first <= last ))
+}
+
+hyst_first_port() {
+	echo "${1%-*}"
+}
+
+hyst_install_binary() {
+	if command -v hysteria >/dev/null 2>&1; then
+		HYST_BIN="$(command -v hysteria)"
+		return 0
+	fi
+	if [[ -x "$HYST_BIN" ]]; then
+		return 0
+	fi
+	echo -e "${YELLOW}Descargando Hysteria 2...${NC}"
+	if command -v curl >/dev/null 2>&1; then
+		bash <(curl -fsSL https://get.hy2.sh/)
+	elif command -v wget >/dev/null 2>&1; then
+		bash <(wget -qO- https://get.hy2.sh/)
+	else
+		echo -e "${RED}Necesita curl o wget para instalar Hysteria.${NC}"
+		return 1
+	fi
+	command -v hysteria >/dev/null 2>&1 && HYST_BIN="$(command -v hysteria)"
+	[[ -x "$HYST_BIN" ]] || [[ -x "$(command -v hysteria 2>/dev/null)" ]]
+}
+
+hyst_write_service() {
+	cat >"$HYST_SERVICE" <<EOF
+[Unit]
+Description=Hysteria 2 Server - SSH Plus
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=${HYST_BIN} server -c ${HYST_CONF}
+WorkingDirectory=${HYST_DIR}
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+	systemctl daemon-reload >/dev/null 2>&1
+	systemctl enable hysteria-server >/dev/null 2>&1
+}
+
+hyst_write_config() {
+	local range="$1" obfs="$2" auth="$3"
+	mkdir -p "$HYST_DIR"
+	if [[ ! -f "$HYST_CERT" || ! -f "$HYST_KEY" ]]; then
+		openssl req -x509 -newkey rsa:2048 -days 3650 -nodes \
+			-keyout "$HYST_KEY" -out "$HYST_CERT" -subj "/CN=sshplus-hysteria" >/dev/null 2>&1
+	fi
+	cat >"$HYST_CONF" <<EOF
+listen: :${range}
+
+tls:
+  cert: ${HYST_CERT}
+  key: ${HYST_KEY}
+
+auth:
+  type: password
+  password: ${auth}
+
+obfs:
+  type: salamander
+  salamander:
+    password: ${obfs}
+
+masquerade:
+  type: proxy
+  proxy:
+    url: https://www.bing.com/
+    rewriteHost: true
+EOF
+	cat >"$HYST_ENV" <<EOF
+HYST_RANGE="${range}"
+HYST_PORT="$(hyst_first_port "$range")"
+HYST_OBFS="${obfs}"
+HYST_AUTH="${auth}"
+EOF
+	chmod 600 "$HYST_CONF" "$HYST_ENV" "$HYST_KEY" 2>/dev/null
+}
+
+hyst_show_info() {
+	hyst_load_env
+	local ip
+	ip="$(hyst_public_ip)"
+	echo -e "${GREEN}Puerto principal:${NC} ${HYST_PORT:-N/A}"
+	echo -e "${GREEN}Rango iptables:${NC} ${HYST_RANGE:-N/A}"
+	echo -e "${GREEN}Auth password:${NC} ${HYST_AUTH:-N/A}"
+	echo -e "${GREEN}OBFS:${NC} ${HYST_OBFS:-N/A}"
+	echo -e "${GREEN}Servidor:${NC} ${ip:-IP_DEL_VPS}:${HYST_PORT:-PUERTO}"
+	echo -e "${YELLOW}TLS usa certificado propio; en el cliente active insecure/allowInsecure.${NC}"
+}
+
+hyst_configure() {
+	hyst_clear
+	echo -e "${BLUE}                 INSTALAR HYSTERIA UDP${NC}"
+	hyst_line
+	local range obfs auth
+	echo -ne "${GREEN}Rango iptables/puerto UDP (1-65535) [36712]: ${NC}"
+	read -r range
+	[[ -z "$range" ]] && range="36712"
+	if ! hyst_valid_range "$range"; then
+		echo -e "${RED}Rango invalido. Ejemplo: 36712 o 20000-50000${NC}"
+		sleep 2
+		return
+	fi
+	echo -ne "${GREEN}OBFS salamander [aleatorio]: ${NC}"
+	read -r obfs
+	[[ -z "$obfs" ]] && obfs="$(hyst_rand 18)"
+	auth="$(hyst_rand 20)"
+	hyst_install_binary || {
+		hyst_pause
+		return
+	}
+	hyst_write_config "$range" "$obfs" "$auth"
+	hyst_write_service
+	systemctl restart hysteria-server >/dev/null 2>&1
+	hyst_line
+	echo -e "${GREEN}Hysteria instalado/configurado.${NC}"
+	hyst_show_info
+	hyst_pause
+}
+
+hyst_change_obfs() {
+	hyst_load_env
+	echo -ne "${GREEN}Nuevo OBFS salamander: ${NC}"
+	read -r new_obfs
+	[[ -z "$new_obfs" ]] && return
+	hyst_write_config "${HYST_RANGE:-36712}" "$new_obfs" "${HYST_AUTH:-$(hyst_rand 20)}"
+	systemctl restart hysteria-server >/dev/null 2>&1
+}
+
+hyst_change_range() {
+	hyst_load_env
+	echo -ne "${GREEN}Nuevo rango iptables/puerto UDP (1-65535): ${NC}"
+	read -r new_range
+	if ! hyst_valid_range "$new_range"; then
+		echo -e "${RED}Rango invalido.${NC}"
+		sleep 2
+		return
+	fi
+	hyst_write_config "$new_range" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_AUTH:-$(hyst_rand 20)}"
+	systemctl restart hysteria-server >/dev/null 2>&1
+}
+
+hyst_toggle_service() {
+	if systemctl is-active --quiet hysteria-server 2>/dev/null; then
+		systemctl stop hysteria-server
+		echo -e "${YELLOW}Hysteria detenido.${NC}"
+	else
+		systemctl start hysteria-server
+		echo -e "${GREEN}Hysteria iniciado.${NC}"
+	fi
+	sleep 2
+}
+
+hyst_menu() {
+	while true; do
+		hyst_clear
+		echo -e "${BLUE}                       HYSTERIA UDP${NC}"
+		hyst_line
+		echo -e "${GREEN}Estado:${NC} $(hyst_status_mark)"
+		[[ -f "$HYST_ENV" ]] && hyst_show_info
+		hyst_line
+		if [[ ! -f "$HYST_CONF" ]]; then
+			echo -e "${GREEN}[1]${NC} => INSTALAR HYSTERIA"
+			echo -e "${GREEN}[0]${NC} => VOLVER"
+		else
+			echo -e "${GREEN}[1]${NC} => VOLVER A CONFIGURAR UDP HYSTERIA"
+			echo -e "${GREEN}[2]${NC} => MODIFICAR OBFS"
+			echo -e "${GREEN}[3]${NC} => MODIFICAR RANGOS IPTABLE (1-65535)"
+			echo -e "${GREEN}[4]${NC} => REINICIAR SERVICIO"
+			echo -e "${GREEN}[5]${NC} => DETENER/INICIAR SERVICIO"
+			echo -e "${GREEN}[0]${NC} => VOLVER"
+		fi
+		hyst_line
+		echo -ne "${GREEN}ELIJA OPCION DESEADA${YELLOW} : ${NC}"
+		read -r opt
+		case "$opt" in
+			1) hyst_configure ;;
+			2) [[ -f "$HYST_CONF" ]] && hyst_change_obfs ;;
+			3) [[ -f "$HYST_CONF" ]] && hyst_change_range ;;
+			4) [[ -f "$HYST_CONF" ]] && systemctl restart hysteria-server && sleep 1 ;;
+			5) [[ -f "$HYST_CONF" ]] && hyst_toggle_service ;;
+			0|00) clear; conexao; exit ;;
+			*) echo -e "${RED}Opcion no valida.${NC}"; sleep 1 ;;
+		esac
+	done
+}
+
+hyst_menu

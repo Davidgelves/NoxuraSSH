@@ -4,7 +4,9 @@
 # LC_MESSAGES or LANG. Only English and Spanish are supported.
 
 _sshplus_detect_lang() {
-	local raw="${LANG_CHOICE:-${LC_ALL:-${LC_MESSAGES:-${LANG:-es}}}}"
+	local saved=""
+	[[ -f /etc/SSHPlus/lang ]] && saved="$(cat /etc/SSHPlus/lang 2>/dev/null || true)"
+	local raw="${LANG_CHOICE:-${saved:-${LC_ALL:-${LC_MESSAGES:-${LANG:-es}}}}}"
 	raw="${raw,,}"
 	case "$raw" in
 		en|en_*|en-*|english) echo "en" ;;

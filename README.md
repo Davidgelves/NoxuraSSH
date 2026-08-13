@@ -28,6 +28,9 @@ El idioma se detecta automaticamente desde `LANG_CHOICE`, `LC_ALL`,
 - `es`, `es_CO`, `es_ES`, etc. usan Espanol.
 - Cualquier otro idioma usa Espanol como respaldo.
 
+Si ejecutas el instalador en una terminal interactiva y no usas `LANG_CHOICE`,
+se pedira el idioma al inicio y se guardara en `/etc/SSHPlus/lang` para el menu.
+
 Tambien puedes forzarlo por variable:
 
 ```bash

@@ -217,7 +217,7 @@ echo -e "\n\033[1;36mVERIFICANDO ENLACE... \033[0m" ; rm -f $_Ink/list >/dev/nul
     clear
     echo ""
     cd $HOME
-    echo -e "        \033[1;33m • \033[1;32mINSTALACAO CONCLUIDA\033[1;33m • \033[0m"
+    echo -e "        \033[1;33m • \033[1;32mINSTALACION COMPLETADA\033[1;33m • \033[0m"
     echo ""
     cd $HOME
     echo "clear" >>/root/.bashrc

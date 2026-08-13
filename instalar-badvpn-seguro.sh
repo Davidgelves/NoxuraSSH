@@ -7,7 +7,9 @@ set -Eeuo pipefail
 # - Configura servicio systemd (sin screen ni /etc/autostart).
 
 detect_lang() {
-  local raw="${LANG_CHOICE:-${LC_ALL:-${LC_MESSAGES:-${LANG:-es}}}}"
+  local saved=""
+  [[ -f /etc/SSHPlus/lang ]] && saved="$(cat /etc/SSHPlus/lang 2>/dev/null || true)"
+  local raw="${LANG_CHOICE:-${saved:-${LC_ALL:-${LC_MESSAGES:-${LANG:-es}}}}}"
   case "${raw,,}" in
     en|en_*|en-*|english) echo "en" ;;
     es|es_*|es-*|spanish|espanol) echo "es" ;;
@@ -16,6 +18,27 @@ detect_lang() {
 }
 
 LANG_SELECTED="$(detect_lang)"
+
+choose_lang() {
+  [[ -n "${LANG_CHOICE:-}" ]] && return
+  [[ -t 0 ]] || return
+  clear
+  echo "Seleccione idioma / Select language"
+  echo
+  echo "  [1] Espanol"
+  echo "  [2] English"
+  echo
+  read -r -p "Opcion [1]: " lang_opt
+  case "$lang_opt" in
+    2) LANG_SELECTED="en" ;;
+    *) LANG_SELECTED="es" ;;
+  esac
+  export LANG_CHOICE="$LANG_SELECTED"
+  mkdir -p /etc/SSHPlus 2>/dev/null || true
+  printf '%s\n' "$LANG_SELECTED" >/etc/SSHPlus/lang 2>/dev/null || true
+}
+
+choose_lang
 
 tr() {
   local key="$1"

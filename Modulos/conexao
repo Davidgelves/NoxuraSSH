@@ -2625,7 +2625,7 @@ echo -e "\033[1;34m                       CONEXION\033[0m"
 			exit
 			;;
 			11 | 11)
-			hysteria
+			hysteria-menu
 			;;
 			12 | 12)
 			trojan-go

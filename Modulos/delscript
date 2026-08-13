@@ -109,7 +109,7 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 		rm -f /usr/local/bin/menu /usr/local/sbin/menu /usr/bin/menu /usr/bin/conexao 2>/dev/null
 		systemctl stop hysteria-server >/dev/null 2>&1 || true
 		systemctl disable hysteria-server >/dev/null 2>&1 || true
-		rm -f /etc/systemd/system/hysteria-server.service /usr/local/bin/hysteria /usr/bin/hysteria /bin/hysteria 2>/dev/null
+		rm -f /etc/systemd/system/hysteria-server.service /usr/local/bin/hysteria /usr/bin/hysteria /bin/hysteria /bin/hysteria-menu 2>/dev/null
 		rm -rf /etc/hysteria 2>/dev/null
 		systemctl daemon-reload >/dev/null 2>&1 || true
 		rm -f /usr/local/bin/badvpn-udpgw 2>/dev/null

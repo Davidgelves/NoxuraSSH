@@ -17,6 +17,15 @@ HYST_KEY="${HYST_DIR}/server.key"
 HYST_IPTABLES="${HYST_DIR}/iptables.sh"
 HYST_SERVICE="/etc/systemd/system/hysteria-server.service"
 
+hyst_cleanup_old_menu_bins() {
+	for old in /bin/hysteria /usr/bin/hysteria; do
+		[[ -f "$old" ]] || continue
+		if grep -q 'Hysteria 2 manager for SSH-Plus' "$old" 2>/dev/null; then
+			rm -f "$old" 2>/dev/null || true
+		fi
+	done
+}
+
 hyst_clear() {
 	printf '\033c\033[3J\033[H\033[2J'
 }
@@ -118,6 +127,7 @@ hyst_build_userpass() {
 }
 
 hyst_install_binary() {
+	hyst_cleanup_old_menu_bins
 	if [[ -x /usr/local/bin/hysteria ]]; then
 		HYST_BIN="/usr/local/bin/hysteria"
 		return 0

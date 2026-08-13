@@ -37,10 +37,10 @@ _sshplus_sync_sshplus_lang
 _sshplus_cols="$(tput cols 2>/dev/null || echo 80)"
 [[ ! "$_sshplus_cols" =~ ^[0-9]+$ ]] && _sshplus_cols=80
 if [[ "$_sshplus_cols" -lt 64 ]]; then
-	_SSHPLUS_IW=52
+	_SSHPLUS_IW=48
 	_SSHPLUS_COMPACT=1
 else
-	_SSHPLUS_IW=64
+	_SSHPLUS_IW=58
 	_SSHPLUS_COMPACT=0
 fi
 _SSHPLUS_CYAN=$'\033[38;2;76;228;255m'

@@ -133,9 +133,10 @@ _sshplus_draw_sys_dashboard() {
 _sshplus_pair() {
 	local n1="$1" l1="$2" n2="$3" l2="$4" left right s
 	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
-		printf -v s ' [%2s] - %s' "$n1" "${l1:0:39}"
+		printf -v left '[%2s] - %-14.14s' "$n1" "$l1"
+		printf -v right '[%2s] - %-14.14s' "$n2" "$l2"
+		printf -v s '  %-21.21s  %-21.21s' "$left" "$right"
 		_sshplus_line "$s"
-		[[ -n "$n2" ]] && { printf -v s ' [%2s] - %s' "$n2" "${l2:0:39}"; _sshplus_line "$s"; }
 		return
 	fi
 	printf -v left '[%2s] - %-20.20s' "$n1" "$l1"

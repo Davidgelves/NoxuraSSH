@@ -81,7 +81,12 @@ tr_msg() {
 choose_lang
 
 apt_update_safe() {
-    apt-get -o APT::Update::Post-Invoke-Success::= update -y || apt-get update -y || true
+    local cnf_hook="/etc/apt/apt.conf.d/50command-not-found"
+    local cnf_disabled="/etc/apt/apt.conf.d/50command-not-found.sshplus-disabled"
+    if ! python3 -c 'import apt_pkg' >/dev/null 2>&1 && [[ -f "$cnf_hook" ]]; then
+        mv -f "$cnf_hook" "$cnf_disabled" 2>/dev/null || true
+    fi
+    apt-get update -y || true
 }
 
 case "$(uname -m)" in
@@ -118,6 +123,7 @@ dpkg --configure -a
 apt_update_safe
 apt-get upgrade -y || true
 apt-get install -y python3-apt command-not-found unzip python3 curl wget
+[[ -f /etc/apt/apt.conf.d/50command-not-found.sshplus-disabled ]] && mv -f /etc/apt/apt.conf.d/50command-not-found.sshplus-disabled /etc/apt/apt.conf.d/50command-not-found 2>/dev/null || true
 
 sysctl -w net.ipv6.conf.all.disable_ipv6=1 && sysctl -p
 echo 'net.ipv6.conf.all.disable_ipv6 = 1' > /etc/sysctl.d/70-disable-ipv6.conf

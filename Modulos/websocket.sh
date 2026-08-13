@@ -24,8 +24,10 @@ need_root() {
 
 apt_install_ws_deps() {
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update -y >/dev/null 2>&1 || true
-    apt-get install -y screen python3 wget curl net-tools >/dev/null 2>&1 || true
+    apt-get install -y screen python3 wget curl net-tools >/dev/null 2>&1 || {
+        apt-get update -y >/dev/null 2>&1 || true
+        apt-get install -y screen python3 wget curl net-tools >/dev/null 2>&1 || true
+    }
     PYBIN="$(command -v python3 || true)"
     if [[ -z "$PYBIN" ]]; then
         echo -e "${RED}[x] No se encontro python3.${NC}"

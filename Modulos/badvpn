@@ -33,6 +33,8 @@ _bad_tr() {
             enable_first) echo "ENABLE BADVPN FIRST." ;;
             returning) echo "Returning..." ;;
             invalid_option) echo "Invalid option!" ;;
+            installing_bin) echo "Installing badvpn-udpgw binary..." ;;
+            install_failed) echo "Could not install badvpn-udpgw. Check internet connection and apt/cmake dependencies." ;;
             missing_bin) echo "badvpn-udpgw binary was not found." ;;
         esac
     else
@@ -55,6 +57,8 @@ _bad_tr() {
             enable_first) echo "ACTIVE BADVPN PRIMERO." ;;
             returning) echo "Volviendo..." ;;
             invalid_option) echo "Opcion no valida!" ;;
+            installing_bin) echo "Instalando binario badvpn-udpgw..." ;;
+            install_failed) echo "No se pudo instalar badvpn-udpgw. Revise la conexion a internet y dependencias apt/cmake." ;;
             missing_bin) echo "No se encontro el binario badvpn-udpgw." ;;
         esac
     fi
@@ -64,13 +68,48 @@ _running() { ps x | grep -w udpvpn | grep -v grep >/dev/null 2>&1; }
 _ports() { netstat -nplt 2>/dev/null | grep 'badvpn-ud' | awk '{print $4}' | grep -oE '[0-9]+$' | xargs; }
 _status_mark() { _running && printf "${GREEN}o${NC}" || printf "${RED}x${NC}"; }
 
+install_badvpn_bin() {
+    local version="${BADVPN_VERSION:-1.999.130}"
+    local workdir="/usr/local/src"
+    local archive="badvpn-${version}.tar.gz"
+    local src_dir="badvpn-${version}"
+    local url="https://github.com/ambrop72/badvpn/archive/refs/tags/${version}.tar.gz"
+
+    command -v apt-get >/dev/null 2>&1 || return 1
+    mkdir -p "$workdir" || return 1
+
+    DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl build-essential cmake make gcc g++ >/dev/null 2>&1 || {
+        apt-get update -y >/dev/null 2>&1 || true
+        DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl build-essential cmake make gcc g++ >/dev/null 2>&1 || return 1
+    }
+
+    cd "$workdir" || return 1
+    rm -rf "$src_dir" "${src_dir}-build" "$archive"
+    curl -fL "$url" -o "$archive" >/dev/null 2>&1 || return 1
+    tar -xzf "$archive" >/dev/null 2>&1 || return 1
+    mkdir -p "${src_dir}-build" || return 1
+    cd "${src_dir}-build" || return 1
+    cmake "../${src_dir}" -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1 >/dev/null 2>&1 || return 1
+    make -j"$(nproc 2>/dev/null || echo 1)" >/dev/null 2>&1 || return 1
+    make install >/dev/null 2>&1 || return 1
+
+    [[ -x /usr/local/bin/badvpn-udpgw ]] || return 1
+    ln -sf /usr/local/bin/badvpn-udpgw /bin/badvpn-udpgw
+    chmod +x /usr/local/bin/badvpn-udpgw /bin/badvpn-udpgw 2>/dev/null || true
+}
+
 ensure_bin() {
     [[ -x /bin/badvpn-udpgw ]] && return 0
     if [[ -x /usr/local/bin/badvpn-udpgw ]]; then
         ln -sf /usr/local/bin/badvpn-udpgw /bin/badvpn-udpgw
         return 0
     fi
+    echo -e "${YELLOW}$(_bad_tr installing_bin)${NC}"
+    if install_badvpn_bin; then
+        return 0
+    fi
     echo -e "${RED}[x] $(_bad_tr missing_bin)${NC}"
+    echo -e "${RED}[x] $(_bad_tr install_failed)${NC}"
     return 1
 }
 

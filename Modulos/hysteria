@@ -49,6 +49,9 @@ hyst_client_ranges() {
 
 hyst_migrate_old_port() {
 	hyst_load_env
+	if [[ -f "$HYST_CONF" ]]; then
+		hyst_install_binary >/dev/null 2>&1 && hyst_write_service
+	fi
 	if [[ "${HYST_PORT:-}" = "1" && -n "${HYST_RULES:-}" ]]; then
 		hyst_write_config "36712" "$HYST_RULES" "${HYST_OBFS:-$(hyst_rand 18)}" || return 0
 		hyst_write_service
@@ -182,7 +185,7 @@ ${userpass_block}
 obfs:
   type: salamander
   salamander:
-    password: ${obfs}
+    password: $(hyst_yaml_quote "$obfs")
 
 masquerade:
   type: proxy
@@ -240,6 +243,7 @@ hyst_sync_users() {
 		return 0
 	fi
 	hyst_write_config "${HYST_PORT:-36712}" "${HYST_RULES:-1:65535}" "${HYST_OBFS:-$(hyst_rand 18)}" || return 0
+	hyst_install_binary >/dev/null 2>&1 && hyst_write_service
 	systemctl restart hysteria-server >/dev/null 2>&1 || true
 }
 
@@ -373,6 +377,16 @@ hyst_toggle_service() {
 	sleep 2
 }
 
+hyst_show_logs() {
+	hyst_clear
+	echo -e "${BLUE}                    LOG HYSTERIA${NC}"
+	hyst_line
+	systemctl status hysteria-server --no-pager -l 2>/dev/null | tail -n 20
+	echo ""
+	journalctl -u hysteria-server -n 30 --no-pager 2>/dev/null
+	hyst_pause
+}
+
 hyst_menu() {
 	while true; do
 		hyst_clear
@@ -390,6 +404,7 @@ hyst_menu() {
 			echo -e "${GREEN}[3]${NC} => MODIFICAR RANGOS IPTABLE (1-65535)"
 			echo -e "${GREEN}[4]${NC} => REINICIAR SERVICIO"
 			echo -e "${GREEN}[5]${NC} => DETENER/INICIAR SERVICIO"
+			echo -e "${GREEN}[6]${NC} => VER LOG DEL SERVICIO"
 			echo -e "${GREEN}[0]${NC} => VOLVER"
 		fi
 		hyst_line
@@ -401,6 +416,7 @@ hyst_menu() {
 			3) [[ -f "$HYST_CONF" ]] && hyst_change_range ;;
 			4) [[ -f "$HYST_CONF" ]] && systemctl restart hysteria-server && sleep 1 ;;
 			5) [[ -f "$HYST_CONF" ]] && hyst_toggle_service ;;
+			6) [[ -f "$HYST_CONF" ]] && hyst_show_logs ;;
 			0|00) clear; conexao; exit ;;
 			*) echo -e "${RED}Opcion no valida.${NC}"; sleep 1 ;;
 		esac

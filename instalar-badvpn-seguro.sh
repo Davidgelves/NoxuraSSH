@@ -86,7 +86,7 @@ confirm_install() {
   echo
   echo -e "${YELLOW}VA A INSTALAR ${title}.${NC}"
   echo
-  read -r -p "¿Desea continuar? [s/n]: " yn
+  read -r -p "Â¿Desea continuar? [s/n]: " yn
   case "${yn,,}" in
     s|si|sim|y|yes) return 0 ;;
     *) echo "Instalacion cancelada."; sleep 1; return 1 ;;
@@ -152,6 +152,61 @@ STUNNEL
   systemctl enable --now stunnel4
 }
 
+setup_websocket() {
+  local ws_port="${1:-80}" redir_port="${2:-22}" raw tmp
+  aptq python3 wget curl
+  mkdir -p /etc/SSHPlus
+  raw="https://raw.githubusercontent.com/${SSHPLUS_GH_USER_REPO:-Davidgelves/ssh-pro-vpn}/${SSHPLUS_GH_BRANCH:-main}"
+  tmp="/etc/SSHPlus/wsproxy.py.new"
+  rm -f "${tmp}"
+  if command -v wget >/dev/null 2>&1; then
+    wget -qO "${tmp}" --header='Cache-Control: no-cache' --header='Pragma: no-cache' "${raw}/Modulos/wsproxy.py?_=$(date +%s%N 2>/dev/null || date +%s)" || true
+  fi
+  if [[ ! -s "${tmp}" ]] && command -v curl >/dev/null 2>&1; then
+    curl -fsSL -o "${tmp}" -H 'Cache-Control: no-cache' "${raw}/Modulos/wsproxy.py?_=$(date +%s%N 2>/dev/null || date +%s)" || true
+  fi
+  [[ -s "${tmp}" ]] || { echo "No se pudo descargar wsproxy.py."; return 1; }
+  grep -q 'class Server' "${tmp}" || { echo "wsproxy.py descargado no es valido."; rm -f "${tmp}"; return 1; }
+  mv -f "${tmp}" /etc/SSHPlus/wsproxy.py
+  chmod +x /etc/SSHPlus/wsproxy.py
+  python3 - "$redir_port" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path("/etc/SSHPlus/wsproxy.py")
+text = path.read_text(encoding="utf-8", errors="replace")
+redir = sys.argv[1]
+
+def rep_line(t, name, rhs):
+    pat = r"^" + re.escape(name) + r" = .*$"
+    if not re.search(pat, t, flags=re.MULTILINE):
+        raise SystemExit(1)
+    return re.sub(pat, name + " = " + rhs, t, count=1, flags=re.MULTILINE)
+
+text = rep_line(text, "DEFAULT_HOST", repr("127.0.0.1:" + redir))
+text = rep_line(text, "HTTP_STATUS", repr("101"))
+text = rep_line(text, "POST_HEADER_RAW", repr(""))
+path.write_text(text, encoding="utf-8")
+PY
+  cat > /etc/systemd/system/sshplus-websocket.service <<EOFWS
+[Unit]
+Description=SSHPlus WebSocket Proxy
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /etc/SSHPlus/wsproxy.py ${ws_port}
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOFWS
+  systemctl daemon-reload
+  systemctl enable --now sshplus-websocket
+}
+
 draw_main() {
   local mem_total mem_pct cpu_pct cpu_cores
   mem_total="$(free -h | awk '/Mem:/ {print $2}')"
@@ -184,7 +239,7 @@ draw_main() {
 draw_conexao() {
   clear
   echo -e "${WHITE}Ubuntu $(. /etc/os-release && echo "$VERSION_ID")${NC}    ${WHITE}$(date '+%Y-%m-%d <> %T')${NC}"
-  echo -e "${BLUE}                         CONEXIÓN${NC}"
+  echo -e "${BLUE}                         CONEXIÃ“N${NC}"
   echo -e "${RED}============================================================${NC}"
   echo -e "SERVICIO: OPENSSH PUERTO: 22"
   echo -e "SERVICIO: PROXY SOCKS PUERTO: 1080"
@@ -201,7 +256,7 @@ draw_conexao() {
   echo -e "[ 09 ] -> SLOWDNS (desactivado seguro)"
   echo -e "[ 10 ] -> V2RAY (desactivado seguro)"
   echo -e "[ 11 ] -> TROJAN-GO (desactivado seguro)"
-  echo -e "[ 12 ] -> WEBSOCKET (desactivado seguro)"
+  echo -e "[ 12 ] -> WEBSOCKET    $(mark sshplus-websocket)"
   echo -e "[ 00 ] -> VOLVER <<<"
   echo -e "${RED}============================================================${NC}"
 }
@@ -209,7 +264,7 @@ draw_conexao() {
 conexao_menu() {
   while true; do
     draw_conexao
-    read -r -p "ELIJA OPCIÓN: " c
+    read -r -p "ELIJA OPCIÃ“N: " c
     case "$c" in
       1|01)
         confirm_install "OPENSSH" || continue
@@ -247,16 +302,33 @@ conexao_menu() {
         systemctl is-active stunnel4 >/dev/null 2>&1 && echo "SSL Tunnel instalado correctamente." || echo "Fallo al iniciar SSL Tunnel."
         pause
         ;;
-      7|8|9|10|11|12) echo "Opción bloqueada en modo seguro."; sleep 1 ;;
+      12)
+        confirm_install "WEBSOCKET" || continue
+        read -r -e -i 80 -p "Puerto WebSocket: " ws_port
+        read -r -e -i 22 -p "Puerto destino local SSH/VPN: " redir_port
+        ws_port="${ws_port:-80}"
+        redir_port="${redir_port:-22}"
+        if [[ ! "$ws_port" =~ ^[0-9]+$ ]] || [[ ! "$redir_port" =~ ^[0-9]+$ ]]; then
+          echo "Puerto no valido."
+        elif ss -lntp 2>/dev/null | grep -qE ":${ws_port}[[:space:]]"; then
+          echo "Puerto ${ws_port} en uso."
+          ss -lntp 2>/dev/null | grep -E ":${ws_port}[[:space:]]" || true
+        else
+          setup_websocket "$ws_port" "$redir_port"
+          systemctl is-active sshplus-websocket >/dev/null 2>&1 && echo "WebSocket instalado correctamente (puerto ${ws_port} -> 127.0.0.1:${redir_port})." || echo "Fallo al iniciar WebSocket."
+        fi
+        pause
+        ;;
+      7|8|9|10|11) echo "Opcion bloqueada en modo seguro."; sleep 1 ;;
       0|00) return ;;
-      *) echo "Opción no válida."; sleep 1 ;;
+      *) echo "OpciÃ³n no vÃ¡lida."; sleep 1 ;;
     esac
   done
 }
 
 while true; do
   draw_main
-  read -r -p "ELIJA UNA OPCIÓN : " opt
+  read -r -p "ELIJA UNA OPCIÃ“N : " opt
   opt=$(echo "$opt" | tr -d '[:space:]')
   case "$opt" in
     10) conexao_menu ;;
@@ -268,12 +340,12 @@ while true; do
       if [[ -x /bin/menu ]]; then
         MENU2_ONLY=1 bash /bin/menu || true
       else
-        echo "MAS >>> requiere el menú completo SSH-PLUS en /bin/menu (ejecute Install/list o copie Modulos/menu)."
+        echo "MAS >>> requiere el menÃº completo SSH-PLUS en /bin/menu (ejecute Install/list o copie Modulos/menu)."
         sleep 2
       fi
       ;;
     0) exit 0 ;;
-    *) echo "Opción en desarrollo (modo seguro)."; sleep 1 ;;
+    *) echo "OpciÃ³n en desarrollo (modo seguro)."; sleep 1 ;;
   esac
 done
 EOF

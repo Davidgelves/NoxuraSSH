@@ -138,7 +138,7 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 
 	sshplus_strip_root_bashrc() {
 		[[ ! -f /root/.bashrc ]] && return 0
-		grep -v -E 'figlet|SSH-PLUS|SSHPLUS|ALFAINTERNET|JDAVIDAG1|Dev\. J DAVID AG|DIGITE \( menu \)|NOME DO SERVIDOR|SERVIDOR LIGADO|DATE=\$\(date|TIME=\$\(date|@ALFAINTERNET|@JDAVIDAG1' /root/.bashrc > /tmp/.bashrc.sshplus.tmp 2>/dev/null &&
+		grep -v -E 'figlet|lolcat|SSH-PLUS|SSHPLUS|ALFAINTERNET|JDAVIDAG1|Dev\. J DAVID AG|Desarrollado por|DIGITE \( menu \)|ESCRIBA \( menu \)|NOME DO SERVIDOR|NOMBRE DEL SERVIDOR|SERVIDOR LIGADO|SERVIDOR EN MARCHA|FECHA :|HORA :|DATE=\$\(date|TIME=\$\(date|@ALFAINTERNET|@JDAVIDAG1' /root/.bashrc > /tmp/.bashrc.sshplus.tmp 2>/dev/null &&
 			mv /tmp/.bashrc.sshplus.tmp /root/.bashrc
 	}
 

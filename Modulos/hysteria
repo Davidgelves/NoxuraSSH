@@ -14,6 +14,7 @@ HYST_CONF="${HYST_DIR}/config.yaml"
 HYST_ENV="${HYST_DIR}/sshplus.env"
 HYST_CERT="${HYST_DIR}/server.crt"
 HYST_KEY="${HYST_DIR}/server.key"
+HYST_IPTABLES="${HYST_DIR}/iptables.sh"
 HYST_SERVICE="/etc/systemd/system/hysteria-server.service"
 
 hyst_clear() {
@@ -45,6 +46,12 @@ hyst_status_mark() {
 	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}o${NC}" || echo -e "${RED}x${NC}"
 }
 
+hyst_valid_port() {
+	local value="$1"
+	[[ "$value" =~ ^[0-9]+$ ]] || return 1
+	(( value >= 1 && value <= 65535 ))
+}
+
 hyst_valid_range() {
 	local value="$1" first last
 	[[ "$value" =~ ^[0-9]+(-[0-9]+)?$ ]] || return 1
@@ -54,8 +61,25 @@ hyst_valid_range() {
 	(( first >= 1 && first <= 65535 && last >= 1 && last <= 65535 && first <= last ))
 }
 
-hyst_first_port() {
-	echo "${1%-*}"
+hyst_valid_rule_ranges() {
+	local value="${1// /}" item first last
+	[[ -n "$value" ]] || return 1
+	IFS=',' read -ra _items <<<"$value"
+	for item in "${_items[@]}"; do
+		[[ "$item" =~ ^[0-9]+(:[0-9]+)?$ ]] || return 1
+		first="${item%%:*}"
+		last="${item##*:}"
+		[[ "$item" != *:* ]] && last="$first"
+		(( first >= 1 && first <= 65535 && last >= 1 && last <= 65535 && first <= last )) || return 1
+	done
+}
+
+hyst_yaml_quote() {
+	printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"
+}
+
+hyst_shell_quote() {
+	printf '%q' "$1"
 }
 
 hyst_install_binary() {
@@ -88,6 +112,8 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=${HYST_BIN} server -c ${HYST_CONF}
+ExecStartPre=${HYST_IPTABLES} apply
+ExecStopPost=${HYST_IPTABLES} clear
 WorkingDirectory=${HYST_DIR}
 Restart=on-failure
 RestartSec=5
@@ -101,22 +127,23 @@ EOF
 }
 
 hyst_write_config() {
-	local range="$1" obfs="$2" auth="$3"
+	local port="$1" rules="$2" obfs="$3" user="$4" pass="$5"
 	mkdir -p "$HYST_DIR"
 	if [[ ! -f "$HYST_CERT" || ! -f "$HYST_KEY" ]]; then
 		openssl req -x509 -newkey rsa:2048 -days 3650 -nodes \
 			-keyout "$HYST_KEY" -out "$HYST_CERT" -subj "/CN=sshplus-hysteria" >/dev/null 2>&1
 	fi
 	cat >"$HYST_CONF" <<EOF
-listen: :${range}
+listen: :${port}
 
 tls:
   cert: ${HYST_CERT}
   key: ${HYST_KEY}
 
 auth:
-  type: password
-  password: ${auth}
+  type: userpass
+  userpass:
+    $(hyst_yaml_quote "$user"): $(hyst_yaml_quote "$pass")
 
 obfs:
   type: salamander
@@ -130,11 +157,46 @@ masquerade:
     rewriteHost: true
 EOF
 	cat >"$HYST_ENV" <<EOF
-HYST_RANGE="${range}"
-HYST_PORT="$(hyst_first_port "$range")"
-HYST_OBFS="${obfs}"
-HYST_AUTH="${auth}"
+HYST_PORT=$(hyst_shell_quote "$port")
+HYST_RULES=$(hyst_shell_quote "$rules")
+HYST_OBFS=$(hyst_shell_quote "$obfs")
+HYST_USER=$(hyst_shell_quote "$user")
+HYST_PASS=$(hyst_shell_quote "$pass")
 EOF
+	cat >"$HYST_IPTABLES" <<'EOF'
+#!/bin/bash
+ACTION="$1"
+ENV_FILE="/etc/hysteria/sshplus.env"
+CHAIN="SSHPLUS_HYSTERIA"
+
+[[ -f "$ENV_FILE" ]] && . "$ENV_FILE"
+
+clear_rules() {
+	while iptables -t nat -C PREROUTING -p udp -j "$CHAIN" >/dev/null 2>&1; do
+		iptables -t nat -D PREROUTING -p udp -j "$CHAIN" >/dev/null 2>&1 || break
+	done
+	iptables -t nat -F "$CHAIN" >/dev/null 2>&1 || true
+	iptables -t nat -X "$CHAIN" >/dev/null 2>&1 || true
+}
+
+apply_rules() {
+	clear_rules
+	iptables -t nat -N "$CHAIN" >/dev/null 2>&1 || true
+	iptables -t nat -A PREROUTING -p udp -j "$CHAIN" >/dev/null 2>&1 || true
+	local clean="${HYST_RULES// /}" item
+	IFS=',' read -ra items <<<"$clean"
+	for item in "${items[@]}"; do
+		[[ -z "$item" ]] && continue
+		iptables -t nat -A "$CHAIN" -p udp --dport "$item" -j REDIRECT --to-ports "$HYST_PORT" >/dev/null 2>&1 || true
+	done
+}
+
+case "$ACTION" in
+	apply) apply_rules ;;
+	clear) clear_rules ;;
+esac
+EOF
+	chmod +x "$HYST_IPTABLES" 2>/dev/null
 	chmod 600 "$HYST_CONF" "$HYST_ENV" "$HYST_KEY" 2>/dev/null
 }
 
@@ -143,8 +205,10 @@ hyst_show_info() {
 	local ip
 	ip="$(hyst_public_ip)"
 	echo -e "${GREEN}Puerto principal:${NC} ${HYST_PORT:-N/A}"
-	echo -e "${GREEN}Rango iptables:${NC} ${HYST_RANGE:-N/A}"
-	echo -e "${GREEN}Auth password:${NC} ${HYST_AUTH:-N/A}"
+	echo -e "${GREEN}Rangos iptables:${NC} ${HYST_RULES:-N/A}"
+	echo -e "${GREEN}Usuario SSH:${NC} ${HYST_USER:-N/A}"
+	echo -e "${GREEN}Contrasena SSH:${NC} ${HYST_PASS:-N/A}"
+	echo -e "${GREEN}Auth cliente:${NC} ${HYST_USER:-usuario}:${HYST_PASS:-contrasena}"
 	echo -e "${GREEN}OBFS:${NC} ${HYST_OBFS:-N/A}"
 	echo -e "${GREEN}Servidor:${NC} ${ip:-IP_DEL_VPS}:${HYST_PORT:-PUERTO}"
 	echo -e "${YELLOW}TLS usa certificado propio; en el cliente active insecure/allowInsecure.${NC}"
@@ -154,24 +218,46 @@ hyst_configure() {
 	hyst_clear
 	echo -e "${BLUE}                 INSTALAR HYSTERIA UDP${NC}"
 	hyst_line
-	local range obfs auth
-	echo -ne "${GREEN}Rango iptables/puerto UDP (1-65535) [36712]: ${NC}"
-	read -r range
-	[[ -z "$range" ]] && range="36712"
-	if ! hyst_valid_range "$range"; then
-		echo -e "${RED}Rango invalido. Ejemplo: 36712 o 20000-50000${NC}"
+	local port rules obfs user pass
+	echo -ne "${GREEN}Puerto principal Hysteria [36712]: ${NC}"
+	read -r port
+	[[ -z "$port" ]] && port="36712"
+	if ! hyst_valid_port "$port"; then
+		echo -e "${RED}Puerto invalido.${NC}"
 		sleep 2
 		return
 	fi
+	echo -ne "${GREEN}Rangos iptables UDP [1:65535]: ${NC}"
+	read -r rules
+	[[ -z "$rules" ]] && rules="1:65535"
+	if ! hyst_valid_rule_ranges "$rules"; then
+		echo -e "${RED}Rangos invalidos. Ejemplo: 1:52,54:5299,5301:65535${NC}"
+		sleep 2
+		return
+	fi
+	echo -ne "${GREEN}Usuario SSH para Hysteria: ${NC}"
+	read -r user
+	[[ -z "$user" ]] && {
+		echo -e "${RED}Usuario invalido.${NC}"
+		sleep 2
+		return
+	}
+	echo -ne "${GREEN}Contrasena SSH para Hysteria: ${NC}"
+	read -rs pass
+	echo ""
+	[[ -z "$pass" ]] && {
+		echo -e "${RED}Contrasena invalida.${NC}"
+		sleep 2
+		return
+	}
 	echo -ne "${GREEN}OBFS salamander [aleatorio]: ${NC}"
 	read -r obfs
 	[[ -z "$obfs" ]] && obfs="$(hyst_rand 18)"
-	auth="$(hyst_rand 20)"
 	hyst_install_binary || {
 		hyst_pause
 		return
 	}
-	hyst_write_config "$range" "$obfs" "$auth"
+	hyst_write_config "$port" "$rules" "$obfs" "$user" "$pass"
 	hyst_write_service
 	systemctl restart hysteria-server >/dev/null 2>&1
 	hyst_line
@@ -185,21 +271,54 @@ hyst_change_obfs() {
 	echo -ne "${GREEN}Nuevo OBFS salamander: ${NC}"
 	read -r new_obfs
 	[[ -z "$new_obfs" ]] && return
-	hyst_write_config "${HYST_RANGE:-36712}" "$new_obfs" "${HYST_AUTH:-$(hyst_rand 20)}"
+	hyst_write_config "${HYST_PORT:-36712}" "${HYST_RULES:-1:65535}" "$new_obfs" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
 	systemctl restart hysteria-server >/dev/null 2>&1
 }
 
 hyst_change_range() {
-	hyst_load_env
-	echo -ne "${GREEN}Nuevo rango iptables/puerto UDP (1-65535): ${NC}"
-	read -r new_range
-	if ! hyst_valid_range "$new_range"; then
-		echo -e "${RED}Rango invalido.${NC}"
-		sleep 2
-		return
-	fi
-	hyst_write_config "$new_range" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_AUTH:-$(hyst_rand 20)}"
-	systemctl restart hysteria-server >/dev/null 2>&1
+	while true; do
+		hyst_clear
+		echo -e "${BLUE}                 RANGOS IPTABLES HYSTERIA${NC}"
+		hyst_line
+		hyst_load_env
+		echo -e "${GREEN}Puerto principal:${NC} ${HYST_PORT:-36712}"
+		echo -e "${GREEN}Reglas actuales:${NC} ${HYST_RULES:-1:65535}"
+		hyst_line
+		echo -e "${GREEN}[1]${NC} => MODIFICAR RANGO IPTABLE"
+		echo -e "${GREEN}[2]${NC} => PONER REGLA DE RANGOS IPTABLES"
+		echo -e "${GREEN}[0]${NC} => VOLVER"
+		hyst_line
+		echo -ne "${GREEN}ELIJA OPCION DESEADA${YELLOW} : ${NC}"
+		read -r range_opt
+		case "$range_opt" in
+			1)
+				echo -ne "${GREEN}Nuevo puerto principal Hysteria [${HYST_PORT:-36712}]: ${NC}"
+				read -r new_port
+				[[ -z "$new_port" ]] && new_port="${HYST_PORT:-36712}"
+				if ! hyst_valid_port "$new_port"; then
+					echo -e "${RED}Puerto invalido.${NC}"
+					sleep 2
+					continue
+				fi
+				hyst_write_config "$new_port" "${HYST_RULES:-1:65535}" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
+				systemctl restart hysteria-server >/dev/null 2>&1
+				;;
+			2)
+				echo -ne "${GREEN}Reglas de rangos iptables [1:52,54:5299,5301:65535]: ${NC}"
+				read -r new_rules
+				[[ -z "$new_rules" ]] && new_rules="1:52,54:5299,5301:65535"
+				if ! hyst_valid_rule_ranges "$new_rules"; then
+					echo -e "${RED}Reglas invalidas.${NC}"
+					sleep 2
+					continue
+				fi
+				hyst_write_config "${HYST_PORT:-36712}" "$new_rules" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
+				systemctl restart hysteria-server >/dev/null 2>&1
+				;;
+			0|00) return ;;
+			*) echo -e "${RED}Opcion no valida.${NC}"; sleep 1 ;;
+		esac
+	done
 }
 
 hyst_toggle_service() {

@@ -10,8 +10,7 @@ YELLOW='\033[1;33m'
 SCOLOR='\033[0m'
 SSHPLUS_NUM=$'\033[38;2;0;255;127m'
 sshplus_clear() {
-	command clear 2>/dev/null || printf '\033[H\033[2J'
-	printf '\033[3J\033[H'
+	printf '\033c\033[3J\033[H\033[2J'
 }
 clear() { sshplus_clear; }
 sshplus_opt() {
@@ -1642,7 +1641,7 @@ exit 0' >$RCLOCAL
 			echo -e "\033[1;33m════════════════════════════════════════════\033[0m"
 			echo -e "\033[1;33m     CONFIGURAR WEBSOCKET (REDIRECCIÓN)\033[0m"
 			echo -e "\033[1;33m════════════════════════════════════════════\033[0m"
-			echo -e "\033[1;37mPUERTEL WEBSOCKET (escucha): \033[1;32m${porta_ws}\033[0m"
+			echo -e "\033[1;37mPUERTO WEBSOCKET (escucha): \033[1;32m${porta_ws}\033[0m"
 			echo -e "\033[1;31m────────────────────────────────────────────\033[0m"
 			echo -e "\033[1;33m   ¿A QUÉ PUERTO REDIRIGIR EL TRÁFICO?\033[0m"
 			echo -e "\033[1;31m────────────────────────────────────────────\033[0m"
@@ -2502,9 +2501,6 @@ PY
 		while true $x != "ok"; do
 			[[ ! -e '/home/sshplus' ]] && exit 0
 			clear
-system=$(cat /etc/issue.net)
-date=$(date '+%Y-%m-%d <> %H:%M:%S')
-echo -e "\033[1;37m $system                $date"
 echo -e "\033[1;34m                       CONEXION\033[0m"
 			echo -e "\033[1;32mSERVICIO: \033[1;33mOPENSSH \033[1;32mPUERTO: \033[1;37m$(grep 'Port' /etc/ssh/sshd_config | cut -d' ' -f2 | grep -v 'no' | xargs)" && sts6="\033[1;32mo "
 			[[ "$(netstat -tlpn | grep 'docker' | wc -l)" != '0' ]] && {

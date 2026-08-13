@@ -203,7 +203,7 @@ config_exist_check() {
 }
 
 domain_port_check() {
-    read -rp "Insira a porta TLS (padrão 443):" tspport
+    read -rp "Ingrese el puerto TLS (predeterminado 443):" tspport
     [[ -z ${tspport} ]] && tspport="443"
     read -rp "Insira as informações do seu nome de domínio (por exemplo, fk.gfw.com):" domain
     domain=$(echo "${domain}" | tr '[:upper:]' '[:lower:]')
@@ -234,10 +234,10 @@ domain_port_check() {
 
 port_exist_check() {
     if [[ 0 -eq $(lsof -i:"$1" | grep -i -c "listen") ]]; then
-        echo -e "${OK} ${GreenBG} $1 A porta não está ocupada ${Font}"
+        echo -e "${OK} ${GreenBG} El puerto $1 no está ocupado ${Font}"
         sleep 1
     else
-        echo -e "${Error} ${RedBG} A porta $1 detectada está ocupada, segue-se a informação de ocupação da porta $1 ${Font}"
+        echo -e "${Error} ${RedBG} El puerto $1 está ocupado; se muestra la información de uso del puerto $1 ${Font}"
         lsof -i:"$1"
         echo -e "${OK} ${GreenBG} 5s Tentará matar automaticamente o processo ocupado ${Font}"
         sleep 5
@@ -306,7 +306,7 @@ trojan_reset() {
         ;;
     esac
     trojan_tcp_mode=true
-    tjport=$((RANDOM % 6666 + 10000)) && echo -e "${OK} ${GreenBG} A porta de escuta do Trojan-Go é: $tjport ${Font}"
+    tjport=$((RANDOM % 6666 + 10000)) && echo -e "${OK} ${GreenBG} El puerto de escucha de Trojan-Go es: $tjport ${Font}"
     mkdir -p $trojan_conf_dir
     cat >$trojan_conf <<-EOF
 {
@@ -501,7 +501,7 @@ EOF
         UUID=$(cat /proc/sys/kernel/random/uuid)
         echo -e "${OK} ${GreenBG} UUID:${UUID} ${Font}"
         v2port=$((RANDOM % 6666 + 20000))
-        echo -e "${OK} ${GreenBG} A porta de escuta V2Ray TCP é ${v2port} ${Font}"
+        echo -e "${OK} ${GreenBG} El puerto de escucha V2Ray TCP es ${v2port} ${Font}"
         if [[ "${v2ray_tcp_mode}" = "vmess" ]]; then
             #read -rp "请输入 TCP 模式 AlterID（默认:10 仅允许填非0数字）:" alterID
             [[ -z ${alterID} ]] && alterID="10"
@@ -652,7 +652,7 @@ tsp_sync() {
         [[ -z $tjport ]] && trojan_tcp_mode=false
         [[ $trojan_ws_mode = null ]] && trojan_ws_mode=false
         [[ -z $tjwspath ]] && tjwspath=/trojan/none
-        echo -e "Detectado: proxy Trojan-Go：TCP：${Green}${trojan_tcp_mode}${Font} / WebSocket：${Green}${trojan_ws_mode}${Font} / porta：${Green}${tjport}${Font} / WebSocket Path：${Green}${tjwspath}${Font}"
+        echo -e "Detectado: proxy Trojan-Go：TCP：${Green}${trojan_tcp_mode}${Font} / WebSocket：${Green}${trojan_ws_mode}${Font} / puerto：${Green}${tjport}${Font} / WebSocket Path：${Green}${tjwspath}${Font}"
     fi
 
     if [[ $v2ray_stat = "installed" && -f ${v2ray_conf} ]]; then
@@ -668,7 +668,7 @@ tsp_sync() {
         [[ $v2ray_tcp_mode = null ]] && v2ray_tcp_mode=none
         [[ $v2ray_ws_mode = null ]] && v2ray_ws_mode=none
         [[ $v2wspath = null ]] && v2wspath=/v2ray/none
-        echo -e "Detectado: proxy V2Ray：TCP：${Green}${v2ray_tcp_mode}${Font} porta：${Green}${v2port}${Font} / WebSocket：${Green}${v2ray_ws_mode}${Font} porta：${Green}${v2wsport}${Font} / WebSocket Path：${Green}${v2wspath}${Font}"
+        echo -e "Detectado: proxy V2Ray：TCP：${Green}${v2ray_tcp_mode}${Font} puerto：${Green}${v2port}${Font} / WebSocket：${Green}${v2ray_ws_mode}${Font} puerto：${Green}${v2wsport}${Font} / WebSocket Path：${Green}${v2wspath}${Font}"
     fi
 
     if [[ -f ${tsp_conf} ]]; then
@@ -717,7 +717,7 @@ install_portainer() {
     docker pull portainer/portainer-ce
     docker run -d -p 9080:9000 --name Portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
     judge "Instalação do contêiner Portainer"
-    echo -e "${OK} ${GreenBG} O endereço de gerenciamento do Portainer é http://$TSP_Domain:9080 Abra você mesmo a porta do firewall！ ${Font}"
+    echo -e "${OK} ${GreenBG} La dirección de administración de Portainer es http://$TSP_Domain:9080 Abra usted mismo el puerto en el firewall. ${Font}"
 }
 
 install_tls_shunt_proxy() {
@@ -998,19 +998,19 @@ info_config() {
     echo -e "\n————————————————————Informações de configuração do shunt————————————————————"
     if [ -f ${tsp_conf} ]; then
         echo -e "TLS-Shunt-Proxy $(/usr/local/bin/tls-shunt-proxy --version 2>&1 | awk 'NR==1{gsub(/"/,"");print $3}')" &&
-            echo -e "Porta TLS do servidor: ${TSP_Port}" && echo -e "Nome de domínio TLS do servidor: ${TSP_Domain}"
-        [[ $trojan_tcp_mode = true ]] && echo -e "Porta de descarregamento de TCP Trojan-Go: $trojan_tcp_port" && echo -e "Porta de escuta Trojan-Go: $tjport"
-        [[ $trojan_ws_mode = true ]] && echo -e "Porta de toque Trojan-Go WebSocket: $trojan_ws_port" &&
+            echo -e "Puerto TLS del servidor: ${TSP_Port}" && echo -e "Dominio TLS del servidor: ${TSP_Domain}"
+        [[ $trojan_tcp_mode = true ]] && echo -e "Puerto TCP de descarga Trojan-Go: $trojan_tcp_port" && echo -e "Puerto de escucha Trojan-Go: $tjport"
+        [[ $trojan_ws_mode = true ]] && echo -e "Puerto WebSocket Trojan-Go: $trojan_ws_port" &&
             echo -e "Caminho de descarregamento do Trojan-Go WebSocket: $trojan_ws_path"
-        [[ $v2ray_tcp_mode = v*ess ]] && echo -e "Porta shunt V2Ray TCP: $v2ray_tcp_port" && echo -e "Porta de escuta V2Ray TCP: $v2port"
-        [[ $v2ray_ws_mode = v*ess ]] && echo -e "Porta de derivação V2Ray WebSocket: $v2ray_ws_port" && echo -e "Porta de escuta V2Ray WS: $v2wsport" &&
+        [[ $v2ray_tcp_mode = v*ess ]] && echo -e "Puerto shunt V2Ray TCP: $v2ray_tcp_port" && echo -e "Puerto de escucha V2Ray TCP: $v2port"
+        [[ $v2ray_ws_mode = v*ess ]] && echo -e "Puerto de derivación V2Ray WebSocket: $v2ray_ws_port" && echo -e "Puerto de escucha V2Ray WS: $v2wsport" &&
             echo -e "Caminho de shunt V2Ray WebSocket: $v2ray_ws_path"
     fi
 
     if [[ -f ${trojan_conf} && $trojan_stat = "installed" ]]; then
         echo -e "—————————————————— Implantação do Trojan-Go ——————————————————" &&
             echo -e "$(docker exec Trojan-Go sh -c 'trojan-go --version' 2>&1 | awk 'NR==1{gsub(/"/,"");print}')" &&
-            echo -e "Porta do servidor: ${TSP_Port}" && echo -e "Endereço do servidor:: ${TSP_Domain}"
+            echo -e "Puerto del servidor: ${TSP_Port}" && echo -e "Dirección del servidor:: ${TSP_Domain}"
         [[ $trojan_tcp_mode = true ]] && echo -e "Senha do Trojan-Go: ${tjpassword}"
         [[ $trojan_ws_mode = true ]] &&
             echo -e "Trojan-Go WebSocket Path: ${tjwspath}" && echo -e "Trojan-Go WebSocket Host: ${tjwshost}"
@@ -1019,7 +1019,7 @@ info_config() {
     if [[ -f ${v2ray_conf} && $v2ray_stat = "installed" ]]; then
         echo -e "\n———————————————————— Configuração V2Ray ————————————————————" &&
             echo -e "$(docker exec V2Ray sh -c 'v2ray --version' 2>&1 | awk 'NR==1{gsub(/"/,"");print}')" &&
-            echo -e "Porta do servidor: ${TSP_Port}" && echo -e "Endereço do servidor:: ${TSP_Domain}"
+            echo -e "Puerto del servidor: ${TSP_Port}" && echo -e "Dirección del servidor:: ${TSP_Domain}"
         [[ $v2ray_tcp_mode = "vmess" ]] && echo -e "\nVMess TCP UUID: ${VMTID}" &&
             echo -e "VMess AlterID: ${VMAID}" && echo -e "Método de criptografia VMess: Auto" && echo -e "VMess Host: ${TSP_Domain}"
         [[ $v2ray_tcp_mode = "vless" ]] && echo -e "\nVLESS TCP UUID: ${VLTID}" &&
@@ -1170,7 +1170,7 @@ menu() {
         fi
     systemctl is-active "tls-shunt-proxy" &>/dev/null &&
         echo -e "——————————————————————Modificação de configuração——————————————————————" &&
-        echo -e "${Green}6.${Font}  Modificar porta TLS / nome de domínio" &&
+        echo -e "${Green}6.${Font}  Modificar puerto TLS / nombre de dominio" &&
         [[ $trojan_stat = "installed" && -f ${trojan_conf} ]] && echo -e "${Green}7.${Font}  Modificar a configuração do proxy Trojan-Go"
     systemctl is-active "tls-shunt-proxy" &>/dev/null &&
         [[ $v2ray_stat = "installed" && -f ${v2ray_conf} ]] && echo -e "${Green}8.${Font}  Modificar a configuração do proxy V2Ray"

@@ -317,7 +317,7 @@ class ConnectionHandler(threading.Thread):
 
 def print_usage():
     print('Use: wsproxy.py -p <port>')
-    print('       wsproxy.py -b <ip> -p <porta>')
+    print('       wsproxy.py -b <ip> -p <puerto>')
     print('       wsproxy.py 80')
 
 

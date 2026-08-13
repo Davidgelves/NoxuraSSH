@@ -44,7 +44,7 @@ else
 	_SSHPLUS_COMPACT=0
 fi
 _SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
-_SSHPLUS_NUM=$'\033[38;2;0;255;127m'
+_SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
 _sshplus_frame_pre() { :; }
 _sshplus_K=$'\033[K'
 _sshplus_clear() {
@@ -137,18 +137,22 @@ _sshplus_draw_sys_dashboard() {
 	fi
 }
 _sshplus_pair() {
-	local n1="$1" l1="$2" n2="$3" l2="$4" left right s
+	local n1="$1" l1="$2" n2="$3" l2="$4" left right s d1 d2
+	d1="${n1#0}"
+	d2="${n2#0}"
+	[[ -z "$d1" ]] && d1="0"
+	[[ -z "$d2" ]] && d2="0"
 	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
-		printf -v left '[%2s] - %-14.14s' "$n1" "$l1"
-		printf -v right '[%2s] - %-14.14s' "$n2" "$l2"
+		printf -v left '[%s] - %-15.15s' "$d1" "$l1"
+		printf -v right '[%s] - %-15.15s' "$d2" "$l2"
 		_sshplus_frame_pre
 		printf '  %b%s\033[0m\033[1;37m%s\033[0m  %b%s\033[0m\033[1;37m%s\033[0m%s\n' \
 			"$_SSHPLUS_NUM" "${left:0:4}" "${left:4:17}" \
 			"$_SSHPLUS_NUM" "${right:0:4}" "${right:4:17}" "$_sshplus_K"
 		return
 	fi
-	printf -v left '[%2s] - %-20.20s' "$n1" "$l1"
-	printf -v right '[%2s] - %-20.20s' "$n2" "$l2"
+	printf -v left '[%s] - %-21.21s' "$d1" "$l1"
+	printf -v right '[%s] - %-21.21s' "$d2" "$l2"
 	_sshplus_frame_pre
 	printf '  %b%s\033[0m\033[1;37m%s\033[0m  %b%s\033[0m\033[1;37m%s\033[0m%s\n' \
 		"$_SSHPLUS_NUM" "${left:0:4}" "${left:4:23}" \

@@ -48,8 +48,10 @@ _SSHPLUS_NUM=$'\033[38;2;0;255;127m'
 _sshplus_frame_pre() { :; }
 _sshplus_K=$'\033[K'
 _sshplus_clear() {
-	printf '\033[H\033[2J\033[3J'
+	command clear 2>/dev/null || printf '\033[H\033[2J'
+	printf '\033[3J\033[H'
 }
+clear() { _sshplus_clear; }
 _sshplus_pad24() {
 	local s="${1:0:24}"
 	while [[ ${#s} -lt 24 ]]; do s+=' '; done

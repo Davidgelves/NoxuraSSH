@@ -213,7 +213,7 @@ echo -e "\n\033[1;36mVERIFICANDO ENLACE... \033[0m" ; rm -f $_Ink/list >/dev/nul
     echo -e "      \033[1;33mCOMPLETANDO FUNCIONES Y DEFINICIONES.\033[0m"
     echo ""
     fun_bar "$_Ink/list $_lnk $_Ink $_1nk $key"
-    [[ ! -x /bin/menu ]] && wget -qO /bin/menu "${SSHPRO_RAW}/Modulos/menu" 2>/dev/null && chmod +x /bin/menu
+    wget --no-cache -qO /bin/menu "${SSHPRO_RAW}/Modulos/menu?_=$(date +%s)" 2>/dev/null && chmod +x /bin/menu
     clear
     echo ""
     cd $HOME

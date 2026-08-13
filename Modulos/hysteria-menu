@@ -159,6 +159,7 @@ After=network.target
 
 [Service]
 Type=simple
+Environment=HYSTERIA_LOG_LEVEL=debug
 ExecStart=${HYST_BIN} server -c ${HYST_CONF}
 ExecStartPre=${HYST_IPTABLES} apply
 ExecStopPost=${HYST_IPTABLES} clear
@@ -401,6 +402,15 @@ hyst_show_logs() {
 	hyst_pause
 }
 
+hyst_follow_logs() {
+	hyst_clear
+	echo -e "${BLUE}              LOG EN VIVO HYSTERIA${NC}"
+	hyst_line
+	echo -e "${YELLOW}Intente conectar desde el cliente ahora. Use CTRL+C para salir.${NC}"
+	hyst_line
+	journalctl -u hysteria-server -f --no-pager
+}
+
 hyst_menu() {
 	while true; do
 		hyst_clear
@@ -419,6 +429,7 @@ hyst_menu() {
 			echo -e "${GREEN}[4]${NC} => REINICIAR SERVICIO"
 			echo -e "${GREEN}[5]${NC} => DETENER/INICIAR SERVICIO"
 			echo -e "${GREEN}[6]${NC} => VER LOG DEL SERVICIO"
+			echo -e "${GREEN}[7]${NC} => VER LOG EN VIVO"
 			echo -e "${GREEN}[0]${NC} => VOLVER"
 		fi
 		hyst_line
@@ -431,6 +442,7 @@ hyst_menu() {
 			4) [[ -f "$HYST_CONF" ]] && systemctl restart hysteria-server && sleep 1 ;;
 			5) [[ -f "$HYST_CONF" ]] && hyst_toggle_service ;;
 			6) [[ -f "$HYST_CONF" ]] && hyst_show_logs ;;
+			7) [[ -f "$HYST_CONF" ]] && hyst_follow_logs ;;
 			0|00) clear; conexao; exit ;;
 			*) echo -e "${RED}Opcion no valida.${NC}"; sleep 1 ;;
 		esac

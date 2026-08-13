@@ -34,6 +34,10 @@ hyst_line() {
 	echo -e "${CYAN}============================================================${NC}"
 }
 
+hyst_red_line() {
+	echo -e "${RED}============================================================${NC}"
+}
+
 hyst_pause() {
 	echo -ne "\n${RED}ENTER ${YELLOW}para volver${NC}"
 	read -r _
@@ -74,6 +78,10 @@ hyst_migrate_old_port() {
 
 hyst_status_mark() {
 	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}o${NC}" || echo -e "${RED}x${NC}"
+}
+
+hyst_status_text() {
+	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}[ON]${NC}" || echo -e "${RED}[OFF]${NC}"
 }
 
 hyst_valid_port() {
@@ -269,6 +277,21 @@ hyst_show_info() {
 	echo -e "${YELLOW}TLS usa certificado propio; en el cliente active insecure/allowInsecure.${NC}"
 }
 
+hyst_show_summary() {
+	hyst_migrate_old_port
+	hyst_load_env
+	local redirect
+	redirect="$(hyst_client_ranges "${HYST_RULES:-N/A}")"
+	hyst_red_line
+	echo -e "${YELLOW}                 ADMINISTRADOR UDP-HYSTERIA v1${NC}"
+	hyst_red_line
+	echo -e "${YELLOW}VERSION:${NC} ${GREEN}HYSTERIA v1${NC}"
+	echo -e "${YELLOW}PORT:${NC} ${GREEN}${HYST_PORT:-36712}${NC}"
+	echo -e "${YELLOW}REDIRECT:${NC} ${GREEN}${redirect} > ${HYST_PORT:-36712}${NC}"
+	echo -e "${YELLOW}OBFS:${NC} ${GREEN}${HYST_OBFS:-N/A}${NC}"
+	hyst_red_line
+}
+
 hyst_configure() {
 	hyst_clear
 	echo -e "${BLUE}                INSTALAR HYSTERIA v1 UDP${NC}"
@@ -387,6 +410,33 @@ hyst_toggle_service() {
 	sleep 2
 }
 
+hyst_service_status() {
+	hyst_clear
+	echo -e "${BLUE}                ESTADO HYSTERIA v1${NC}"
+	hyst_line
+	systemctl status hysteria-server --no-pager -l 2>/dev/null
+	hyst_pause
+}
+
+hyst_reinstall() {
+	rm -f "$HYST_BIN" 2>/dev/null || true
+	hyst_configure
+}
+
+hyst_uninstall() {
+	hyst_clear
+	echo -ne "${RED}Desea desinstalar Hysteria v1? ${YELLOW}[s/n]: ${NC}"
+	read -r ans
+	[[ "$ans" = "s" || "$ans" = "S" ]] || return
+	systemctl stop hysteria-server >/dev/null 2>&1 || true
+	systemctl disable hysteria-server >/dev/null 2>&1 || true
+	rm -f "$HYST_SERVICE" "$HYST_BIN" /usr/local/bin/hysteria /usr/bin/hysteria /bin/hysteria 2>/dev/null
+	rm -rf "$HYST_DIR" 2>/dev/null
+	systemctl daemon-reload >/dev/null 2>&1 || true
+	echo -e "${GREEN}Hysteria v1 desinstalado.${NC}"
+	sleep 2
+}
+
 hyst_show_logs() {
 	hyst_clear
 	echo -e "${BLUE}                  LOG HYSTERIA v1${NC}"
@@ -409,35 +459,39 @@ hyst_follow_logs() {
 hyst_menu() {
 	while true; do
 		hyst_clear
-		echo -e "${BLUE}                    HYSTERIA v1 UDP${NC}"
-		hyst_line
-		echo -e "${GREEN}Estado:${NC} $(hyst_status_mark)"
-		[[ -f "$HYST_ENV" ]] && hyst_show_info
-		hyst_line
+		hyst_show_summary
 		if [[ ! -f "$HYST_CONF" ]]; then
-			echo -e "${GREEN}[1]${NC} => INSTALAR HYSTERIA v1"
-			echo -e "${GREEN}[0]${NC} => VOLVER"
+			echo -e "${GREEN}[1]${NC}> ${YELLOW}INSTALAR HYSTERIA v1${NC}"
+			hyst_red_line
+			echo -e "${GREEN}[0]${NC} ${RED}Volver${NC}"
 		else
-			echo -e "${GREEN}[1]${NC} => VOLVER A CONFIGURAR UDP HYSTERIA v1"
-			echo -e "${GREEN}[2]${NC} => MODIFICAR OBFS"
-			echo -e "${GREEN}[3]${NC} => MODIFICAR RANGOS IPTABLE (1-65535)"
-			echo -e "${GREEN}[4]${NC} => REINICIAR SERVICIO"
-			echo -e "${GREEN}[5]${NC} => DETENER/INICIAR SERVICIO"
-			echo -e "${GREEN}[6]${NC} => VER LOG DEL SERVICIO"
-			echo -e "${GREEN}[7]${NC} => VER LOG EN VIVO"
-			echo -e "${GREEN}[0]${NC} => VOLVER"
+			echo -e "${GREEN}[1]${NC}> ${YELLOW}RECONFIGURAR UDP-HYSTERIA v1${NC}"
+			echo -e "${GREEN}[2]${NC}> ${YELLOW}MODIFICAR OBFS${NC}"
+			hyst_red_line
+			echo -e "${GREEN}[3]${NC}> ${YELLOW}MODIFICAR RANGOS IPTABLE${NC}"
+			echo -e "${GREEN}[4]${NC}> ${YELLOW}ESTADO DEL SERVICIO${NC}"
+			echo -e "${GREEN}[5]${NC}> ${YELLOW}REINICIAR SERVICIO${NC}"
+			echo -e "${GREEN}[6]${NC}> ${YELLOW}INICIAR/PARAR SERVICIO ${NC}$(hyst_status_text)"
+			hyst_red_line
+			echo -e "${GREEN}[7]${NC}> ${BLUE}LOG UDP-HYSTERIA v1${NC}"
+			echo -e "${GREEN}[8]${NC}> ${CYAN}LOG UDP-HYSTERIA v1 EN TIEMPO REAL${NC}"
+			hyst_red_line
+			echo -e "${GREEN}[0]${NC} ${RED}Volver${NC}          ${GREEN}[9]${NC} ${RED}REINSTALAR${NC}          ${GREEN}[10]${NC} ${RED}DESINSTALAR${NC}"
 		fi
-		hyst_line
-		echo -ne "${GREEN}ELIJA OPCION DESEADA${YELLOW} : ${NC}"
+		hyst_red_line
+		echo -ne "${YELLOW}Ingresa una Opcion: ${NC}"
 		read -r opt
 		case "$opt" in
 			1) hyst_configure ;;
 			2) [[ -f "$HYST_CONF" ]] && hyst_change_obfs ;;
 			3) [[ -f "$HYST_CONF" ]] && hyst_change_range ;;
-			4) [[ -f "$HYST_CONF" ]] && systemctl restart hysteria-server && sleep 1 ;;
-			5) [[ -f "$HYST_CONF" ]] && hyst_toggle_service ;;
-			6) [[ -f "$HYST_CONF" ]] && hyst_show_logs ;;
-			7) [[ -f "$HYST_CONF" ]] && hyst_follow_logs ;;
+			4) [[ -f "$HYST_CONF" ]] && hyst_service_status ;;
+			5) [[ -f "$HYST_CONF" ]] && systemctl restart hysteria-server && sleep 1 ;;
+			6) [[ -f "$HYST_CONF" ]] && hyst_toggle_service ;;
+			7) [[ -f "$HYST_CONF" ]] && hyst_show_logs ;;
+			8) [[ -f "$HYST_CONF" ]] && hyst_follow_logs ;;
+			9) [[ -f "$HYST_CONF" ]] && hyst_reinstall ;;
+			10) [[ -f "$HYST_CONF" ]] && hyst_uninstall ;;
 			0|00) clear; conexao; exit ;;
 			*) echo -e "${RED}Opcion no valida.${NC}"; sleep 1 ;;
 		esac

@@ -206,9 +206,6 @@ hyst_show_info() {
 	ip="$(hyst_public_ip)"
 	echo -e "${GREEN}Puerto principal:${NC} ${HYST_PORT:-N/A}"
 	echo -e "${GREEN}Rangos iptables:${NC} ${HYST_RULES:-N/A}"
-	echo -e "${GREEN}Usuario SSH:${NC} ${HYST_USER:-N/A}"
-	echo -e "${GREEN}Contrasena SSH:${NC} ${HYST_PASS:-N/A}"
-	echo -e "${GREEN}Auth cliente:${NC} ${HYST_USER:-usuario}:${HYST_PASS:-contrasena}"
 	echo -e "${GREEN}OBFS:${NC} ${HYST_OBFS:-N/A}"
 	echo -e "${GREEN}Servidor:${NC} ${ip:-IP_DEL_VPS}:${HYST_PORT:-PUERTO}"
 	echo -e "${YELLOW}TLS usa certificado propio; en el cliente active insecure/allowInsecure.${NC}"
@@ -292,15 +289,20 @@ hyst_change_range() {
 		read -r range_opt
 		case "$range_opt" in
 			1)
-				echo -ne "${GREEN}Nuevo puerto principal Hysteria [${HYST_PORT:-36712}]: ${NC}"
-				read -r new_port
-				[[ -z "$new_port" ]] && new_port="${HYST_PORT:-36712}"
-				if ! hyst_valid_port "$new_port"; then
-					echo -e "${RED}Puerto invalido.${NC}"
+				local from_port to_port new_rules
+				echo -ne "${GREEN}Desde puerto [1]: ${NC}"
+				read -r from_port
+				[[ -z "$from_port" ]] && from_port="1"
+				echo -ne "${GREEN}Hasta puerto [65535]: ${NC}"
+				read -r to_port
+				[[ -z "$to_port" ]] && to_port="65535"
+				new_rules="${from_port}:${to_port}"
+				if ! hyst_valid_rule_ranges "$new_rules"; then
+					echo -e "${RED}Rango invalido.${NC}"
 					sleep 2
 					continue
 				fi
-				hyst_write_config "$new_port" "${HYST_RULES:-1:65535}" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
+				hyst_write_config "${HYST_PORT:-36712}" "$new_rules" "${HYST_OBFS:-$(hyst_rand 18)}" "${HYST_USER:-sshplus}" "${HYST_PASS:-sshplus}"
 				systemctl restart hysteria-server >/dev/null 2>&1
 				;;
 			2)

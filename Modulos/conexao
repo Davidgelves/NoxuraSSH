@@ -8,6 +8,11 @@ scor='\033[0m'
 GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 SCOLOR='\033[0m'
+sshplus_clear() {
+	command clear 2>/dev/null || printf '\033[H\033[2J'
+	printf '\033[3J\033[H'
+}
+clear() { sshplus_clear; }
 # Licenca: Install/list grava em /usr/lib/sshplus; verificacao antiga so lia /usr/lib/licence (menu vazio).
 ensure_licence_conexao() {
 	mkdir -p /usr/lib

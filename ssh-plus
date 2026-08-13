@@ -80,6 +80,10 @@ tr_msg() {
 
 choose_lang
 
+apt_update_safe() {
+    apt-get -o APT::Update::Post-Invoke-Success::= update -y || apt-get update -y || true
+}
+
 case "$(uname -m)" in
     'amd64' | 'x86_64')
         arch='64'
@@ -111,8 +115,9 @@ else
 fi
 
 dpkg --configure -a
-apt update -y && apt upgrade -y
-apt install -y unzip python3 curl wget
+apt_update_safe
+apt-get upgrade -y || true
+apt-get install -y python3-apt command-not-found unzip python3 curl wget
 
 sysctl -w net.ipv6.conf.all.disable_ipv6=1 && sysctl -p
 echo 'net.ipv6.conf.all.disable_ipv6 = 1' > /etc/sysctl.d/70-disable-ipv6.conf

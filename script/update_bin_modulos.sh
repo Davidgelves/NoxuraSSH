@@ -79,6 +79,9 @@ if [[ -n "${_lvk:-}" ]]; then
 fi
 echo "[OK] Modulos actualizados en /bin (repo ${SSHPLUS_GH_USER_REPO} @ ${SSHPLUS_GH_BRANCH})."
 if [[ -f /bin/conexao ]]; then
+	rm -f /usr/bin/conexao 2>/dev/null || true
+	ln -s /bin/conexao /usr/bin/conexao 2>/dev/null || cp -f /bin/conexao /usr/bin/conexao
+	chmod +x /usr/bin/conexao 2>/dev/null || true
 	if grep -q 'fun_socks' /bin/conexao 2>/dev/null; then
 		echo "[OK] /bin/conexao descargado (menú proxy SOCKS presente)."
 	else

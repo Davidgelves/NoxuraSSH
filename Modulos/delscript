@@ -106,7 +106,7 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 
 	sshplus_remove_files_extra() {
 		rm -f /etc/IP 2>/dev/null
-		rm -f /usr/local/bin/menu /usr/local/sbin/menu /usr/bin/menu 2>/dev/null
+		rm -f /usr/local/bin/menu /usr/local/sbin/menu /usr/bin/menu /usr/bin/conexao 2>/dev/null
 		rm -f /usr/local/bin/badvpn-udpgw 2>/dev/null
 		rm -rf /usr/local/src/badvpn-* 2>/dev/null
 		rm -rf /tmp/badvpn-* /tmp/sshplus-* 2>/dev/null

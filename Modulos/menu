@@ -685,7 +685,7 @@ case "$x" in
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
    ;;
    10)
-   conexao
+   /bin/conexao
    exit;
    ;;
    11)

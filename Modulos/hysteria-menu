@@ -128,6 +128,8 @@ hyst_build_userpass() {
 
 hyst_install_binary() {
 	hyst_cleanup_old_menu_bins
+	apt-get update -y >/dev/null 2>&1 || true
+	apt-get install -y iptables openssl curl wget >/dev/null 2>&1 || true
 	if [[ -x /usr/local/bin/hysteria ]]; then
 		HYST_BIN="/usr/local/bin/hysteria"
 		return 0
@@ -227,7 +229,7 @@ clear_rules() {
 apply_rules() {
 	clear_rules
 	iptables -t nat -N "$CHAIN" >/dev/null 2>&1 || true
-	iptables -t nat -A PREROUTING -p udp -j "$CHAIN" >/dev/null 2>&1 || true
+	iptables -t nat -I PREROUTING 1 -p udp -j "$CHAIN" >/dev/null 2>&1 || true
 	local clean="${HYST_RULES// /}" item
 	IFS=',' read -ra items <<<"$clean"
 	for item in "${items[@]}"; do
@@ -266,6 +268,8 @@ hyst_show_info() {
 	echo -e "${GREEN}Rangos iptables:${NC} ${HYST_RULES:-N/A}"
 	echo -e "${GREEN}OBFS:${NC} ${HYST_OBFS:-N/A}"
 	echo -e "${GREEN}Servidor:${NC} ${ip:-IP_DEL_VPS}:$(hyst_client_ranges "${HYST_RULES:-${HYST_PORT:-PUERTO}}")"
+	echo -e "${GREEN}Auth:${NC} use el mismo usuario:contrasena SSH"
+	echo -e "${GREEN}TLS cliente:${NC} insecure/allowInsecure = true"
 	echo -e "${YELLOW}TLS usa certificado propio; en el cliente active insecure/allowInsecure.${NC}"
 }
 

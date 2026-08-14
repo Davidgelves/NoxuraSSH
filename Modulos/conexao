@@ -2704,8 +2704,8 @@ PY
 			apache2menu
 			;;
 			0 | 00)
-			clear
-			menu
+			printf '\033c\033[3J\033[H\033[2J'
+			exec /bin/menu
 			;;
 			*)
 			echo -e "\033[1;31mOpcion no valida!\033[0m"

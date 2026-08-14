@@ -56,7 +56,9 @@ _SSHPLUS_COUNTER=$'\033[1;38;2;255;179;71m'
 _sshplus_frame_pre() { :; }
 _sshplus_K=$'\033[K'
 _sshplus_clear() {
-	printf '\033c\033[3J\033[H\033[2J'
+	printf '\033c\033[3J\033[H\033[2J\033[?25h'
+	printf '\n%.0s' {1..80}
+	printf '\033[H\033[3J\033[2J'
 	_sshplus_resize
 }
 clear() { _sshplus_clear; }

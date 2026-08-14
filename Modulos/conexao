@@ -2601,8 +2601,7 @@ echo -e "\033[1;34m                       CONEXION\033[0m"
 			sshplus_opt_pair "06" "SLOWDNS" "$sts9" "15" "PANEL WEB V2RAY" ""
 			sshplus_opt_pair "07" "HYSTERIA v1" "$hysteriasts" "16" "LIMPIAR V2RAY" ""
 			sshplus_opt_pair "08" "TROJAN-GO" "$trojansts" "17" "MENU APACHE" ""
-			sshplus_opt "09" "BADVPN" "$badsts"
-			sshplus_opt "00" "VOLVER" ""
+			sshplus_opt_pair "09" "BADVPN" "$badsts" "00" "VOLVER" ""
 			echo -e "\033[38;2;76;228;255m============================================================\033[0m"
 			tput civis
 			echo -ne "\033[1;32mELIJA OPCION DESEADA\033[1;33m : \033[0m";

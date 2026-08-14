@@ -9,24 +9,29 @@ GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 SCOLOR='\033[0m'
 SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
+SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 sshplus_clear() {
 	printf '\033c\033[3J\033[H\033[2J'
 }
 clear() { sshplus_clear; }
+sshplus_line() {
+	echo -e "${SSHPLUS_CYAN}============================================================\033[0m"
+}
 sshplus_opt() {
 	local n="${1#0}"
 	[[ -z "$n" ]] && n="0"
 	printf '%b[%s]\033[0m \033[1;37m>\033[0m \033[1;33m%s\033[0m %b\n' "$SSHPLUS_NUM" "$n" "$2" "$3"
 }
 sshplus_opt_cell() {
-	local n="${1#0}" text="$2" st="$3" cell
+	local n="${1#0}" text="$2" st="$3" cell num rest
 	[[ -z "$n" ]] && n="0"
-	printf -v cell '[%s] > %-23.23s' "$n" "$text"
-	printf '%b%s\033[0m %b\033[0m' "$SSHPLUS_NUM" "${cell:0:4}" "\033[1;37m${cell:4}\033[0m${st}"
+	printf -v num '[%s]' "$n"
+	printf -v rest '  > %-24.24s' "$text"
+	printf '%b%-5s\033[0m\033[1;37m%s\033[0m%b' "$SSHPLUS_NUM" "$num" "$rest" "$st"
 }
 sshplus_opt_pair() {
 	sshplus_opt_cell "$1" "$2" "$3"
-	printf '  '
+	printf '   '
 	sshplus_opt_cell "$4" "$5" "$6"
 	printf '\n'
 }
@@ -2515,7 +2520,9 @@ PY
 		while true $x != "ok"; do
 			[[ ! -e '/home/sshplus' ]] && exit 0
 			clear
-echo -e "\033[1;34m                       CONEXION\033[0m"
+			sshplus_line
+			echo -e "\033[1;34m                       CONEXION\033[0m"
+			sshplus_line
 			echo -e "\033[1;32mSERVICIO: \033[1;33mOPENSSH \033[1;32mPUERTO: \033[1;37m$(grep 'Port' /etc/ssh/sshd_config | cut -d' ' -f2 | grep -v 'no' | xargs)" && sts6="\033[1;32mo "
 			[[ "$(netstat -tlpn | grep 'docker' | wc -l)" != '0' ]] && {
 				echo -e "\033[1;32mSERVICIO: \033[1;33mCHISEL: \033[1;32mPUERTO: \033[1;37m$(netstat -nplt | grep 'docker' | awk {'print $4'} | cut -d: -f2 | xargs)"
@@ -2592,17 +2599,17 @@ echo -e "\033[1;34m                       CONEXION\033[0m"
 			} || {
 				badsts="\033[1;31mx "
 			}
-						echo -e "\033[38;2;76;228;255m============================================================\033[0m"
-			sshplus_opt_pair "01" "OPENSSH" "$sts6" "10" "OPENVPN" "$sts5"
-			sshplus_opt_pair "02" "PROXY SOCKS" "$sts4" "11" "WEBSOCKET-CORRECTOR" "$wssts"
-			sshplus_opt_pair "03" "SSL TUNNEL" "$sts3" "12" "SSLH MULTIPLEX" "$sts7"
-			sshplus_opt_pair "04" "DROPBEAR" "$sts2" "13" "SQUID PROXY" "$sts1"
-			sshplus_opt_pair "05" "V2RAY" "$xv2ray" "14" "CHISEL" "$sts8"
-			sshplus_opt_pair "06" "SLOWDNS" "$sts9" "15" "PANEL WEB V2RAY" ""
-			sshplus_opt_pair "07" "HYSTERIA v1" "$hysteriasts" "16" "LIMPIAR V2RAY" ""
-			sshplus_opt_pair "08" "TROJAN-GO" "$trojansts" "17" "MENU APACHE" ""
-			sshplus_opt_pair "09" "BADVPN" "$badsts" "00" "VOLVER" ""
-			echo -e "\033[38;2;76;228;255m============================================================\033[0m"
+			sshplus_line
+			sshplus_opt_pair "1" "OPENSSH" "$sts6" "10" "OPENVPN" "$sts5"
+			sshplus_opt_pair "2" "PROXY SOCKS" "$sts4" "11" "WEBSOCKET-CORRECTOR" "$wssts"
+			sshplus_opt_pair "3" "SSL TUNNEL" "$sts3" "12" "SSLH MULTIPLEX" "$sts7"
+			sshplus_opt_pair "4" "DROPBEAR" "$sts2" "13" "SQUID PROXY" "$sts1"
+			sshplus_opt_pair "5" "V2RAY" "$xv2ray" "14" "CHISEL" "$sts8"
+			sshplus_opt_pair "6" "SLOWDNS" "$sts9" "15" "PANEL WEB V2RAY" ""
+			sshplus_opt_pair "7" "HYSTERIA v1" "$hysteriasts" "16" "LIMPIAR V2RAY" ""
+			sshplus_opt_pair "8" "TROJAN-GO" "$trojansts" "17" "MENU APACHE" ""
+			sshplus_opt_pair "9" "BADVPN" "$badsts" "0" "VOLVER" ""
+			sshplus_line
 			tput civis
 			echo -ne "\033[1;32mELIJA OPCION DESEADA\033[1;33m : \033[0m";
 			read x

@@ -28,7 +28,7 @@ tput cnorm
 }
 IP=$(cat /etc/IP)
 _sshplus_sync_sshplus_lang() {
-	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'AJUSTES DE CONEXION\|CONNECTION SETTINGS' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_SCRIPT_SETTINGS' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_CHECKUSERS' /bin/sshplus_lang 2>/dev/null; then
+	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'CONFIGURACION DE PROTOCOLOS\|PROTOCOL CONFIGURATION' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_SCRIPT_SETTINGS' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_CHECKUSERS' /bin/sshplus_lang 2>/dev/null; then
 		wget -qO /bin/sshplus_lang "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/sshplus_lang" && chmod +x /bin/sshplus_lang
 	fi
 }
@@ -211,6 +211,16 @@ _sshplus_single_opt() {
 	[[ -z "$d" ]] && d="0"
 	_sshplus_frame_pre
 	printf '  %b[%s]\033[0m  \033[1;37m>\033[0m %b%s\033[0m%s\n' "$_SSHPLUS_NUM" "$d" "$color" "$label" "$_sshplus_K"
+}
+_sshplus_main_opt() {
+	local n="$1" label="$2" mark="$3" d max
+	d="${n#0}"
+	[[ -z "$d" ]] && d="0"
+	max=$(( _SSHPLUS_IW - 10 ))
+	[[ "$max" -lt 18 ]] && max=18
+	label="$(_sshplus_trim_label "$label" "$max")"
+	_sshplus_frame_pre
+	printf '  %b[%s]\033[0m \033[1;37m> %-*s\033[0m%b%s\n' "$_SSHPLUS_NUM" "$d" "$max" "$label" "$mark" "$_sshplus_K"
 }
 _sshplus_line_00() {
 	local s
@@ -866,67 +876,70 @@ _sshplus_title
 _sshplus_box_sep
 _sshplus_draw_sys_dashboard
 _sshplus_box_sep
-_sshplus_pair "21" "${L2_21}" "28" "${L2_28}"
-_sshplus_pair "22" "${L2_22}" "29" "${L2_29} ${autm}"
-_sshplus_pair "23" "${L2_24}" "30" "${var01}${L2_30}"
-_sshplus_pair "24" "${L2_25} ${stsf}" "31" "${L2_31}"
-_sshplus_pair "25" "${L2_26} ${stsbot}" "32" "${L2_32}"
-_sshplus_pair "26" "${L2_27} ${stsbotteste}" "33" "${L2_33} <<"
-_sshplus_pair "27" "" "34" "${L2_34}"
-_sshplus_line_00
+_sshplus_pair "01" "${L2_21}" "08" "${L2_28}"
+_sshplus_pair "02" "${L2_22}" "09" "${L2_29} ${autm}"
+_sshplus_pair "03" "${L2_24}" "10" "${var01}${L2_30}"
+_sshplus_pair "04" "${L2_25} ${stsf}" "11" "${L2_31}"
+_sshplus_pair "05" "${L2_26} ${stsbot}" "12" "${L2_32}"
+_sshplus_pair "06" "${L2_27} ${stsbotteste}" "13" "${L2_34}"
+_sshplus_pair "07" "${L_M17:-HERRAMIENTAS}" "" ""
+_sshplus_pair "" "" "00" "${L2_33:-VOLVER}"
 _sshplus_box_bot
 _sshplus_prompt; read x
 case "$x" in
-   21)
+   1|01|21)
    clear
    addhost
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
-   22)
+   2|02|22)
    clear
    delhost
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
-   23)
+   3|03|23)
    clear
    reiniciarservicos
    sleep 3
    ;;
-   24)
+   4|04|24)
    blockt
    ;;
-   25)
+   5|05|25)
    botssh
    ;;
-   26)
+   6|06|26)
    inst-botteste
    ;;
-   27)
+   7|07|27)
+   clear
+   _sshplus_sync_utili
+   utili
    ;;
-   28)
+   8|08|28)
    clear
    senharoot
    sleep 3
    ;;
-   29)
+   9|09|29)
    autoexec
    ;;
-   30)
+   10|30)
    attscript
    ;;
-   31)
+   11|31)
    clear
    delscript
    ;;
-   32)
+   12|32)
    clear
    tcptweaker.sh
    ;;
-   34|034)
+   13|34|034)
    clear
    reiniciarsistema
    ;;
-   33|0|00)
+   0|00|33)
    break
    ;;
    *)
@@ -990,14 +1003,17 @@ _sshplus_title
 _sshplus_box_sep
 _sshplus_draw_sys_dashboard
 _sshplus_box_sep
-# Menu principal compacto; usuarios queda agrupado en un submenu.
-_sshplus_pair "01" "${L_USER_ADMIN:-ADMINISTRAR USUARIOS}" "07" "${L_VPS_SETTINGS:-AJUSTES DE VPS}"
-_sshplus_pair "02" "${L_M10:-AJUSTES DE CONEXION}" "08" "${L_NET_SECURITY:-RED Y SEGURIDAD}"
-_sshplus_pair "03" "${L_BANNER_SETTINGS:-AJUSTES DE BANNER}" "09" "${L_M17:-HERRAMIENTAS}"
-_sshplus_pair "04" "${L_M18:-LIMITADOR} ${stsl}" "" ""
-_sshplus_pair "05" "${L_M13:-BANNER}" "15" "${L_MORE_SETTINGS:-MAS AJUSTES >>>}"
-_sshplus_pair "06" "${L_CHECKUSERS:-CHECKUSERS}" "14" "${L_REBOOT_VPS:-REINICIAR VPS}"
-_sshplus_pair "" "" "16" "${L_SCRIPT_SETTINGS:-AJUSTES DE SCRIPT}"
+# Menu principal en una columna.
+_sshplus_main_opt "01" "${L_USER_ADMIN:-ADMINISTRAR USUARIOS}"
+_sshplus_main_opt "02" "${L_M10:-CONFIGURACION DE PROTOCOLOS}"
+_sshplus_main_opt "03" "${L_BANNER_SETTINGS:-CONFIGURACION DE BANNER}"
+_sshplus_main_opt "04" "${L_M18:-ACTIVAR LIMITADOR}" "$stsl"
+_sshplus_main_opt "05" "${L_CHECKUSERS:-CHECKUSERS}"
+_sshplus_main_opt "06" "${L_NET_SECURITY:-RED Y SEGURIDAD}"
+_sshplus_main_opt "07" "${L_VPS_SETTINGS:-CONFIGURACION DE LA VPS}"
+_sshplus_main_opt "08" "${L_SCRIPT_SETTINGS:-CONFIGURACION DEL SCRIPT}"
+_sshplus_main_opt "09" "${L_MORE_SETTINGS:-MAS AJUSTES >>>}"
+_sshplus_main_opt "10" "${L_REBOOT_VPS:-REINICIAR VPS}"
 _sshplus_box_bot
 _sshplus_prompt; read x
 
@@ -1023,27 +1039,24 @@ case "$x" in
    ;;      
    5 | 05)
    clear
-   _sshplus_sync_banner
-   banner
-   sleep 3
+   _sshplus_checkusers_menu
    ;;
    6 | 06)
-   clear
-   _sshplus_checkusers_menu
+   _sshplus_network_security_menu
    ;; 
    7 | 07)
    _sshplus_vps_settings_menu
    ;;
    8 | 08)
-   _sshplus_network_security_menu
+   _sshplus_script_settings_menu
    ;;     
    9 | 09)
-   clear
-   _sshplus_sync_utili
-   utili
+   menu2
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    10)
-   _sshplus_vps_settings_menu
+   clear
+   reiniciarsistema
    ;;
    11)
    _sshplus_network_security_menu

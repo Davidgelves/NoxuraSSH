@@ -10,12 +10,30 @@ YELLOW='\033[1;33m'
 SCOLOR='\033[0m'
 SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
 SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
+sshplus_resize() {
+	SSHPLUS_COLS="$(tput cols 2>/dev/null || echo 80)"
+	[[ ! "$SSHPLUS_COLS" =~ ^[0-9]+$ ]] && SSHPLUS_COLS=80
+	if [[ "$SSHPLUS_COLS" -lt 78 ]]; then
+		SSHPLUS_COMPACT=1
+		SSHPLUS_IW=$(( SSHPLUS_COLS - 2 ))
+		[[ "$SSHPLUS_IW" -lt 42 ]] && SSHPLUS_IW=42
+		[[ "$SSHPLUS_IW" -gt 60 ]] && SSHPLUS_IW=60
+	else
+		SSHPLUS_COMPACT=0
+		SSHPLUS_IW=60
+	fi
+}
+sshplus_resize
 sshplus_clear() {
 	printf '\033c\033[3J\033[H\033[2J'
+	sshplus_resize
 }
 clear() { sshplus_clear; }
 sshplus_line() {
-	echo -e "${SSHPLUS_CYAN}============================================================\033[0m"
+	local i
+	printf '%b' "$SSHPLUS_CYAN"
+	for ((i=0;i<SSHPLUS_IW;i++)); do printf '='; done
+	printf '\033[0m\n'
 }
 sshplus_opt() {
 	local n="${1#0}"
@@ -23,13 +41,24 @@ sshplus_opt() {
 	printf '%b[%s]\033[0m \033[1;37m>\033[0m \033[1;33m%s\033[0m %b\n' "$SSHPLUS_NUM" "$n" "$2" "$3"
 }
 sshplus_opt_cell() {
-	local n="${1#0}" text="$2" st="$3" cell num rest
+	local n="${1#0}" text="$2" st="$3" cell num rest max
 	[[ -z "$n" ]] && n="0"
 	printf -v num '[%s]' "$n"
-	printf -v rest '  > %-24.24s' "$text"
+	max=24
+	[[ "${SSHPLUS_COMPACT:-0}" == 1 ]] && max=$(( SSHPLUS_IW - 13 ))
+	[[ "$max" -lt 12 ]] && max=12
+	text="${text:0:max}"
+	printf -v rest '  > %-*s' "$max" "$text"
 	printf '%b%-5s\033[0m\033[1;37m%s\033[0m%b' "$SSHPLUS_NUM" "$num" "$rest" "$st"
 }
 sshplus_opt_pair() {
+	if [[ "${SSHPLUS_COMPACT:-0}" == 1 ]]; then
+		sshplus_opt_cell "$1" "$2" "$3"
+		printf '\n'
+		sshplus_opt_cell "$4" "$5" "$6"
+		printf '\n'
+		return
+	fi
 	sshplus_opt_cell "$1" "$2" "$3"
 	printf '   '
 	sshplus_opt_cell "$4" "$5" "$6"

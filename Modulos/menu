@@ -34,15 +34,20 @@ _sshplus_sync_sshplus_lang() {
 }
 _sshplus_sync_sshplus_lang
 [[ -f /bin/sshplus_lang ]] && . /bin/sshplus_lang
-_sshplus_cols="$(tput cols 2>/dev/null || echo 80)"
-[[ ! "$_sshplus_cols" =~ ^[0-9]+$ ]] && _sshplus_cols=80
-if [[ "$_sshplus_cols" -lt 64 ]]; then
-	_SSHPLUS_IW=48
-	_SSHPLUS_COMPACT=1
-else
-	_SSHPLUS_IW=58
-	_SSHPLUS_COMPACT=0
-fi
+_sshplus_resize() {
+	_sshplus_cols="$(tput cols 2>/dev/null || echo 80)"
+	[[ ! "$_sshplus_cols" =~ ^[0-9]+$ ]] && _sshplus_cols=80
+	if [[ "$_sshplus_cols" -lt 78 ]]; then
+		_SSHPLUS_IW=$(( _sshplus_cols - 2 ))
+		[[ "$_SSHPLUS_IW" -lt 42 ]] && _SSHPLUS_IW=42
+		[[ "$_SSHPLUS_IW" -gt 58 ]] && _SSHPLUS_IW=58
+		_SSHPLUS_COMPACT=1
+	else
+		_SSHPLUS_IW=58
+		_SSHPLUS_COMPACT=0
+	fi
+}
+_sshplus_resize
 _SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 _SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
 _SSHPLUS_SECTION=$'\033[1;38;2;240;230;140m'
@@ -53,6 +58,7 @@ _sshplus_K=$'\033[K'
 _sshplus_clear() {
 	command clear 2>/dev/null || printf '\033[H\033[2J'
 	printf '\033[3J\033[H'
+	_sshplus_resize
 }
 clear() { _sshplus_clear; }
 _sshplus_pad24() {
@@ -177,14 +183,18 @@ _sshplus_pair() {
 	[[ -z "$d1" ]] && d1="0"
 	[[ -z "$d2" ]] && d2="0"
 	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
-		l1="$(_sshplus_trim_label "$l1" 15)"
-		l2="$(_sshplus_trim_label "$l2" 15)"
-		[[ -n "$n1$l1" ]] && printf -v left '[%s] > %-15s' "$d1" "$l1" || printf -v left '%-21s' ''
-		[[ -n "$n2$l2" ]] && printf -v right '[%s] > %-15s' "$d2" "$l2" || printf -v right '%-21s' ''
-		_sshplus_frame_pre
-		printf '  %b%s\033[0m\033[1;37m%b\033[0m  %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
-			"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
-			"$_SSHPLUS_NUM" "${right:0:4}" "${right:4}" "$_sshplus_K"
+		local max=$(( _SSHPLUS_IW - 10 ))
+		[[ "$max" -lt 12 ]] && max=12
+		l1="$(_sshplus_trim_label "$l1" "$max")"
+		l2="$(_sshplus_trim_label "$l2" "$max")"
+		if [[ -n "$n1$l1" ]]; then
+			_sshplus_frame_pre
+			printf '  %b[%s]\033[0m \033[1;37m> %-*s\033[0m%s\n' "$_SSHPLUS_NUM" "$d1" "$max" "$l1" "$_sshplus_K"
+		fi
+		if [[ -n "$n2$l2" ]]; then
+			_sshplus_frame_pre
+			printf '  %b[%s]\033[0m \033[1;37m> %-*s\033[0m%s\n' "$_SSHPLUS_NUM" "$d2" "$max" "$l2" "$_sshplus_K"
+		fi
 		return
 	fi
 	l1="$(_sshplus_trim_label "$l1" 21)"

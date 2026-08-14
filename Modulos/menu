@@ -28,7 +28,7 @@ tput cnorm
 }
 IP=$(cat /etc/IP)
 _sshplus_sync_sshplus_lang() {
-	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'CONFIGURACION DE PROTOCOLOS\|PROTOCOL SETTINGS' /bin/sshplus_lang 2>/dev/null; then
+	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'AJUSTES DE CONEXION\|CONNECTION SETTINGS' /bin/sshplus_lang 2>/dev/null; then
 		wget -qO /bin/sshplus_lang "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/sshplus_lang" && chmod +x /bin/sshplus_lang
 	fi
 }
@@ -179,8 +179,8 @@ _sshplus_pair() {
 	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
 		l1="$(_sshplus_trim_label "$l1" 15)"
 		l2="$(_sshplus_trim_label "$l2" 15)"
-		printf -v left '[%s] > %-15s' "$d1" "$l1"
-		printf -v right '[%s] > %-15s' "$d2" "$l2"
+		[[ -n "$n1$l1" ]] && printf -v left '[%s] > %-15s' "$d1" "$l1" || printf -v left '%-21s' ''
+		[[ -n "$n2$l2" ]] && printf -v right '[%s] > %-15s' "$d2" "$l2" || printf -v right '%-21s' ''
 		_sshplus_frame_pre
 		printf '  %b%s\033[0m\033[1;37m%b\033[0m  %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
 			"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
@@ -189,8 +189,8 @@ _sshplus_pair() {
 	fi
 	l1="$(_sshplus_trim_label "$l1" 21)"
 	l2="$(_sshplus_trim_label "$l2" 21)"
-	printf -v left '[%s] > %-21s' "$d1" "$l1"
-	printf -v right '[%s] > %-21s' "$d2" "$l2"
+	[[ -n "$n1$l1" ]] && printf -v left '[%s] > %-21s' "$d1" "$l1" || printf -v left '%-27s' ''
+	[[ -n "$n2$l2" ]] && printf -v right '[%s] > %-21s' "$d2" "$l2" || printf -v right '%-27s' ''
 	_sshplus_frame_pre
 	printf '  %b%s\033[0m\033[1;37m%b\033[0m  %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
 		"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
@@ -738,13 +738,13 @@ _sshplus_draw_sys_dashboard
 _sshplus_box_sep
 # Menu principal compacto; usuarios queda agrupado en un submenu.
 _sshplus_pair "01" "${L_USER_ADMIN:-ADMINISTRAR USUARIOS}" "09" "${L_M18:-LIMITER} ${stsl}"
-_sshplus_pair "02" "${L_M10:-MODO DE CONEXION}" "10" "${L_M19:-Menu BadVpn} ${stsu}"
-_sshplus_pair "03" "${L_M11:-CREAR MEMORIA SWAP}" "11" "${L_M20:-FIREWALL (PRO)}"
-_sshplus_pair "04" "${L_M12:-SPEEDTEST}" "12" "${L_M21:-INFO VPS}"
-_sshplus_pair "05" "${L_M13:-BANNER}" "13" "${L_M22:-CHECKUSER 4G}"
-_sshplus_pair "06" "${L_M14:-TRAFICO}" "14" "${L_MG:-CHECKUSER GLTUNNEL}"
-_sshplus_pair "07" "${L_M15:-OPTIMIZAR}" "15" "${L_M17:-HERRAMIENTAS}"
-_sshplus_pair "08" "${L_M16:-RESPALDO}" "16" "${L_M23:-MAS >>>}"
+_sshplus_pair "02" "${L_M10:-AJUSTES DE CONEXION}" "10" "${L_M20:-FIREWALL (PRO)}"
+_sshplus_pair "03" "${L_M11:-CREAR MEMORIA SWAP}" "11" "${L_M21:-INFO VPS}"
+_sshplus_pair "04" "${L_M12:-SPEEDTEST}" "12" "${L_M22:-CHECKUSER 4G}"
+_sshplus_pair "05" "${L_M13:-BANNER}" "13" "${L_MG:-CHECKUSER GLTUNNEL}"
+_sshplus_pair "06" "${L_M14:-TRAFICO}" "14" "${L_M17:-HERRAMIENTAS}"
+_sshplus_pair "07" "${L_M15:-OPTIMIZAR}" "15" "${L_M23:-MAS >>>}"
+_sshplus_pair "08" "${L_M16:-RESPALDO}" "" ""
 _sshplus_box_bot
 _sshplus_prompt; read x
 
@@ -798,29 +798,27 @@ case "$x" in
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
    ;;
    10)
-   clear
-   menub
-   exit;
-   ;;
-   11)
    fr
    ;;
-   12)
+   11)
    clear
    detalhes
+   ;;
+   12)
+   initcheck
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
    ;;
    13)
-   initcheck
-   ;;
-   14)
    _sshplus_sync_gltunnel
    gltunnel
    ;;
-   15)
+   14)
    clear
    _sshplus_sync_utili
    utili
+   ;;
+   15)
+   menu2
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
    ;;
    16)

@@ -1,14 +1,59 @@
 #!/bin/bash
-# Si /bin/otimizar es antiguo (portugués), sustituir desde GitHub y reejecutar.
+# Si /bin/otimizar es antiguo (portugues), sustituir desde GitHub y reejecutar.
 _inf="${BASH_SOURCE[0]:-$0}"
-if ! grep -q 'lang=es otimizar' "$_inf" 2>/dev/null; then
+if ! grep -q 'lang=es otimizar v2' "$_inf" 2>/dev/null; then
 	wget -qO /bin/otimizar "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/otimizar" && chmod +x /bin/otimizar || {
 		echo -e "\033[1;31mNo se pudo actualizar otimizar desde GitHub.\033[0m"
 		exit 1
 	}
 	exec /bin/otimizar
 fi
-# lang=es otimizar
+# lang=es otimizar v2
+FREE_CMD="$(command -v free 2>/dev/null || true)"
+[[ -z "$FREE_CMD" && -x /usr/bin/free ]] && FREE_CMD="/usr/bin/free"
+[[ -z "$FREE_CMD" && -x /bin/free ]] && FREE_CMD="/bin/free"
+fmt_kb() {
+	awk -v kb="${1:-0}" 'BEGIN {
+		b = kb * 1024;
+		split("B KiB MiB GiB TiB", u, " ");
+		i = 1;
+		while (b >= 1024 && i < 5) { b /= 1024; i++ }
+		printf "%.1f%s", b, u[i]
+	}'
+}
+mem_pct() {
+	if [[ -n "$FREE_CMD" ]]; then
+		LC_ALL=C LANG=C "$FREE_CMD" 2>/dev/null | awk '$1 == "Mem:" && ($2+0) > 0 {print int(100*$3/$2); exit}'
+	else
+		awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {if(t>0) print int(100*(t-a)/t); else print 0}' /proc/meminfo 2>/dev/null
+	fi
+}
+mem_stat() {
+	local key="$1" kb
+	if [[ -n "$FREE_CMD" ]]; then
+		LC_ALL=C LANG=C "$FREE_CMD" -h 2>/dev/null | awk -v k="$key" '$1 == "Mem:" {if(k=="total") print $2; else if(k=="used") print $3; else if(k=="free") print $4; exit}'
+	else
+		case "$key" in
+			total) kb="$(awk '/^MemTotal:/ {print $2; exit}' /proc/meminfo 2>/dev/null)" ;;
+			used) kb="$(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {print t-a}' /proc/meminfo 2>/dev/null)" ;;
+			free) kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)" ;;
+		esac
+		fmt_kb "${kb:-0}"
+	fi
+}
+swap_stat() {
+	local key="$1" kb
+	if [[ -n "$FREE_CMD" ]]; then
+		LC_ALL=C LANG=C "$FREE_CMD" -h 2>/dev/null | awk -v k="$key" '$1 == "Swap:" {if(k=="total") print $2; else if(k=="used") print $3; else if(k=="free") print $4; exit}'
+	else
+		case "$key" in
+			total) kb="$(awk '/^SwapTotal:/ {print $2; exit}' /proc/meminfo 2>/dev/null)" ;;
+			used) kb="$(awk '/^SwapTotal:/ {t=$2} /^SwapFree:/ {f=$2} END {print t-f}' /proc/meminfo 2>/dev/null)" ;;
+			free) kb="$(awk '/^SwapFree:/ {print $2; exit}' /proc/meminfo 2>/dev/null)" ;;
+		esac
+		fmt_kb "${kb:-0}"
+	fi
+}
 #===================================================
 #	SCRIPT: OPTIMIZAR	SSHPLUS MANAGER
 #	DESARROLLADO POR:	CRAZY_VPN
@@ -60,25 +105,25 @@ echo ""
 echo -e "\033[1;32m        Eliminando paquetes conflictivos"
 echo ""
 fun_bar 'apt-get -f remove -y' 'apt-get clean -y'
-# Limpiar caché de memoria RAM
+# Limpiar cache de memoria RAM
 clear
-echo -e "\033[1;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;32m===========================================================\033[0m"
 echo ""
-MEM1=$(free | awk '/Mem:/ {print int(100*$3/$2)}')
-ram1=$(free -h | grep -i mem | awk {'print $2'})
-ram2=$(free -h | grep -i mem | awk {'print $4'})
-ram3=$(free -h | grep -i mem | awk {'print $3'})
-swap1=$(free -h | grep -i swap | awk {'print $2'})
-swap2=$(free -h | grep -i swap | awk {'print $4'})
-swap3=$(free -h | grep -i swap | awk {'print $3'})
-echo -e "\033[1;31m•\033[1;32mMemoria RAM\033[1;31m•\033[0m                    \033[1;31m•\033[1;32mSwap\033[1;31m•\033[0m"
+MEM1=$(mem_pct)
+ram1=$(mem_stat total)
+ram2=$(mem_stat free)
+ram3=$(mem_stat used)
+swap1=$(swap_stat total)
+swap2=$(swap_stat free)
+swap3=$(swap_stat used)
+echo -e "\033[1;31m*\033[1;32mMemoria RAM\033[1;31m*\033[0m                    \033[1;31m*\033[1;32mSwap\033[1;31m*\033[0m"
 echo -e " \033[1;33mTotal: \033[1;37m$ram1                   \033[1;33mTotal: \033[1;37m$swap1"
 echo -e " \033[1;33mEn uso: \033[1;37m$ram3                  \033[1;33mEn uso: \033[1;37m$swap3"
 echo -e " \033[1;33mLibre: \033[1;37m$ram2                   \033[1;33mLibre: \033[1;37m$swap2\033[0m"
 echo ""
 echo -e "\033[1;37mMemoria \033[1;32mRAM \033[1;37mantes de optimizar:\033[1;36m" $MEM1%
 echo ""
-echo -e "\033[1;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;32m===========================================================\033[0m"
 sleep 2
 echo ""
 fun_limpram() {
@@ -110,22 +155,22 @@ function aguarde() {
 aguarde
 sleep 1
 clear
-echo -e "\033[1;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;32m===========================================================\033[0m"
 echo ""
-MEM2=$(free | awk '/Mem:/ {print int(100*$3/$2)}')
-ram1=$(free -h | grep -i mem | awk {'print $2'})
-ram2=$(free -h | grep -i mem | awk {'print $4'})
-ram3=$(free -h | grep -i mem | awk {'print $3'})
-swap1=$(free -h | grep -i swap | awk {'print $2'})
-swap2=$(free -h | grep -i swap | awk {'print $4'})
-swap3=$(free -h | grep -i swap | awk {'print $3'})
-echo -e "\033[1;31m•\033[1;32mMemoria RAM\033[1;31m•\033[0m                    \033[1;31m•\033[1;32mSwap\033[1;31m•\033[0m"
+MEM2=$(mem_pct)
+ram1=$(mem_stat total)
+ram2=$(mem_stat free)
+ram3=$(mem_stat used)
+swap1=$(swap_stat total)
+swap2=$(swap_stat free)
+swap3=$(swap_stat used)
+echo -e "\033[1;31m*\033[1;32mMemoria RAM\033[1;31m*\033[0m                    \033[1;31m*\033[1;32mSwap\033[1;31m*\033[0m"
 echo -e " \033[1;33mTotal: \033[1;37m$ram1                   \033[1;33mTotal: \033[1;37m$swap1"
 echo -e " \033[1;33mEn uso: \033[1;37m$ram3                  \033[1;33mEn uso: \033[1;37m$swap3"
 echo -e " \033[1;33mLibre: \033[1;37m$ram2                   \033[1;33mLibre: \033[1;37m$swap2\033[0m"
 echo ""
-echo -e "\033[1;37mMemoria \033[1;32mRAM \033[1;37mdespués de optimizar:\033[1;36m" $MEM2%
+echo -e "\033[1;37mMemoria \033[1;32mRAM \033[1;37mdespues de optimizar:\033[1;36m" $MEM2%
 echo ""
 echo -e "\033[1;37mAhorro:\033[1;31m $(expr $MEM1 - $MEM2)%\033[0m"
 echo ""
-echo -e "\033[1;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;32m===========================================================\033[0m"

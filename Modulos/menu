@@ -557,8 +557,15 @@ _sshplus_sync_banner() {
 	fi
 }
 _sshplus_sync_otimizar() {
-	if ! grep -q 'lang=es otimizar' /bin/otimizar 2>/dev/null; then
-		wget -qO /bin/otimizar "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/otimizar" && chmod +x /bin/otimizar
+	local url="/Modulos/otimizar" target
+	for target in /bin/otimizar /usr/bin/otimizar; do
+		if [[ ! -f "$target" ]] || ! grep -q 'lang=es otimizar v2' "$target" 2>/dev/null; then
+			wget -qO "$target" "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main${url}" && chmod +x "$target"
+		fi
+	done
+	hash -r 2>/dev/null || true
+	if ! command -v otimizar >/dev/null 2>&1; then
+		ln -sf /bin/otimizar /usr/bin/otimizar 2>/dev/null || true
 	fi
 }
 _sshplus_sync_userbackup() {

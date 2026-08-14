@@ -196,95 +196,23 @@ ensure_licence_conexao
 	}
 
 	slow_setup() {
-		local dns_bin="/etc/SSHPlus/dns"
-		local arch_dns url dns_zip dns_name
-		mkdir -p /etc/SSHPlus
-		if [[ ! -x "${dns_bin}" ]]; then
-			cd "$HOME" || return 1
-			rm -f dns dnstt-client-* dnstt-client.zip
-			echo -e "\033[1;33mDESCARGANDO SLOWDNS...\033[0m"
-			if command -v wget >/dev/null 2>&1; then
-				wget -qO dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
-			fi
-			if [[ ! -s dns ]] && command -v curl >/dev/null 2>&1; then
-				curl -fsSL -o dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
-			fi
-			if [[ ! -s dns ]]; then
-				case "$(uname -m)" in
-					x86_64|amd64) arch_dns="amd64" ;;
-					aarch64|arm64) arch_dns="arm64" ;;
-					*) arch_dns="" ;;
-				esac
-				if [[ -n "${arch_dns}" ]]; then
-					dns_zip="dnstt-client.zip"
-					dns_name="dnstt-client-${arch_dns}-linux"
-					url="https://github.com/1andrevich/dnstt/releases/download/v0.20210424.0/${dns_name}.zip"
-					echo -e "\033[1;33mURL principal no disponible. Probando DNSTT ${arch_dns}...\033[0m"
-					if command -v wget >/dev/null 2>&1; then
-						wget -qO "${dns_zip}" "${url}" || true
-					fi
-					if [[ ! -s "${dns_zip}" ]] && command -v curl >/dev/null 2>&1; then
-						curl -fL -o "${dns_zip}" "${url}" || true
-					fi
-					if [[ -s "${dns_zip}" ]]; then
-						apt-get install -y unzip >/dev/null 2>&1 || true
-						unzip -o "${dns_zip}" >/dev/null 2>&1 || true
-						[[ -f "${dns_name}" ]] && mv -f "${dns_name}" dns
-					fi
-				fi
-			fi
-			if [[ ! -s dns ]]; then
-				echo -e "\033[1;31mNo se pudo descargar SlowDNS.\033[0m"
-				echo -e "\033[1;33mRevise conexion a raw.githubusercontent.com o intente mas tarde.\033[0m"
-				sleep 3
-				return 1
-			fi
-			cp -f dns "${dns_bin}"
-			chmod +x "${dns_bin}"
+		cd "$HOME" || return 1
+		rm -f install
+		echo -e "\033[1;33mDESCARGANDO INSTALADOR SLOWDNS...\033[0m"
+		if command -v wget >/dev/null 2>&1; then
+			wget -qO install https://raw.githubusercontent.com/fabricio94b/VPS-MANAGER/main/SlowDNS/install || true
 		fi
-		cat >/bin/slowdns <<'SLOWDNS_WRAPPER'
-#!/bin/bash
-RED='\033[1;31m'
-GREEN='\033[1;32m'
-YELLOW='\033[1;33m'
-SCOLOR='\033[0m'
-DNS_BIN="/etc/SSHPlus/dns"
-[[ -x "${DNS_BIN}" ]] || {
-	echo -e "${RED}No se encontro ${DNS_BIN}. Instale SlowDNS nuevamente.${SCOLOR}"
-	read -r -p "ENTER para volver..." _
-	exit 1
-}
-clear
-echo -e "${YELLOW}================ SLOWDNS ================${SCOLOR}"
-echo -ne "${GREEN}NS/dominio SlowDNS${YELLOW}: ${SCOLOR}"
-read -r ns
-[[ -n "${ns}" ]] || { echo -e "${RED}NS no puede estar vacio.${SCOLOR}"; sleep 2; exit 1; }
-echo -ne "${GREEN}Public key${YELLOW}: ${SCOLOR}"
-read -r chave
-[[ -n "${chave}" ]] || { echo -e "${RED}Public key no puede estar vacia.${SCOLOR}"; sleep 2; exit 1; }
-echo -ne "${GREEN}DNS/IP servidor [187.50.250.115]${YELLOW}: ${SCOLOR}"
-read -r dns_server
-dns_server="${dns_server:-187.50.250.115}"
-echo -e "${YELLOW}Iniciando SlowDNS...${SCOLOR}"
-"${DNS_BIN}" -udp "${dns_server}:53" -pubkey "${chave}" "${ns}" 127.0.0.1:2222 >/tmp/slowdns.log 2>&1 &
-sleep 1
-pid="$(pgrep -f "${DNS_BIN}.*127.0.0.1:2222" | head -1)"
-if [[ -n "${pid}" ]]; then
-	echo -e "${GREEN}SlowDNS iniciado. PID: ${pid}${SCOLOR}"
-	echo -e "${YELLOW}Presione ENTER para detener SlowDNS.${SCOLOR}"
-	read -r _
-	kill "${pid}" >/dev/null 2>&1 || true
-else
-	echo -e "${RED}SlowDNS no inicio. Ultimo error:${SCOLOR}"
-	tail -n 8 /tmp/slowdns.log 2>/dev/null
-	read -r -p "ENTER para volver..." _
-	exit 1
-fi
-SLOWDNS_WRAPPER
-		chmod +x /bin/slowdns
-		echo -e "\033[1;32mSlowDNS instalado. Abriendo configuracion...\033[0m"
-		sleep 1
-		/bin/slowdns
+		if [[ ! -s install ]] && command -v curl >/dev/null 2>&1; then
+			curl -fsSL -o install https://raw.githubusercontent.com/fabricio94b/VPS-MANAGER/main/SlowDNS/install || true
+		fi
+		if [[ ! -s install ]]; then
+			echo -e "\033[1;31mNo se pudo descargar el instalador de SlowDNS.\033[0m"
+			echo -e "\033[1;33mRevise conexion a raw.githubusercontent.com o intente mas tarde.\033[0m"
+			sleep 3
+			return 1
+		fi
+		chmod +x install
+		bash ./install
 
 	}
 

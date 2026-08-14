@@ -182,7 +182,7 @@ _sshplus_pair() {
 	d2="${n2#0}"
 	[[ -z "$d1" ]] && d1="0"
 	[[ -z "$d2" ]] && d2="0"
-	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
+	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 && "${_SSHPLUS_IW:-0}" -lt 50 ]]; then
 		local max=$(( _SSHPLUS_IW - 10 ))
 		[[ "$max" -lt 12 ]] && max=12
 		l1="$(_sshplus_trim_label "$l1" "$max")"
@@ -197,12 +197,12 @@ _sshplus_pair() {
 		fi
 		return
 	fi
-	l1="$(_sshplus_trim_label "$l1" 21)"
-	l2="$(_sshplus_trim_label "$l2" 21)"
-	[[ -n "$n1$l1" ]] && printf -v left '[%s] > %-21s' "$d1" "$l1" || printf -v left '%-27s' ''
-	[[ -n "$n2$l2" ]] && printf -v right '[%s] > %-21s' "$d2" "$l2" || printf -v right '%-27s' ''
+	l1="$(_sshplus_trim_label "$l1" 18)"
+	l2="$(_sshplus_trim_label "$l2" 18)"
+	[[ -n "$n1$l1" ]] && printf -v left '[%s] > %-18s' "$d1" "$l1" || printf -v left '%-24s' ''
+	[[ -n "$n2$l2" ]] && printf -v right '[%s] > %-18s' "$d2" "$l2" || printf -v right '%-24s' ''
 	_sshplus_frame_pre
-	printf '  %b%s\033[0m\033[1;37m%b\033[0m  %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
+	printf '  %b%s\033[0m\033[1;37m%b\033[0m %b%s\033[0m\033[1;37m%b\033[0m%s\n' \
 		"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
 		"$_SSHPLUS_NUM" "${right:0:4}" "${right:4}" "$_sshplus_K"
 }

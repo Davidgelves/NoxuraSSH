@@ -220,7 +220,11 @@ _sshplus_main_opt() {
 	[[ "$max" -lt 18 ]] && max=18
 	label="$(_sshplus_trim_label "$label" "$max")"
 	_sshplus_frame_pre
-	printf '  %b[%s]\033[0m \033[1;37m> %-*s\033[0m%b%s\n' "$_SSHPLUS_NUM" "$d" "$max" "$label" "$mark" "$_sshplus_K"
+	if [[ -n "$mark" ]]; then
+		printf '  %b[%s]\033[0m \033[1;37m> %s\033[0m  %b%s\n' "$_SSHPLUS_NUM" "$d" "$label" "$mark" "$_sshplus_K"
+	else
+		printf '  %b[%s]\033[0m \033[1;37m> %s\033[0m%s\n' "$_SSHPLUS_NUM" "$d" "$label" "$_sshplus_K"
+	fi
 }
 _sshplus_line_00() {
 	local s

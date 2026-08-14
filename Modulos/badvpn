@@ -145,9 +145,9 @@ header() {
 menu_badvpn() {
     while true; do
         header
-        echo -e "${RED}[${GREEN}1${RED}] ${WHITE}? $(_bad_tr toggle) $(_status_mark)${NC}"
-        echo -e "${RED}[${GREEN}2${RED}] ${WHITE}? $(_bad_tr open_port)${NC}"
-        echo -e "${RED}[${GREEN}0${RED}] ${WHITE}? $(_bad_tr back)${NC}"
+        echo -e "${RED}[${GREEN}1${RED}] ${WHITE}> $(_bad_tr toggle) $(_status_mark)${NC}"
+        echo -e "${RED}[${GREEN}2${RED}] ${WHITE}> $(_bad_tr open_port)${NC}"
+        echo -e "${RED}[${GREEN}0${RED}] ${WHITE}> $(_bad_tr back)${NC}"
         echo ""
         echo -ne "${GREEN}$(_bad_tr prompt) ${WHITE}"
         read -r resposta

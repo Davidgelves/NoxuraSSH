@@ -348,6 +348,61 @@ _sshplus_script_settings_menu() {
 		esac
 	done
 }
+_sshplus_fmt_bytes() {
+	awk -v b="${1:-0}" 'BEGIN {
+		split("B KB MB GB TB", u, " ");
+		i=1;
+		while (b >= 1024 && i < 5) { b /= 1024; i++ }
+		printf "%.2f %s", b, u[i]
+	}'
+}
+_sshplus_fmt_rate() {
+	awk -v b="${1:-0}" 'BEGIN {
+		bps = b * 8;
+		split("bps Kbps Mbps Gbps", u, " ");
+		i=1;
+		while (bps >= 1000 && i < 4) { bps /= 1000; i++ }
+		printf "%.2f %s", bps, u[i]
+	}'
+}
+_sshplus_default_iface() {
+	ip route 2>/dev/null | awk '/default/ {print $5; exit}'
+}
+_sshplus_traffic_monitor() {
+	local iface rx1 tx1 rx2 tx2 drx dtx ipaddr
+	iface="$(_sshplus_default_iface)"
+	[[ -z "$iface" ]] && iface="$(ls /sys/class/net 2>/dev/null | grep -v '^lo$' | head -1)"
+	if [[ -z "$iface" || ! -r "/sys/class/net/$iface/statistics/rx_bytes" ]]; then
+		clear
+		echo -e "\033[1;31mNo se encontro una interfaz de red valida.\033[0m"
+		echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
+		return
+	fi
+	trap 'trap - INT; clear; return 0' INT
+	while true; do
+		rx1="$(cat "/sys/class/net/$iface/statistics/rx_bytes" 2>/dev/null || echo 0)"
+		tx1="$(cat "/sys/class/net/$iface/statistics/tx_bytes" 2>/dev/null || echo 0)"
+		sleep 1
+		rx2="$(cat "/sys/class/net/$iface/statistics/rx_bytes" 2>/dev/null || echo 0)"
+		tx2="$(cat "/sys/class/net/$iface/statistics/tx_bytes" 2>/dev/null || echo 0)"
+		drx=$((rx2 - rx1))
+		dtx=$((tx2 - tx1))
+		ipaddr="$(ip -4 addr show "$iface" 2>/dev/null | awk '/inet / {print $2; exit}' | cut -d/ -f1)"
+		clear
+		_sshplus_box_top
+		_sshplus_line "                    TRAFICO DE RED"
+		_sshplus_box_sep
+		_sshplus_line " INTERFAZ        : ${iface}  IP: ${ipaddr:-N/A}"
+		_sshplus_box_sep
+		_sshplus_line " DESCARGA ACTUAL : $(_sshplus_fmt_rate "$drx")"
+		_sshplus_line " SUBIDA ACTUAL   : $(_sshplus_fmt_rate "$dtx")"
+		_sshplus_line " TOTAL RECIBIDO  : $(_sshplus_fmt_bytes "$rx2")"
+		_sshplus_line " TOTAL ENVIADO   : $(_sshplus_fmt_bytes "$tx2")"
+		_sshplus_box_sep
+		_sshplus_line " CTRL+C para volver"
+		_sshplus_box_bot
+	done
+}
 _sshplus_network_security_menu() {
 	local opt title
 	title="${L_NET_SECURITY:-RED Y SEGURIDAD}"
@@ -374,9 +429,7 @@ _sshplus_network_security_menu() {
 				;;
 			3 | 03)
 				clear
-				echo -e "\033[1;32mPARA SALIR PULSE CTRL + C\033[1;36m"
-				sleep 4
-				nload
+				_sshplus_traffic_monitor
 				;;
 			0 | 00)
 				break
@@ -884,9 +937,7 @@ case "$x" in
    ;;
    6 | 06)
    clear
-   echo -e "\033[1;32mPARA SALIR PULSE CTRL + C\033[1;36m"
-   sleep 4
-   nload
+   _sshplus_traffic_monitor
    ;; 
    7 | 07)
    clear

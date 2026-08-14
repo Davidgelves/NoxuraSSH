@@ -13,7 +13,7 @@ SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 sshplus_resize() {
 	SSHPLUS_COLS="$(tput cols 2>/dev/null || echo 80)"
 	[[ ! "$SSHPLUS_COLS" =~ ^[0-9]+$ ]] && SSHPLUS_COLS=80
-	if [[ "$SSHPLUS_COLS" -lt 78 ]]; then
+	if [[ "$SSHPLUS_COLS" -lt 58 ]]; then
 		SSHPLUS_COMPACT=1
 		SSHPLUS_IW=$(( SSHPLUS_COLS - 2 ))
 		[[ "$SSHPLUS_IW" -lt 42 ]] && SSHPLUS_IW=42
@@ -44,7 +44,8 @@ sshplus_opt_cell() {
 	local n="${1#0}" text="$2" st="$3" cell num rest max
 	[[ -z "$n" ]] && n="0"
 	printf -v num '[%s]' "$n"
-	max=24
+	st="${st%"${st##*[![:space:]]}"}"
+	max=19
 	[[ "${SSHPLUS_COMPACT:-0}" == 1 ]] && max=$(( SSHPLUS_IW - 13 ))
 	[[ "$max" -lt 12 ]] && max=12
 	text="${text:0:max}"
@@ -60,7 +61,7 @@ sshplus_opt_pair() {
 		return
 	fi
 	sshplus_opt_cell "$1" "$2" "$3"
-	printf '   '
+	printf ' '
 	sshplus_opt_cell "$4" "$5" "$6"
 	printf '\n'
 }

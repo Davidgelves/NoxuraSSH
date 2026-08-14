@@ -30,7 +30,8 @@ printf '\033[1;37m%43s\033[0m\n' "Cambiar fecha de caducidad"
 line
 printf '\033[1;37m%55s\033[0m\n' "LISTA DE USUARIOS Y FECHA DE CADUCIDAD:"
 line
-echo ""
+echo -e "\033[1;37mUSUARIOS:                 EXPIRA:                  ESTADO:\033[0m"
+echo -e "\033[1;37m------------------------------------------------------------\033[0m"
 
 i=0
 unset _userPass
@@ -57,6 +58,7 @@ while read -r user; do
 done < <(awk '{print $1}' "$database" 2>/dev/null)
 
 [[ "$i" -eq 0 ]] && echo -e "\033[1;33mNo hay usuarios SSH creados por la script.\033[0m"
+line
 echo -e "${SSHPLUS_NUM}[0]\033[0m \033[1;37m> CANCELAR\033[0m"
 line
 echo ""

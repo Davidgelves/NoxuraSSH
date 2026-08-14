@@ -270,7 +270,6 @@ _sshplus_user_menu() {
 			4 | 04)
 				clear
 				sshmonitor
-				echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
 				;;
 			5 | 05)
 				clear

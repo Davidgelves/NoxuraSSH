@@ -28,6 +28,8 @@ clear
 line
 printf '\033[1;37m%47s\033[0m\n' "cambiar contrasena del usuario"
 line
+echo -e "\033[1;37mUSUARIOS:                   CONTRASENA:\033[0m"
+echo -e "\033[1;37m------------------------------------------------------------\033[0m"
 
 i=0
 unset _userPass
@@ -40,11 +42,12 @@ while read -r user _limit _rest; do
 	else
 		password="Null"
 	fi
-	printf '%b[%s]\033[0m \033[1;37m> USUARIO: %-24s CONTRASENA: %s\033[0m\n' "$SSHPLUS_NUM" "$i" "$user" "$password"
+	printf '%b[%s]\033[0m \033[1;37m> %-25s %s\033[0m\n' "$SSHPLUS_NUM" "$i" "$user" "$password"
 	_userPass+="\n${i}:${user}"
 done < "$database"
 
 [[ "$i" -eq 0 ]] && echo -e "\033[1;33mNo hay usuarios SSH creados por la script.\033[0m"
+line
 echo -e "${SSHPLUS_NUM}[0]\033[0m \033[1;37m> CANCELAR\033[0m"
 line
 echo ""

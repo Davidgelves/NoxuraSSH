@@ -12,7 +12,7 @@ SINCRONIZARPAINEL () {
       bash <(wget -qO- sshplus.xyz/scripts/utilitarios/syncpainel/inst)
 }
 SLOWDNS () {
-      rm -f dns install
+      rm -f dns
       if command -v wget >/dev/null 2>&1; then
             wget -qO dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
       fi
@@ -28,8 +28,8 @@ SLOWDNS () {
       chmod +x dns
       mkdir -p /etc/SSHPlus
       cp -f dns /etc/SSHPlus/dns
-      cp -f dns /bin/slowdns
-      chmod +x /etc/SSHPlus/dns /bin/slowdns
+      chmod +x /etc/SSHPlus/dns
+      conexao
       echo -e "\033[1;32mSlowDNS instalado correctamente.\033[0m"
       sleep 2
 }

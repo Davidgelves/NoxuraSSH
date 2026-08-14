@@ -325,10 +325,10 @@ _sshplus_script_settings_menu() {
 		_sshplus_frame_pre
 		printf '\033[1;34m%*s\033[0m%s\n' $(( (_SSHPLUS_IW + ${#L_SCRIPT_SETTINGS}) / 2 )) "${L_SCRIPT_SETTINGS:-AJUSTES DE SCRIPT}" "$_sshplus_K"
 		_sshplus_box_sep
-		_sshplus_single_opt "1" "${L_SCRIPT_INFO:-Informacion de vps}"
-		_sshplus_single_opt "2" "${L_SCRIPT_UPDATE:-actualizar script} ${upd}"
-		_sshplus_single_opt "3" "${L_SCRIPT_LANG:-cambiar idioma}"
-		_sshplus_single_opt "4" "${L_SCRIPT_UNINSTALL:-desinstalar script}" "\033[1;31m"
+		_sshplus_single_opt "1" "${L_SCRIPT_INFO:-INFORMACION DE VPS}"
+		_sshplus_single_opt "2" "${L_SCRIPT_UPDATE:-ACTUALIZAR SCRIPT} ${upd}"
+		_sshplus_single_opt "3" "${L_SCRIPT_LANG:-CAMBIAR IDIOMA}"
+		_sshplus_single_opt "4" "${L_SCRIPT_UNINSTALL:-DESINSTALAR SCRIPT}" "\033[1;31m"
 		_sshplus_single_opt "0" "${L2_33:-VOLVER}"
 		_sshplus_box_bot
 		_sshplus_prompt; read -r opt

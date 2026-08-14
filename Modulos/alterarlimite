@@ -6,8 +6,15 @@ SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
 
 line() { echo -e "${SSHPLUS_CYAN}============================================================\033[0m"; }
 title() {
-	local text="$1" pad=$(( (60 - ${#text}) / 2 ))
-	printf '%b\033[1m%*s%s\033[0m\n' "$SSHPLUS_CYAN" "$pad" "" "$text"
+	local text="$1" cols pad
+	cols="$(tput cols 2>/dev/null || echo 60)"
+	[[ "$cols" =~ ^[0-9]+$ ]] || cols=60
+	[[ "$cols" -gt 60 ]] && cols=60
+	[[ "$cols" -lt 40 ]] && cols=40
+	[[ ${#text} -gt "$cols" ]] && text="${text:0:cols}"
+	pad=$(( (cols - ${#text}) / 2 ))
+	[[ "$pad" -lt 0 ]] && pad=0
+	printf '%*s%b\033[1m%s\033[0m\n' "$pad" "" "$SSHPLUS_CYAN" "$text"
 }
 
 valid_sshplus_user() {
@@ -30,7 +37,7 @@ clear
 [[ -f "$database" ]] || show_error "Archivo $database no encontrado"
 
 line
-title "cambiar limite de conexiones simultaneas"
+title "CAMBIAR LIMITE DE CONEXIONES"
 line
 echo -e "${SSHPLUS_CYAN}\033[1mUSUARIOS:                   LIMITE:\033[0m"
 echo -e "${SSHPLUS_CYAN}\033[1m------------------------------------------------------------\033[0m"

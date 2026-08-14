@@ -199,10 +199,28 @@ ensure_licence_conexao
 		[[ -e "/bin/slowdns" ]] && {
 			slowdns
 		} || {
-			cd $HOME
-			wget https://raw.githubusercontent.com/kiritosshxd/SSHPLUS/main/Slowdns/install -o /dev/null
-			chmod 777 install
-			./install
+			cd "$HOME" || return 1
+			rm -f dns install
+			echo -e "\033[1;33mDESCARGANDO SLOWDNS...\033[0m"
+			if command -v wget >/dev/null 2>&1; then
+				wget -qO dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
+			fi
+			if [[ ! -s dns ]] && command -v curl >/dev/null 2>&1; then
+				curl -fsSL -o dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
+			fi
+			if [[ ! -s dns ]]; then
+				echo -e "\033[1;31mNo se pudo descargar SlowDNS.\033[0m"
+				echo -e "\033[1;33mRevise conexion a raw.githubusercontent.com o intente mas tarde.\033[0m"
+				sleep 3
+				return 1
+			fi
+			chmod +x dns
+			mkdir -p /etc/SSHPlus
+			cp -f dns /etc/SSHPlus/dns
+			cp -f dns /bin/slowdns
+			chmod +x /etc/SSHPlus/dns /bin/slowdns
+			echo -e "\033[1;32mSlowDNS instalado correctamente.\033[0m"
+			sleep 2
 		}
 
 	}

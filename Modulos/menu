@@ -56,8 +56,7 @@ _SSHPLUS_COUNTER=$'\033[1;38;2;255;179;71m'
 _sshplus_frame_pre() { :; }
 _sshplus_K=$'\033[K'
 _sshplus_clear() {
-	command clear 2>/dev/null || printf '\033[H\033[2J'
-	printf '\033[3J\033[H'
+	printf '\033c\033[3J\033[H\033[2J'
 	_sshplus_resize
 }
 clear() { _sshplus_clear; }
@@ -131,7 +130,7 @@ _sshplus_swap_enabled() {
 }
 _sshplus_draw_sys_dashboard() {
 	local sw
-	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
+	if [[ "${_SSHPLUS_COMPACT:-0}" == 1 && "${_SSHPLUS_IW:-0}" -lt 58 ]]; then
 		_sshplus_frame_pre; _sshplus_dash_label "${L_SISTEMA:-SISTEMA}"; printf '%s\n' "$_sshplus_K"
 		_sshplus_frame_pre; _sshplus_dash_label "OS: "; _sshplus_dash_value "${_system}  "; _sshplus_dash_label "${L_HORA:-Hora}: "; _sshplus_dash_value "$_hora"; printf '%s\n' "$_sshplus_K"
 		_sshplus_frame_pre; _sshplus_dash_label "${L_MEM_RAM:-MEMORIA RAM}"; printf '%s\n' "$_sshplus_K"
@@ -154,7 +153,7 @@ _sshplus_draw_sys_dashboard() {
 	fi
 	_sshplus_box_sep
 	if [[ ! -e /tmp/att ]]; then
-		if [[ "${_SSHPLUS_COMPACT:-0}" == 1 ]]; then
+		if [[ "${_SSHPLUS_COMPACT:-0}" == 1 && "${_SSHPLUS_IW:-0}" -lt 58 ]]; then
 			_sshplus_frame_pre; _sshplus_dash_counter "${L_ONLINES:-Conectados}: ${_onlin}  "; _sshplus_dash_counter "${L_EXPIR:-Caducados}: ${_userexp}  "; _sshplus_dash_counter "${L_TOTAL:-Total}: $_tuser"; printf '%s\n' "$_sshplus_K"
 		else
 			_sshplus_frame_pre
@@ -219,6 +218,7 @@ _sshplus_main_opt() {
 	max=$(( _SSHPLUS_IW - 10 ))
 	[[ "$max" -lt 18 ]] && max=18
 	label="$(_sshplus_trim_label "$label" "$max")"
+	label="${label%"${label##*[![:space:]]}"}"
 	_sshplus_frame_pre
 	if [[ -n "$mark" ]]; then
 		printf '  %b[%s]\033[0m \033[1;37m> %s\033[0m  %b%s\n' "$_SSHPLUS_NUM" "$d" "$label" "$mark" "$_sshplus_K"

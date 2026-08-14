@@ -88,7 +88,7 @@ hyst_status_mark() {
 }
 
 hyst_status_text() {
-	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}[ON]${NC}" || echo -e "${RED}[OFF]${NC}"
+	systemctl is-active --quiet hysteria-server 2>/dev/null && echo -e "${GREEN}o${NC}" || echo -e "${RED}x${NC}"
 }
 
 hyst_valid_port() {

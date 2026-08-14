@@ -5,6 +5,10 @@ SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
 
 line() { echo -e "${SSHPLUS_CYAN}============================================================\033[0m"; }
+title() {
+	local text="$1" pad=$(( (60 - ${#text}) / 2 ))
+	printf '%b\033[1m%*s%s\033[0m\n' "$SSHPLUS_CYAN" "$pad" "" "$text"
+}
 
 valid_sshplus_user() {
 	local user="$1" uid
@@ -26,12 +30,12 @@ show_error() {
 
 clear
 line
-printf '\033[1;37m%43s\033[0m\n' "Cambiar fecha de caducidad"
+title "Cambiar fecha de caducidad"
 line
-printf '\033[1;37m%55s\033[0m\n' "LISTA DE USUARIOS Y FECHA DE CADUCIDAD:"
+title "LISTA DE USUARIOS Y FECHA DE CADUCIDAD:"
 line
-echo -e "\033[1;37mUSUARIOS:                 EXPIRA:                  ESTADO:\033[0m"
-echo -e "\033[1;37m------------------------------------------------------------\033[0m"
+echo -e "${SSHPLUS_CYAN}\033[1mUSUARIOS:                 EXPIRA:                  ESTADO:\033[0m"
+echo -e "${SSHPLUS_CYAN}\033[1m------------------------------------------------------------\033[0m"
 
 i=0
 unset _userPass

@@ -12,9 +12,13 @@ database="/root/usuarios.db"
 SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
 line() { echo -e "${SSHPLUS_CYAN}============================================================\033[0m"; }
+title() {
+	local text="$1" pad=$(( (60 - ${#text}) / 2 ))
+	printf '%b\033[1m%*s%s\033[0m\n' "$SSHPLUS_CYAN" "$pad" "" "$text"
+}
 [[ -s "$database" ]] || {
 	line
-	echo -e "\033[1;37mUSUARIOS:          ESTADO:       CONECTADOS:       TIEMPO:\033[0m"
+	echo -e "${SSHPLUS_CYAN}\033[1mUSUARIOS:          ESTADO:       CONECTADOS:       TIEMPO:\033[0m"
 	line
 	echo -e "\033[1;33mNo hay usuarios creados por la script.\033[0m"
 	line
@@ -58,7 +62,7 @@ fun_drop() {
 }
 
 line
-echo -e "\033[1;37mUSUARIOS:          ESTADO:       CONECTADOS:       TIEMPO:\033[0m"
+echo -e "${SSHPLUS_CYAN}\033[1mUSUARIOS:          ESTADO:       CONECTADOS:       TIEMPO:\033[0m"
 line
 
 found=0

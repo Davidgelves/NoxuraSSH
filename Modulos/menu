@@ -290,12 +290,12 @@ _sshplus_change_language_menu() {
 	local lang_opt
 	_sshplus_clear
 	_sshplus_box_top
-	_sshplus_line "Seleccione idioma / Select language"
+	_sshplus_line "              SELECT LANGUAGE - SELECCIONAR IDIOMA"
 	_sshplus_box_sep
-	_sshplus_single_opt "1" "Espanol"
+	_sshplus_single_opt "1" "Español"
 	_sshplus_single_opt "2" "English"
 	_sshplus_box_bot
-	_sshplus_prompt; read -r lang_opt
+	echo -ne "\033[1;32mopcion\033[1;33m: \033[0m"; read -r lang_opt
 	mkdir -p /etc/SSHPlus 2>/dev/null || true
 	case "$lang_opt" in
 		2) printf '%s\n' "en" >/etc/SSHPlus/lang 2>/dev/null || true ;;

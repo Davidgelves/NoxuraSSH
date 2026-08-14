@@ -140,17 +140,16 @@ _sshplus_draw_sys_dashboard() {
 		_sshplus_frame_pre; _sshplus_dash_label "${L_NUCLEOS:-Nucleos}: "; _sshplus_dash_value "${_core}  "; _sshplus_dash_label "CPU: "; _sshplus_dash_value "$_usop"; printf '%s\n' "$_sshplus_K"
 	else
 		_sshplus_frame_pre
-		_sshplus_dash_pad "$(_sshplus_dash_label "${L_SISTEMA:-SISTEMA}")" 22 "${L_SISTEMA:-SISTEMA}"
-		_sshplus_dash_pad "$(_sshplus_dash_label "${L_MEM_RAM:-MEMORIA RAM}")" 22 "${L_MEM_RAM:-MEMORIA RAM}"
-		_sshplus_dash_label "${L_PROCESSADOR:-PROCESADOR}"
-		printf '%s\n' "$_sshplus_K"
+		_sshplus_dash_label "${L_SISTEMA:-SISTEMA}"; printf '%*s' $((22 - ${#L_SISTEMA} > 0 ? 22 - ${#L_SISTEMA} : 1)) ''
+		_sshplus_dash_label "${L_MEM_RAM:-MEMORIA RAM}"; printf '%*s' $((22 - ${#L_MEM_RAM} > 0 ? 22 - ${#L_MEM_RAM} : 1)) ''
+		_sshplus_dash_label "${L_PROCESSADOR:-PROCESADOR}"; printf '%s\n' "$_sshplus_K"
 		_sshplus_frame_pre
-		_sshplus_dash_label "OS: "; _sshplus_dash_pad "$(_sshplus_dash_value "$_system")" 18 "$_system"
-		_sshplus_dash_label "${L_TOTAL:-Total}: "; _sshplus_dash_pad "$(_sshplus_dash_value "$_ram")" 15 "$_ram"
+		_sshplus_dash_label "OS: "; _sshplus_dash_value "$_system"; printf '%*s' $((18 - ${#_system} > 0 ? 18 - ${#_system} : 1)) ''
+		_sshplus_dash_label "${L_TOTAL:-Total}: "; _sshplus_dash_value "$_ram"; printf '%*s' $((15 - ${#_ram} > 0 ? 15 - ${#_ram} : 1)) ''
 		_sshplus_dash_label "${L_NUCLEOS:-Nucleos}: "; _sshplus_dash_value "$_core"; printf '%s\n' "$_sshplus_K"
 		_sshplus_frame_pre
-		_sshplus_dash_label "${L_HORA:-Hora}: "; _sshplus_dash_pad "$(_sshplus_dash_value "$_hora")" 16 "$_hora"
-		_sshplus_dash_label "RAM: "; _sshplus_dash_pad "$(_sshplus_dash_value "$_usor")" 18 "$_usor"
+		_sshplus_dash_label "${L_HORA:-Hora}: "; _sshplus_dash_value "$_hora"; printf '%*s' $((16 - ${#_hora} > 0 ? 16 - ${#_hora} : 1)) ''
+		_sshplus_dash_label "RAM: "; _sshplus_dash_value "$_usor"; printf '%*s' $((18 - ${#_usor} > 0 ? 18 - ${#_usor} : 1)) ''
 		_sshplus_dash_label "CPU: "; _sshplus_dash_value "$_usop"; printf '%s\n' "$_sshplus_K"
 	fi
 	_sshplus_box_sep
@@ -995,9 +994,10 @@ _sshplus_box_sep
 _sshplus_pair "01" "${L_USER_ADMIN:-ADMINISTRAR USUARIOS}" "07" "${L_VPS_SETTINGS:-AJUSTES DE VPS}"
 _sshplus_pair "02" "${L_M10:-AJUSTES DE CONEXION}" "08" "${L_NET_SECURITY:-RED Y SEGURIDAD}"
 _sshplus_pair "03" "${L_BANNER_SETTINGS:-AJUSTES DE BANNER}" "09" "${L_M17:-HERRAMIENTAS}"
-_sshplus_pair "04" "${L_M18:-LIMITADOR} ${stsl}" "16" "${L_SCRIPT_SETTINGS:-AJUSTES DE SCRIPT}"
+_sshplus_pair "04" "${L_M18:-LIMITADOR} ${stsl}" "" ""
 _sshplus_pair "05" "${L_M13:-BANNER}" "15" "${L_MORE_SETTINGS:-MAS AJUSTES >>>}"
 _sshplus_pair "06" "${L_CHECKUSERS:-CHECKUSERS}" "14" "${L_REBOOT_VPS:-REINICIAR VPS}"
+_sshplus_pair "" "" "16" "${L_SCRIPT_SETTINGS:-AJUSTES DE SCRIPT}"
 _sshplus_box_bot
 _sshplus_prompt; read x
 

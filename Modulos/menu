@@ -28,7 +28,7 @@ tput cnorm
 }
 IP=$(cat /etc/IP)
 _sshplus_sync_sshplus_lang() {
-	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null; then
+	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'CONFIGURACION DE PROTOCOLOS\|PROTOCOL SETTINGS' /bin/sshplus_lang 2>/dev/null; then
 		wget -qO /bin/sshplus_lang "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/sshplus_lang" && chmod +x /bin/sshplus_lang
 	fi
 }

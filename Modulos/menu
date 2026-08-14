@@ -274,18 +274,15 @@ _sshplus_user_menu() {
 			5 | 05)
 				clear
 				mudardata
-				sleep 3
 				;;
 			6 | 06)
 				clear
 				alterarlimite
-				sleep 3
 				;;
 			7 | 07)
 				clear
 				_sshplus_sync_alterarsenha
 				alterarsenha
-				sleep 3
 				;;
 			8 | 08)
 				clear

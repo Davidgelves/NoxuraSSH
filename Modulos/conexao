@@ -49,8 +49,8 @@ sshplus_opt_cell() {
 	[[ "${SSHPLUS_COMPACT:-0}" == 1 ]] && max=$(( SSHPLUS_IW - 13 ))
 	[[ "$max" -lt 12 ]] && max=12
 	text="${text:0:max}"
-	printf -v rest '  > %-*s' "$max" "$text"
-	printf '%b%-5s\033[0m\033[1;37m%s\033[0m%b' "$SSHPLUS_NUM" "$num" "$rest" "$st"
+	printf -v rest ' > %-*s' "$max" "$text"
+	printf '%b%s\033[0m\033[1;37m%s\033[0m%b' "$SSHPLUS_NUM" "$num" "$rest" "$st"
 }
 sshplus_opt_pair() {
 	if [[ "${SSHPLUS_COMPACT:-0}" == 1 ]]; then
@@ -61,7 +61,7 @@ sshplus_opt_pair() {
 		return
 	fi
 	sshplus_opt_cell "$1" "$2" "$3"
-	printf ' '
+	printf '   '
 	sshplus_opt_cell "$4" "$5" "$6"
 	printf '\n'
 }

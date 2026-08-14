@@ -197,16 +197,41 @@ ensure_licence_conexao
 
 	slow_setup() {
 		local dns_bin="/etc/SSHPlus/dns"
+		local arch_dns url dns_zip dns_name
 		mkdir -p /etc/SSHPlus
 		if [[ ! -x "${dns_bin}" ]]; then
 			cd "$HOME" || return 1
-			rm -f dns
+			rm -f dns dnstt-client-* dnstt-client.zip
 			echo -e "\033[1;33mDESCARGANDO SLOWDNS...\033[0m"
 			if command -v wget >/dev/null 2>&1; then
 				wget -qO dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
 			fi
 			if [[ ! -s dns ]] && command -v curl >/dev/null 2>&1; then
 				curl -fsSL -o dns https://raw.githubusercontent.com/arquivobgx/SSHPLUS/main/Install/dns || true
+			fi
+			if [[ ! -s dns ]]; then
+				case "$(uname -m)" in
+					x86_64|amd64) arch_dns="amd64" ;;
+					aarch64|arm64) arch_dns="arm64" ;;
+					*) arch_dns="" ;;
+				esac
+				if [[ -n "${arch_dns}" ]]; then
+					dns_zip="dnstt-client.zip"
+					dns_name="dnstt-client-${arch_dns}-linux"
+					url="https://github.com/1andrevich/dnstt/releases/download/v0.20210424.0/${dns_name}.zip"
+					echo -e "\033[1;33mURL principal no disponible. Probando DNSTT ${arch_dns}...\033[0m"
+					if command -v wget >/dev/null 2>&1; then
+						wget -qO "${dns_zip}" "${url}" || true
+					fi
+					if [[ ! -s "${dns_zip}" ]] && command -v curl >/dev/null 2>&1; then
+						curl -fL -o "${dns_zip}" "${url}" || true
+					fi
+					if [[ -s "${dns_zip}" ]]; then
+						apt-get install -y unzip >/dev/null 2>&1 || true
+						unzip -o "${dns_zip}" >/dev/null 2>&1 || true
+						[[ -f "${dns_name}" ]] && mv -f "${dns_name}" dns
+					fi
+				fi
 			fi
 			if [[ ! -s dns ]]; then
 				echo -e "\033[1;31mNo se pudo descargar SlowDNS.\033[0m"

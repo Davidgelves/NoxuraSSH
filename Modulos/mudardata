@@ -61,7 +61,6 @@ done < <(awk '{print $1}' "$database" 2>/dev/null)
 line
 echo -e "${SSHPLUS_NUM}[0]\033[0m \033[1;37m> CANCELAR\033[0m"
 line
-echo ""
 
 echo -ne "\033[1;32mOpcion\033[1;33m: \033[0m"; read -r option
 [[ "$option" == "0" || "$option" == "00" ]] && exit 0

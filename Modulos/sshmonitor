@@ -136,5 +136,4 @@ done < "$database"
 line
 echo -e " ${SSHPLUS_NUM}[0]\033[0m \033[1;37m> VOLVER\033[0m"
 line
-echo ""
 echo -ne "\033[1;32mOpcion\033[1;33m: \033[0m"; read -r _back

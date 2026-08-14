@@ -28,7 +28,7 @@ tput cnorm
 }
 IP=$(cat /etc/IP)
 _sshplus_sync_sshplus_lang() {
-	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'AJUSTES DE CONEXION\|CONNECTION SETTINGS' /bin/sshplus_lang 2>/dev/null; then
+	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'AJUSTES DE CONEXION\|CONNECTION SETTINGS' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_SCRIPT_SETTINGS' /bin/sshplus_lang 2>/dev/null; then
 		wget -qO /bin/sshplus_lang "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/sshplus_lang" && chmod +x /bin/sshplus_lang
 	fi
 }
@@ -196,6 +196,13 @@ _sshplus_pair() {
 		"$_SSHPLUS_NUM" "${left:0:4}" "${left:4}" \
 		"$_SSHPLUS_NUM" "${right:0:4}" "${right:4}" "$_sshplus_K"
 }
+_sshplus_single_opt() {
+	local n="$1" label="$2" color="${3:-\033[1;37m}" d
+	d="${n#0}"
+	[[ -z "$d" ]] && d="0"
+	_sshplus_frame_pre
+	printf '  %b[%s]\033[0m  \033[1;37m>\033[0m %b%s\033[0m%s\n' "$_SSHPLUS_NUM" "$d" "$color" "$label" "$_sshplus_K"
+}
 _sshplus_line_00() {
 	local s
 	printf -v s ' [0] > %s' "${L2_00}"
@@ -279,7 +286,69 @@ _sshplus_user_menu() {
 		esac
 	done
 }
-# % RAM usado: $1=="Mem:" por si la línea tiene espacios (no coincide /^Mem:/); respaldo /proc/meminfo
+_sshplus_change_language_menu() {
+	local lang_opt
+	_sshplus_clear
+	_sshplus_box_top
+	_sshplus_line "Seleccione idioma / Select language"
+	_sshplus_box_sep
+	_sshplus_single_opt "1" "Espanol"
+	_sshplus_single_opt "2" "English"
+	_sshplus_box_bot
+	_sshplus_prompt; read -r lang_opt
+	mkdir -p /etc/SSHPlus 2>/dev/null || true
+	case "$lang_opt" in
+		2) printf '%s\n' "en" >/etc/SSHPlus/lang 2>/dev/null || true ;;
+		*) printf '%s\n' "es" >/etc/SSHPlus/lang 2>/dev/null || true ;;
+	esac
+	_sshplus_sync_sshplus_lang
+	[[ -f /bin/sshplus_lang ]] && . /bin/sshplus_lang
+}
+_sshplus_script_settings_menu() {
+	local opt upd
+	while true; do
+		_sshplus_sync_sshplus_lang
+		[[ -f /bin/sshplus_lang ]] && . /bin/sshplus_lang
+		[[ -e /tmp/att ]] && upd="${L_SCRIPT_NEW_UPDATE:-[NUEVA ACTUALIZACION]}" || upd="${L_SCRIPT_UPDATED:-[ACTUALIZADO]}"
+		_sshplus_clear
+		_sshplus_box_top
+		_sshplus_frame_pre
+		printf '\033[1;34m%*s\033[0m%s\n' $(( (_SSHPLUS_IW + ${#L_SCRIPT_SETTINGS}) / 2 )) "${L_SCRIPT_SETTINGS:-AJUSTES DE SCRIPT}" "$_sshplus_K"
+		_sshplus_box_sep
+		_sshplus_single_opt "1" "${L_SCRIPT_INFO:-Informacion de vps}"
+		_sshplus_single_opt "2" "${L_SCRIPT_UPDATE:-actualizar script} ${upd}"
+		_sshplus_single_opt "3" "${L_SCRIPT_LANG:-cambiar idioma}"
+		_sshplus_single_opt "4" "${L_SCRIPT_UNINSTALL:-desinstalar script}" "\033[1;31m"
+		_sshplus_single_opt "0" "${L2_33:-VOLVER}"
+		_sshplus_box_bot
+		_sshplus_prompt; read -r opt
+		case "$opt" in
+			1 | 01)
+				clear
+				detalles
+				echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
+				;;
+			2 | 02)
+				attscript
+				;;
+			3 | 03)
+				_sshplus_change_language_menu
+				;;
+			4 | 04)
+				clear
+				delscript
+				;;
+			0 | 00)
+				break
+				;;
+			*)
+				echo -e "\n\033[1;31m${L_OPC_INVALIDA:-Opcion no valida!}\033[0m"
+				sleep 2
+				;;
+		esac
+	done
+}
+# % RAM usado: $1=="Mem:" por si la linea tiene espacios (no coincide /^Mem:/); respaldo /proc/meminfo
 _sshplus_ram_used_pct() {
 	local o
 	o="$(LC_ALL=C LANG=C free 2>/dev/null | awk '$1 == "Mem:" && ($2+0) > 0 { printf "%.1f%%", ($3/$2)*100; exit 0 }')"
@@ -300,7 +369,7 @@ _sshplus_ram_used_pct() {
 	' /proc/meminfo 2>/dev/null)"
 	[[ -n "${o// }" ]] && printf '%s' "$o" || printf '?'
 }
-# Si el módulo en /bin es antiguo (portugués), bajar la versión del repo una vez.
+# Si el modulo en /bin es antiguo (portugues), bajar la version del repo una vez.
 _sshplus_sync_criarteste() {
 	if ! grep -q 'lang=es' /bin/criarteste 2>/dev/null; then
 		wget -qO /bin/criarteste "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/criarteste" && chmod +x /bin/criarteste
@@ -398,9 +467,9 @@ fun_tst () {
 		echo "ERROR: instale speedtest-cli (apt install -y speedtest-cli)" >"$_sf"
 	fi
 }
-echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;37m===========================================================\033[0m"
 echo -e "   \033[1;32mMIDIENDO VELOCIDAD DEL SERVIDOR !\033[0m"
-echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[1;37m===========================================================\033[0m"
 aguarde 'fun_tst' 'true'
 echo ""
 _sf="$HOME/speed"
@@ -420,17 +489,17 @@ if [[ -s "$_sf" ]]; then
 	fi
 	lnk=$(grep -oE 'https?://[^[:space:]]+' "$_sf" | grep -E 'speedtest|\.png|result' | tail -1)
 else
-	png=" — "
-	down=" — "
-	upl=" — "
+	png=" --- "
+	down=" --- "
+	upl=" --- "
 	lnk=""
 fi
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\033[1;32mPING (LATENCIA):\033[1;37m ${png:-—}"
-echo -e "\033[1;32mDOWNLOAD:\033[1;37m ${down:-—}"
-echo -e "\033[1;32mUPLOAD:\033[1;37m ${upl:-—}"
-echo -e "\033[1;32mLINK: \033[1;36m${lnk:-—}\033[0m"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\033[0;34m===========================================================\033[0m"
+echo -e "\033[1;32mPING (LATENCIA):\033[1;37m ${png:----}"
+echo -e "\033[1;32mDOWNLOAD:\033[1;37m ${down:----}"
+echo -e "\033[1;32mUPLOAD:\033[1;37m ${upl:----}"
+echo -e "\033[1;32mLINK: \033[1;36m${lnk:----}\033[0m"
+echo -e "\033[0;34m===========================================================\033[0m"
 rm -f "$HOME/speed"
 }
 #limiter
@@ -520,19 +589,19 @@ function onapp_ssh () {
 function autoexec () {
    if grep "menu;" /etc/profile > /dev/null; then
       clear
-      echo -e "\033[1;32mDESACTIVANDO AUTOEJECUCIÓN\033[0m"
+      echo -e "\033[1;32mDESACTIVANDO AUTOEJECUCION\033[0m"
       offautmenu () {
          sed -i '/menu;/d' /etc/profile
       }
       echo ""
       fun_bar 'offautmenu'
       echo ""
-      echo -e "\033[1;31mAUTOEJECUCIÓN DESACTIVADA!\033[0m"
+      echo -e "\033[1;31mAUTOEJECUCION DESACTIVADA!\033[0m"
       sleep 1.5s
       menu2
    else
       clear
-      echo -e "\033[1;32mACTIVANDO AUTOEJECUCIÓN\033[0m"
+      echo -e "\033[1;32mACTIVANDO AUTOEJECUCION\033[0m"
       autmenu () {
          grep -v "^menu;" /etc/profile > /tmp/tmpass && mv /tmp/tmpass /etc/profile
          echo "menu;" >> /etc/profile
@@ -540,7 +609,7 @@ function autoexec () {
       echo ""
       fun_bar 'autmenu'
       echo ""
-      echo -e "\033[1;32mAUTOEJECUCIÓN ACTIVADA!\033[0m"
+      echo -e "\033[1;32mAUTOEJECUCION ACTIVADA!\033[0m"
       sleep 1.5s
       menu2
    fi
@@ -626,12 +695,12 @@ case "$x" in
    21)
    clear
    addhost
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    22)
    clear
    delhost
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    23)
    clear
@@ -739,12 +808,12 @@ _sshplus_box_sep
 # Menu principal compacto; usuarios queda agrupado en un submenu.
 _sshplus_pair "01" "${L_USER_ADMIN:-ADMINISTRAR USUARIOS}" "09" "${L_M18:-LIMITER} ${stsl}"
 _sshplus_pair "02" "${L_M10:-AJUSTES DE CONEXION}" "10" "${L_M20:-FIREWALL (PRO)}"
-_sshplus_pair "03" "${L_M11:-CREAR MEMORIA SWAP}" "11" "${L_M21:-INFO VPS}"
+_sshplus_pair "03" "${L_M11:-CREAR MEMORIA SWAP}" "" ""
 _sshplus_pair "04" "${L_M12:-SPEEDTEST}" "12" "${L_M22:-CHECKUSER 4G}"
 _sshplus_pair "05" "${L_M13:-BANNER}" "13" "${L_MG:-CHECKUSER GLTUNNEL}"
 _sshplus_pair "06" "${L_M14:-TRAFICO}" "14" "${L_M17:-HERRAMIENTAS}"
 _sshplus_pair "07" "${L_M15:-OPTIMIZAR}" "15" "${L_M23:-MAS >>>}"
-_sshplus_pair "08" "${L_M16:-RESPALDO}" "" ""
+_sshplus_pair "08" "${L_M16:-RESPALDO}" "16" "${L_SCRIPT_SETTINGS:-AJUSTES DE SCRIPT}"
 _sshplus_box_bot
 _sshplus_prompt; read x
 
@@ -756,7 +825,7 @@ case "$x" in
    clear
    /bin/conexao
    exit;
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    3 | 03)
    clear
@@ -766,7 +835,7 @@ case "$x" in
    4 | 04)
    clear
    velocity
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;      
    5 | 05)
    clear
@@ -795,7 +864,7 @@ case "$x" in
    9 | 09)
    clear
    limit_ssh
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    10)
    fr
@@ -806,7 +875,7 @@ case "$x" in
    ;;
    12)
    initcheck
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    13)
    _sshplus_sync_gltunnel
@@ -819,11 +888,10 @@ case "$x" in
    ;;
    15)
    menu2
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    16)
-   menu2
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   _sshplus_script_settings_menu
    ;;
    17)
    clear
@@ -844,7 +912,7 @@ case "$x" in
    21)
    clear
    detalhes
-   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menú}\033[0m"; read
+   echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    22)
    initcheck

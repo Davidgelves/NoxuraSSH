@@ -19,7 +19,7 @@ SLOW_SERVICE="/etc/systemd/system/slowdns.service"
 SLOW_LOG="/var/log/slowdns.log"
 SLOW_PORT_DEFAULT="5300"
 SLOW_TRAFFIC_DEFAULT="22"
-SLOW_DOMAIN_DEFAULT="ns.example.com"
+SLOW_DOMAIN_DEFAULT=""
 
 slow_line() {
 	echo -e "${CYAN}============================================================${NC}"
@@ -131,8 +131,20 @@ EOF
 }
 
 slow_apply_redirect() {
+	iptables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
+	iptables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
 	iptables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	iptables -I INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
+	iptables -I INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
 	iptables -t nat -A PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	if command -v ip6tables >/dev/null 2>&1; then
+		ip6tables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
+		ip6tables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
+		ip6tables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+		ip6tables -I INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
+		ip6tables -I INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
+		ip6tables -t nat -A PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	fi
 }
 
 slow_restart() {
@@ -141,6 +153,28 @@ slow_restart() {
 	slow_apply_redirect
 	systemctl enable slowdns >/dev/null 2>&1 || true
 	systemctl restart slowdns >/dev/null 2>&1 || true
+}
+
+slow_check_connection() {
+	slow_load_conf
+	slow_line
+	if systemctl is-active --quiet slowdns 2>/dev/null; then
+		echo -e "${GREEN}SERVICIO SLOWDNS ACTIVO.${NC}"
+	else
+		echo -e "${RED}SERVICIO SLOWDNS NO ESTA ACTIVO.${NC}"
+		journalctl -u slowdns -n 12 --no-pager 2>/dev/null
+	fi
+	if ss -ulnp 2>/dev/null | grep -q ":${SLOW_PORT} "; then
+		echo -e "${GREEN}PUERTO UDP ${SLOW_PORT} EN ESCUCHA.${NC}"
+	else
+		echo -e "${RED}PUERTO UDP ${SLOW_PORT} NO APARECE EN ESCUCHA.${NC}"
+	fi
+	if iptables -t nat -S PREROUTING 2>/dev/null | grep -Eq -- "--dport ${SLOW_REDIRECT:-53} .*--to-ports ${SLOW_PORT}"; then
+		echo -e "${GREEN}REDIRECCION UDP ${SLOW_REDIRECT:-53} > ${SLOW_PORT} ACTIVA.${NC}"
+	else
+		echo -e "${RED}NO SE ENCONTRO REDIRECCION UDP ${SLOW_REDIRECT:-53} > ${SLOW_PORT}.${NC}"
+	fi
+	slow_line
 }
 
 slow_status_text() {
@@ -243,6 +277,11 @@ slow_configure() {
 	echo -ne "${DARK_GREEN}DOMINIO NS:${NC} "; read -r new_domain
 	[[ -n "$new_port" ]] && SLOW_PORT="$new_port"
 	[[ -n "$new_domain" ]] && SLOW_DOMAIN="$new_domain"
+	if [[ -z "$SLOW_DOMAIN" || "$SLOW_DOMAIN" = "ns.example.com" ]]; then
+		echo -e "${RED}Debe ingresar un dominio NS real apuntando a la IP de esta VPS.${NC}"
+		slow_pause
+		return
+	fi
 	slow_pick_traffic || return
 	SLOW_REDIRECT="53"
 	slow_install_deps
@@ -251,6 +290,7 @@ slow_configure() {
 	slow_save_conf
 	slow_restart
 	echo -e "\n${GREEN}SLOWDNS configurado correctamente.${NC}"
+	slow_check_connection
 	slow_pause
 }
 
@@ -284,6 +324,8 @@ slow_change_traffic() {
 	slow_pick_traffic || return
 	slow_save_conf
 	slow_restart
+	slow_check_connection
+	slow_pause
 }
 
 slow_change_domain() {
@@ -331,7 +373,14 @@ slow_uninstall() {
 	systemctl disable slowdns >/dev/null 2>&1 || true
 	rm -f "$SLOW_SERVICE"
 	systemctl daemon-reload >/dev/null 2>&1 || true
+	iptables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
+	iptables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
 	iptables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	if command -v ip6tables >/dev/null 2>&1; then
+		ip6tables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
+		ip6tables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
+		ip6tables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	fi
 	rm -rf "$SLOW_DIR" "$SLOW_LOG"
 	echo -e "${GREEN}SlowDNS desinstalado.${NC}"
 	slow_pause

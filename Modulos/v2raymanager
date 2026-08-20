@@ -162,17 +162,10 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     valid=$(date '+%C%y-%m-%d' -d " +31 days")		  
     ##CORREO		  
     MAILITO=$(cat /dev/urandom | tr -dc '[:alnum:]' | head -c 10)
-    ##ADDUSERV2RAY		  
-    UUID=`uuidgen`	  
-    sed -i '13i\           \{' /etc/v2ray/config.json
-    sed -i '14i\           \"alterId": 0,' /etc/v2ray/config.json
-    sed -i '15i\           \"id": "'$UUID'",' /etc/v2ray/config.json
-    sed -i '16i\           \"email": "'$MAILITO'@gmail.com"' /etc/v2ray/config.json
-    sed -i '17i\           \},' /etc/v2ray/config.json
     echo ""
     while true; do
-    echo -ne "\e[91m >> Escriba un nombre de usuario: \033[1;92m"
-         read -p ": " nick
+    echo -ne "\e[91m> NOMBRE DE USUARIO: \033[1;37m"
+         read nick
          nick="$(echo $nick|sed -e 's/[^a-z0-9 -]//ig')"
          if [[ -z $nick ]]; then
          echo -e "$msg17" && continue
@@ -183,9 +176,31 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
          fi
          break
     done
-    echo -e "\e[91m >> UUID generado: \e[92m$UUID "
     while true; do
-         echo -ne "\e[91m >> Duracion del UUID (dias):\033[1;92m " && read diasuser
+         echo -ne "\e[91m> UUID [1] GENERAR [2] ESCRIBIR: \033[1;37m" && read uuidopc
+         case "$uuidopc" in
+         1)
+         UUID=`uuidgen`
+         break
+         ;;
+         2)
+         echo -ne "\e[91m> UUID: \033[1;37m" && read UUID
+         [[ -z "$UUID" ]] && echo -e "$msg17" && continue
+         break
+         ;;
+         *)
+         echo -e "\033[1;31mOpcion no valida!\033[0m"
+         ;;
+         esac
+    done
+    sed -i '13i\           \{' /etc/v2ray/config.json
+    sed -i '14i\           \"alterId": 0,' /etc/v2ray/config.json
+    sed -i '15i\           \"id": "'$UUID'",' /etc/v2ray/config.json
+    sed -i '16i\           \"email": "'$MAILITO'@gmail.com"' /etc/v2ray/config.json
+    sed -i '17i\           \},' /etc/v2ray/config.json
+    echo -e "\e[91m> UUID: \033[1;37m$UUID "
+    while true; do
+         echo -ne "\e[91m> DURACION DEL UUID (DIAS): \033[1;37m" && read diasuser
          if [[ -z "$diasuser" ]]; then
          echo -e "$msg17" && continue
          elif [[ "$diasuser" != +([0-9]) ]]; then
@@ -198,7 +213,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     #Lim
     [[ $(cat /etc/passwd |grep $1: |grep -vi [a-z]$1 |grep -v [0-9]$1 > /dev/null) ]] && return 1
     valid=$(date '+%C%y-%m-%d' -d " +$diasuser days") && datexp=$(date "+%F" -d " + $diasuser days")
-    echo -e "\e[91m >> Expira el: \e[92m$datexp "
+    echo -e "\e[91m> EXPIRA EL: \033[1;37m$datexp "
     ##Registro
     echo "  $UUID | $nick | $valid " >> /etc/SSHPlus/RegV2ray
     Fecha=`date +%d-%m-%y-%R`

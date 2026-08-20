@@ -151,16 +151,93 @@ slow_status_text() {
 	fi
 }
 
+slow_add_target() {
+	local label="$1" port="$2"
+	[[ -z "$port" || ! "$port" =~ ^[0-9]+$ ]] && return
+	[[ -n "${SLOW_SEEN_PORT[$port]}" ]] && return
+	SLOW_SEEN_PORT[$port]=1
+	SLOW_TARGET_LABELS+=("$label")
+	SLOW_TARGET_PORTS+=("$port")
+}
+
+slow_detect_targets() {
+	local line port proc
+	SLOW_TARGET_LABELS=()
+	SLOW_TARGET_PORTS=()
+	declare -gA SLOW_SEEN_PORT=()
+
+	if command -v ss >/dev/null 2>&1; then
+		while IFS= read -r line; do
+			[[ "$line" != *LISTEN* ]] && continue
+			port="$(echo "$line" | awk '{print $4}' | grep -oE '[0-9]+$')"
+			proc="$(echo "$line" | sed -n 's/.*users:((("\([^"]*\)".*/\1/p')"
+			[[ -z "$proc" ]] && proc="TCP"
+			case "$proc" in
+				sshd) slow_add_target "OPENSSH" "$port" ;;
+				dropbear) slow_add_target "DROPBEAR" "$port" ;;
+				openvpn) slow_add_target "OPENVPN" "$port" ;;
+				v2ray|xray) slow_add_target "V2RAY" "$port" ;;
+				python|python3) slow_add_target "PROXY SOCKS" "$port" ;;
+				stunnel|stunnel4) slow_add_target "SSL TUNNEL" "$port" ;;
+				squid|squid3) slow_add_target "SQUID" "$port" ;;
+			esac
+		done < <(ss -tlnp 2>/dev/null)
+	else
+		while IFS= read -r line; do
+			port="$(echo "$line" | awk '{print $4}' | grep -oE '[0-9]+$')"
+			echo "$line" | grep -q 'sshd' && slow_add_target "OPENSSH" "$port"
+			echo "$line" | grep -q 'dropbear' && slow_add_target "DROPBEAR" "$port"
+			echo "$line" | grep -q 'openvpn' && slow_add_target "OPENVPN" "$port"
+			echo "$line" | grep -qE 'v2ray|xray' && slow_add_target "V2RAY" "$port"
+			echo "$line" | grep -qE 'python|python3' && slow_add_target "PROXY SOCKS" "$port"
+			echo "$line" | grep -qE 'stunnel|stunnel4' && slow_add_target "SSL TUNNEL" "$port"
+			echo "$line" | grep -qE 'squid|squid3' && slow_add_target "SQUID" "$port"
+		done < <(netstat -nplt 2>/dev/null)
+	fi
+
+	slow_add_target "OPENSSH" "22"
+}
+
+slow_pick_traffic() {
+	local opt manual i
+	slow_detect_targets
+	while true; do
+		clear
+		slow_title "REDIRIGIR TRAFICO SLOWDNS"
+		echo -e "${WHITE}A QUE PUERTO DESEA REDIRIGIR${DARK_GREEN}:${NC}"
+		slow_line
+		for i in "${!SLOW_TARGET_PORTS[@]}"; do
+			slow_opt "$((i + 1))" "${SLOW_TARGET_LABELS[$i]} ${SLOW_TARGET_PORTS[$i]}"
+		done
+		slow_opt "99" "INGRESAR PUERTO MANUAL"
+		slow_opt "0" "CANCELAR"
+		slow_line
+		echo -ne "${DARK_GREEN}Opcion:${NC} "
+		read -r opt
+		[[ "$opt" = "0" ]] && return 1
+		if [[ "$opt" = "99" ]]; then
+			echo -ne "${DARK_GREEN}PUERTO DE TRAFICO:${NC} "
+			read -r manual
+			[[ "$manual" =~ ^[0-9]+$ ]] || continue
+			SLOW_TRAFFIC="$manual"
+			return 0
+		fi
+		if [[ "$opt" =~ ^[0-9]+$ ]] && [[ "$opt" -ge 1 ]] && [[ "$opt" -le "${#SLOW_TARGET_PORTS[@]}" ]]; then
+			SLOW_TRAFFIC="${SLOW_TARGET_PORTS[$((opt - 1))]}"
+			return 0
+		fi
+	done
+}
+
 slow_configure() {
 	clear
 	slow_title "CONFIGURAR SLOWDNS"
 	slow_load_conf
 	echo -ne "${DARK_GREEN}PUERTO SLOWDNS:${NC} "; read -r new_port
-	echo -ne "${DARK_GREEN}PUERTO DE TRAFICO:${NC} "; read -r new_traffic
 	echo -ne "${DARK_GREEN}DOMINIO NS:${NC} "; read -r new_domain
 	[[ -n "$new_port" ]] && SLOW_PORT="$new_port"
-	[[ -n "$new_traffic" ]] && SLOW_TRAFFIC="$new_traffic"
 	[[ -n "$new_domain" ]] && SLOW_DOMAIN="$new_domain"
+	slow_pick_traffic || return
 	SLOW_REDIRECT="53"
 	slow_install_deps
 	[[ -x "$SLOW_BIN" ]] || slow_download_bin || { slow_pause; return; }
@@ -198,8 +275,7 @@ slow_custom_keys() {
 
 slow_change_traffic() {
 	slow_load_conf
-	echo -ne "${DARK_GREEN}PUERTO DE TRAFICO:${NC} "; read -r SLOW_TRAFFIC
-	[[ -z "$SLOW_TRAFFIC" ]] && return
+	slow_pick_traffic || return
 	slow_save_conf
 	slow_restart
 }

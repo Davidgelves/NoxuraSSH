@@ -91,20 +91,21 @@ otimize_python() {
     update-alternatives --set python3 /usr/bin/python3.6
 }
 show_install_banner() {
-    printf "${CYAN}%s${RESET}\n" "============================================================"
-    printf "${CYAN}\033[1m%s${RESET}\n" "                         NoxuraSSH"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
-    printf "${WHITE}%s${RESET}\n" "             Desarrollado por: J DAVID AG"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
-    printf "${CYAN}\033[1m%s${RESET}\n" "                    SISTEMAS SOPORTADOS"
+    printf "${CYAN}%s${RESET}\n" "+----------------------------------------------------------+"
+    printf "${CYAN}|${RESET}  ${CYAN}\033[1m%-10s${RESET} ${CYAN}|${RESET}  ${WHITE}%-38s${RESET}${CYAN}|${RESET}\n" "NoxuraSSH" "Desarrollado por: J DAVID AG"
+    printf "${CYAN}%s${RESET}\n" "+----------------------------------------------------------+"
+    printf "\n"
+    printf "  ${CYAN}\033[1m%s${RESET}\n" "SISTEMAS SOPORTADOS (arm64)"
+    printf "  ${CYAN}%s${RESET}\n" "--------------------------------------------------------"
+    printf "    ${CYAN}[+]${RESET} ${WHITE}%-27s${RESET} ${CYAN}[+]${RESET} ${WHITE}%s${RESET}\n" "Ubuntu 18 / 20 / 22 / 24" "Debian 9 / 10 / 11 / 12"
+    printf "\n"
+    printf "  ${CYAN}\033[1m%s${RESET}\n" "INFORMACION DEL SCRIPT"
+    printf "  ${CYAN}%s${RESET}\n" "--------------------------------------------------------"
+    printf "    ${CYAN}(i)${RESET} ${GREEN}SSH-Plus        :${RESET} ${WHITE}Compatible con Ubuntu 18+ y Debian 9+${RESET}\n"
+    printf "    ${CYAN}(i)${RESET} ${GREEN}V2Ray           :${RESET} ${WHITE}Validado principalmente en Ubuntu 18 x64${RESET}\n"
+    printf "    ${CYAN}(i)${RESET} ${GREEN}Nota            :${RESET} ${WHITE}Use una VPS limpia para mejor estabilidad${RESET}\n"
+    printf "\n"
     printf "${CYAN}%s${RESET}\n" "------------------------------------------------------------"
-    printf "${GREEN}%s${RESET} ${WHITE}%s${RESET}\n" "Ubuntu :" "18 / 20 / 22 / 24 arm64"
-    printf "${GREEN}%s${RESET} ${WHITE}%s${RESET}\n" "Debian :" "9 / 10 / 11 / 12 arm64"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
-    printf "${YELLOW}%s${RESET} ${WHITE}%s${RESET}\n" "(!)" "Mejor experiencia: Ubuntu 18 arm64 o 20 arm64"
-    printf "${RED}%s${RESET} ${WHITE}%s${RESET}\n" "(!)" "Requerido para V2Ray: Ubuntu 18 arm64 (evitar otras versiones)"
-    printf "${CYAN}%s${RESET} ${WHITE}%s${RESET}\n" "(i)" "SSH-Plus: Compatible con Ubuntu 18.04+ y Debian 9+"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
 }
 
 install_step_header() {
@@ -171,10 +172,8 @@ rm -f $_Ink/listARM >/dev/null 2>&1
         echo -e "\n\033[1;36m[1] >\033[0m \033[1;37mMANTENER DATOS ACTUALES\033[0m"
         echo -e "\033[1;36m[2] >\033[0m \033[1;37mCREAR UNA NUEVA BASE DE DATOS\033[0m"
         echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-        tput setaf 2
-        tput bold
-        read -p "Opcion: " -e -i 1 optiondb
-        tput sgr0
+        printf "\033[1;36mOpcion: \033[0m"
+        read -e -i 1 optiondb
     } || {
         awk -F : '$3 >= 500 { print $1 " 1" }' /etc/passwd | grep -v '^nobody' >$HOME/usuarios.db
     }

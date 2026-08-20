@@ -4,6 +4,7 @@
 NC='\033[0m'
 RED='\033[1;31m'
 GREEN='\033[1;32m'
+DARK_GREEN='\033[0;32m'
 NEON='\033[1;38;2;0;255;127m'
 YELLOW='\033[1;33m'
 WHITE='\033[1;37m'
@@ -362,13 +363,13 @@ hyst_change_range() {
 		hyst_line
 		hyst_load_env
 		echo -e "${GREEN}Puerto principal:${NC} ${HYST_PORT:-36712}"
-		echo -e "${GREEN}Reglas actuales:${NC} ${HYST_RULES:-1:65535}"
+		echo -e "${DARK_GREEN}Reglas actuales:${NC} ${HYST_RULES:-1:65535}"
 		hyst_line
 		hyst_opt "1" "${WHITE}MODIFICAR RANGO IPTABLE${NC}"
 		hyst_opt "2" "${WHITE}PONER REGLA DE RANGOS IPTABLES${NC}"
 		hyst_opt "0" "${WHITE}VOLVER${NC}"
 		hyst_line
-		echo -ne "${WHITE}Opcion: ${NC}"
+		echo -ne "${DARK_GREEN}Opcion:${NC} "
 		read -r range_opt
 		case "$range_opt" in
 			1)
@@ -472,7 +473,7 @@ hyst_menu() {
 			hyst_red_line
 			hyst_opt "1" "${WHITE}INSTALAR HYSTERIA v1${NC}"
 			hyst_red_line
-			hyst_opt "0" "${RED}Volver${NC}"
+			hyst_opt "0" "${WHITE}Volver${NC}"
 		else
 			hyst_show_summary
 			hyst_opt "1" "${WHITE}RECONFIGURAR UDP-HYSTERIA v1${NC}"
@@ -483,13 +484,13 @@ hyst_menu() {
 			hyst_opt "5" "${WHITE}REINICIAR SERVICIO${NC}"
 			hyst_opt "6" "${WHITE}INICIAR/PARAR SERVICIO ${NC}$(hyst_status_text)"
 			hyst_red_line
-			hyst_opt "7" "${CYAN}LOG UDP-HYSTERIA v1${NC}"
-			hyst_opt "8" "${CYAN}LOG UDP-HYSTERIA v1 EN TIEMPO REAL${NC}"
+			hyst_opt "7" "${WHITE}LOG UDP-HYSTERIA v1${NC}"
+			hyst_opt "8" "${WHITE}LOG UDP-HYSTERIA v1 EN TIEMPO REAL${NC}"
 			hyst_red_line
-			printf "%b  %b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}Volver${NC}" "${NEON}[9]${NC} ${CYAN}>${NC} ${RED}REINSTALAR${NC}" "${NEON}[10]${NC} ${CYAN}>${NC} ${RED}DESINSTALAR${NC}"
+			printf "%b  %b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}Volver${NC}" "${NEON}[9]${NC} ${CYAN}>${NC} ${WHITE}REINSTALAR${NC}" "${NEON}[10]${NC} ${CYAN}>${NC} ${WHITE}DESINSTALAR${NC}"
 		fi
 		hyst_red_line
-		echo -ne "${WHITE}Ingresa una Opcion: ${NC}"
+		echo -ne "${DARK_GREEN}Opcion:${NC} "
 		read -r opt
 		case "$opt" in
 			1) hyst_configure ;;

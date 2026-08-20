@@ -40,6 +40,9 @@ v2ray_opt() {
     [[ -z "$n" ]] && n="0"
     printf '%b[%s]\033[0m \033[1;37m>\033[0m \033[1;33m%s\033[0m %b\n' "$SSHPLUS_NUM" "$n" "$2" "$3"
 }
+v2ray_prompt() {
+    printf '%b>\033[0m \033[1;37m%s\033[0m \033[1;37m' "$SSHPLUS_CYAN" "$1"
+}
 msg01='\033[1;37m\033[1;33mUsuario vacio\033[1;31m'
 msg02='\033[1;37m\033[1;33mNombre muy corto (MIN: 2 caracteres)\033[1;31m'
 msg03='\033[1;37m\033[1;33mNombre muy largo (MAX: 20 caracteres)\033[1;31m'
@@ -164,7 +167,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     MAILITO=$(cat /dev/urandom | tr -dc '[:alnum:]' | head -c 10)
     echo ""
     while true; do
-    echo -ne "\e[91m> NOMBRE DE USUARIO: \033[1;37m"
+    v2ray_prompt "NOMBRE DE USUARIO:"
          read nick
          nick="$(echo $nick|sed -e 's/[^a-z0-9 -]//ig')"
          if [[ -z $nick ]]; then
@@ -177,7 +180,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
          break
     done
     while true; do
-         echo -ne "\e[91m> UUID [1] GENERAR [2] ESCRIBIR: \033[1;37m" && read uuidopc
+         v2ray_prompt "UUID [1] GENERAR [2] ESCRIBIR:" && read uuidopc
          case "$uuidopc" in
          1)
          UUID=`uuidgen`
@@ -187,7 +190,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
          break
          ;;
          2)
-         echo -ne "\e[91m> UUID: \033[1;37m" && read UUID
+         v2ray_prompt "UUID:" && read UUID
          [[ -z "$UUID" ]] && echo -e "$msg17" && continue
          if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" /etc/v2ray/config.json 2>/dev/null; then
          echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
@@ -205,9 +208,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     sed -i '15i\           \"id": "'$UUID'",' /etc/v2ray/config.json
     sed -i '16i\           \"email": "'$MAILITO'@gmail.com"' /etc/v2ray/config.json
     sed -i '17i\           \},' /etc/v2ray/config.json
-    echo -e "\e[91m> UUID: \033[1;37m$UUID "
+    printf '%b>\033[0m \033[1;37mUUID: %s\033[0m\n' "$SSHPLUS_CYAN" "$UUID"
     while true; do
-         echo -ne "\e[91m> DURACION DEL UUID (DIAS): \033[1;37m" && read diasuser
+         v2ray_prompt "DURACION DEL UUID (DIAS):" && read diasuser
          if [[ -z "$diasuser" ]]; then
          echo -e "$msg17" && continue
          elif [[ "$diasuser" != +([0-9]) ]]; then
@@ -220,7 +223,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     #Lim
     [[ $(cat /etc/passwd |grep $1: |grep -vi [a-z]$1 |grep -v [0-9]$1 > /dev/null) ]] && return 1
     valid=$(date '+%C%y-%m-%d' -d " +$diasuser days") && datexp=$(date "+%F" -d " + $diasuser days")
-    echo -e "\e[91m> EXPIRA EL: \033[1;37m$datexp "
+    printf '%b>\033[0m \033[1;37mEXPIRA EL: %s\033[0m\n' "$SSHPLUS_CYAN" "$datexp"
     ##Registro
     echo "  $UUID | $nick | $valid " >> /etc/SSHPlus/RegV2ray
     Fecha=`date +%d-%m-%y-%R`
@@ -236,16 +239,6 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     sed -i "11 s;104.16.18.94%3A443;$nick;g" /etc/SSHPlus/v2ray/confuuid.log
     cat /etc/SSHPlus/v2ray/confuuid.log  | sed -n '11 p'
     echo "" 
-echo "APP ANDROID:"
-echo "Descarga en el enlace"
-echo "" 
-echo "App: https://play.google.com/store/apps/details?id=com.v2ray.ang" 
-echo "" 
-echo "" 
-echo "APP IPHONE:"
-echo "Descarga en el enlace"
-echo "" 
-echo "App: https://apps.apple.com/br/app/fair-vpn/id1533873488" 
     echo -e "\033[0;34m============================================================\033[0m"
     echo -e "\e[92m           UUID AGREGADO CORRECTAMENTE "
     echo -e "\033[0;34m============================================================\033[0m"

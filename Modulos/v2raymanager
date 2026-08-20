@@ -654,7 +654,7 @@ echo "App: https://apps.apple.com/br/app/fair-vpn/id1533873488"
 
     ajustes_v2ray() {
     clear
-    v2ray_title "AJUSTES DE V2RAY"
+    v2ray_title "CONFIGURACION DE V2RAY"
     v2ray_opt "1" "CAMBIAR PROTOCOLO"
     v2ray_opt "2" "ACTIVAR TLS"
     v2ray_opt "3" "CAMBIAR PUERTO V2RAY"
@@ -705,9 +705,10 @@ echo "App: https://apps.apple.com/br/app/fair-vpn/id1533873488"
             v2ray_line
             echo ""
             v2ray_opt "1" "ADMINISTRAR USUARIOS V2RAY"
-            v2ray_opt "2" "AJUSTES DE V2RAY"
+            [[ "$(netstat -tunlp | grep v2ray 1> /dev/null 2> /dev/null; echo $?)" = "0" ]] && v2ray_inst_text="REINSTALAR V2RAY" || v2ray_inst_text="INSTALAR V2RAY"
+            v2ray_opt "2" "CONFIGURACION DE V2RAY"
             v2ray_opt "3" "REINICIAR SERVICIO V2RAY"
-            v2ray_opt "4" "INSTALAR V2RAY" "$xv2ray"
+            v2ray_opt "4" "$v2ray_inst_text" "$xv2ray"
             v2ray_opt "5" "DESINSTALAR V2RAY"
             v2ray_opt "6" "VOLVER <<<"
             echo ""

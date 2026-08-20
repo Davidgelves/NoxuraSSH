@@ -89,15 +89,7 @@ msg17='\033[1;37m\033[1;33m(Sin datos - Para cancelar pulse CTRL + C)\033[1;31m'
     sort ${USRdatabase} | uniq > ${USRdatabase}tmp
     mv -f ${USRdatabase}tmp ${USRdatabase}
 clear
-    linea_v2ray
     v2ray_title "ELIJA EL PROTOCOLO V2RAY"
-    v2ray_opt "3" "VMESS WEBSOCKET"
-    v2ray_opt "24" "VLESS WEBSOCKET"
-    linea_v2ray
-    echo -e "${SSHPLUS_CYAN}SELECCION:${SCOLOR} \033[1;37mCuando aparezca la lista del instalador, escriba solo el numero.\033[0m"
-    echo -e "\033[1;37m>${SCOLOR} \033[1;37mUse 3 para VMESS WebSocket o 24 para VLESS WebSocket.\033[0m"
-  
-    linea_v2ray
     v2ray stream
 clear
     linea_v2ray
@@ -110,19 +102,13 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     linea_v2ray
     v2ray_title "INFORMACION DE CUENTA"
     v2ray info
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
 
     protocolv2ray () {
     v2ray_title "CAMBIAR PROTOCOLO V2RAY"
-    v2ray_opt "3" "VMESS WEBSOCKET"
-    v2ray_opt "24" "VLESS WEBSOCKET"
-    v2ray_line
-    echo -e "${SSHPLUS_CYAN}SELECCION:${SCOLOR} \033[1;37mCuando aparezca la lista del instalador, escriba solo el numero.\033[0m"
-    echo -e "\033[1;37m>${SCOLOR} \033[1;37mUse 3 para VMESS WebSocket o 24 para VLESS WebSocket.\033[0m"
-    v2ray_line
     v2ray stream
     v2ray_line
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
@@ -132,21 +118,21 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     clear
     v2ray_title "Activar o desactivar TLS"
     v2ray tls
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
     portv () {
     v2ray_title "CAMBIAR PUERTO V2RAY"
     v2ray port
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
     stats () {
     v2ray_title "ESTADISTICAS DE CONSUMO"
     v2ray stats
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -154,14 +140,14 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     source <(curl -sL https://multi.netlify.app/v2ray.sh) --remove > /dev/null 2>&1
     rm -rf /etc/SSHPlus/RegV2ray > /dev/null 2>&1
     echo -e "\n\033[1;32mV2RAY ELIMINADO CORRECTAMENTE.\033[0m"
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
     infocuenta () {
     v2ray_title "INFORMACION DE CUENTA"
     v2ray info
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -246,9 +232,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     sed -i "11 s;104.16.18.94%3A443;$nick;g" /etc/SSHPlus/v2ray/confuuid.log
     cat /etc/SSHPlus/v2ray/confuuid.log  | sed -n '11 p'
     echo "" 
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\e[92m           UUID AGREGADO CORRECTAMENTE "
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -291,9 +277,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     v2ray restart > /dev/null 2>&1
     fi
     echo ""
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     [[ -n "$lineP" ]] && echo -e "\e[92m           UUID ELIMINADO CORRECTAMENTE " || echo -e "\e[92m           REGISTRO ELIMINADO CORRECTAMENTE "
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -338,9 +324,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     lim_port () {
     clear 
     clear
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     v2ray_title "LIMITAR MB x PUERTO | UUID V2RAY"
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     ###VER
     estarts () {
     VPSsec=$(date +%s)
@@ -371,7 +357,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     	      echo -e "$contador_secuencial \n Puertos Limitados: $linesss"
     	}
     fi
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager 
     }
@@ -409,7 +395,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     echo -e " Puerto seleccionado: $portbg | Cantidad de GB: $gbuser"
     echo ""
     echo " $portbg | $gbuser | $multiplicacion " >> /etc/SSHPlus/v2ray/lisportt.log 
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -444,7 +430,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     	      echo -e "$contador_secuencial \n Puertos Limitados: $linesss"
     	}
     fi
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
 
     while true; do
          echo -ne "\e[91m >> Puerto a limpiar:\033[1;92m " && read portbg
@@ -458,9 +444,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
          break
     done
     invaliduuid () {
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\e[91m                PUERTO NO VALIDO \n"
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -471,7 +457,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     iptables-save > /etc/iptables/rules.v4
     lineP=$(sed -n '/'${portbg}'/=' /etc/SSHPlus/v2ray/lisportt.log)
     sed -i "${linePre}d" /etc/SSHPlus/v2ray/lisportt.log
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
@@ -479,9 +465,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     v2ray_opt "1" "LIMITAR DATOS x PUERTO"
     v2ray_opt "2" "RESTABLECER DATOS DE PUERTO"
     v2ray_opt "3" "VER DATOS CONSUMIDOS"
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     v2ray_opt "0" "VOLVER"
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     selection=$(selection_fun 3)
     case ${selection} in
     1)liport ;;
@@ -509,13 +495,13 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     statgen="$(echo $PID_GEN)"
     clear 
     clear
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     v2ray_title "ELIMINAR EXPIRADOS | UUID V2RAY"
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo ""
     echo -e "                    $statgen " 
     echo "" 						
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
 
@@ -537,7 +523,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     [[ ! $PID_GEN ]] && PID_GEN="\e[91m [ DESACTIVADO ] " || PID_GEN="\e[92m [ ACTIVADO ] "
     statgen="$(echo $PID_GEN)"
     #SPR & 
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
 
     pausa_v2ray() {
     echo ""
@@ -545,7 +531,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     }
 
     linea_v2ray() {
-    echo -e "\033[0;34m============================================================\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     }
 
     editar_json_v2ray() {

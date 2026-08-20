@@ -271,9 +271,9 @@ echo "App: https://apps.apple.com/br/app/fair-vpn/id1533873488"
     done
     uuidel="${uuid_list[$((uuid_sel-1))]}"
     lineP=$(sed -n '/'${uuidel}'/=' /etc/v2ray/config.json | head -1)
-    [[ -n "$lineP" ]] || { echo -e "\033[1;31mUUID no encontrado en config.json.\033[0m"; pausa_v2ray; fun_v2raymanager; }
     linePre="${line_list[$((uuid_sel-1))]}"
     sed -i "${linePre}d" /etc/SSHPlus/RegV2ray
+    if [[ -n "$lineP" ]]; then
     numl1=2
     let resta=$lineP-$numl1
     sed -i "${resta}d" /etc/v2ray/config.json
@@ -282,9 +282,10 @@ echo "App: https://apps.apple.com/br/app/fair-vpn/id1533873488"
     sed -i "${resta}d" /etc/v2ray/config.json
     sed -i "${resta}d" /etc/v2ray/config.json
     v2ray restart > /dev/null 2>&1
+    fi
     echo ""
     echo -e "\033[0;34m============================================================\033[0m"
-    echo -e "\e[92m           UUID ELIMINADO CORRECTAMENTE "
+    [[ -n "$lineP" ]] && echo -e "\e[92m           UUID ELIMINADO CORRECTAMENTE " || echo -e "\e[92m           REGISTRO ELIMINADO CORRECTAMENTE "
     echo -e "\033[0;34m============================================================\033[0m"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager

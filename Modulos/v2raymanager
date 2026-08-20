@@ -547,12 +547,26 @@ echo "App: https://apps.apple.com/br/app/fair-vpn/id1533873488"
 
     modificar_uuid_v2ray() {
     clear
-    linea_v2ray
     v2ray_title "MODIFICAR UUID V2RAY"
-    linea_v2ray
     [[ ! -e /etc/v2ray/config.json ]] && echo -e "\033[1;31mNo existe /etc/v2ray/config.json\033[0m" && pausa_v2ray && ajustes_v2ray
-    echo -ne "\e[91m >> UUID actual a modificar:\033[1;92m " && read uuid_actual
-    [[ -z "$uuid_actual" ]] && echo -e "$msg17" && pausa_v2ray && ajustes_v2ray
+    [[ ! -s /etc/SSHPlus/RegV2ray ]] && echo -e "\033[1;31mNo hay usuarios V2RAY registrados.\033[0m" && pausa_v2ray && ajustes_v2ray
+    echo -e "\033[1;37m        SELECIONAR USUARIOS (UUID) PARA MODIFICAR\033[0m"
+    v2ray_line
+    mapfile -t uuid_list < <(awk -F'|' '{gsub(/ /,"",$1); if($1!="") print $1}' /etc/SSHPlus/RegV2ray)
+    for i in "${!uuid_list[@]}"; do
+    v2ray_opt "$((i+1))" "${uuid_list[$i]}"
+    done
+    v2ray_opt "0" "CANCELAR"
+    v2ray_line
+    while true; do
+    echo -ne "\033[1;37mOpcion: "
+    read uuid_sel
+    [[ "$uuid_sel" = "0" ]] && ajustes_v2ray
+    [[ "$uuid_sel" =~ ^[0-9]+$ ]] && [[ "$uuid_sel" -ge 1 ]] && [[ "$uuid_sel" -le "${#uuid_list[@]}" ]] && break
+    echo -e "\033[1;31mOpcion no valida!\033[0m"
+    sleep 1
+    done
+    uuid_actual="${uuid_list[$((uuid_sel-1))]}"
     grep -q "$uuid_actual" /etc/v2ray/config.json || { echo -e "\033[1;31mUUID no encontrado.\033[0m"; pausa_v2ray; ajustes_v2ray; }
     echo -ne "\e[91m >> Nuevo UUID (Enter para generar):\033[1;92m " && read uuid_nuevo
     [[ -z "$uuid_nuevo" ]] && uuid_nuevo="$(uuidgen)"

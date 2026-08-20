@@ -691,31 +691,56 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
             [[ ! -e '/home/sshplus' ]] && exit 0
             clear
             v2ray_title "V2RAY"
-            xv2ray1=`if netstat -tunlp |grep v2ray 1> /dev/null 2> /dev/null; then
+            if netstat -tunlp | grep v2ray >/dev/null 2>&1; then
+                v2ray_running=1
+            else
+                v2ray_running=0
+            fi
+            xv2ray1=`if [[ "$v2ray_running" = "1" ]]; then
             echo -e "\e[92m ACTIVADO"
             else
             echo -e "\e[91m DESACTIVADO"
             fi`;
             echo -e "${SSHPLUS_DARK_GREEN}SERVICIO:${SCOLOR} \033[1;33mV2RAY \033[1;32m$xv2ray1\033[1;37m"
-            xv2ray=`if netstat -tunlp |grep v2ray 1> /dev/null 2> /dev/null; then
+            xv2ray=`if [[ "$v2ray_running" = "1" ]]; then
             echo -e "\033[1;32mo "
             else
             echo -e "\033[1;31mx "
             fi`;
             v2ray_line
-            v2ray_opt "1" "ADMINISTRAR USUARIOS V2RAY"
-            [[ "$(netstat -tunlp | grep v2ray 1> /dev/null 2> /dev/null; echo $?)" = "0" ]] && v2ray_inst_text="REINSTALAR V2RAY" || v2ray_inst_text="INSTALAR V2RAY"
-            v2ray_opt "2" "CONFIGURACION DE V2RAY"
-            v2ray_opt "3" "REINICIAR SERVICIO V2RAY"
-            v2ray_opt "4" "$v2ray_inst_text" "$xv2ray"
-            v2ray_opt "5" "DESINSTALAR V2RAY"
-            v2ray_opt "6" "VOLVER <<<"
+            if [[ "$v2ray_running" = "1" ]]; then
+                v2ray_opt "1" "ADMINISTRAR USUARIOS V2RAY"
+                v2ray_opt "2" "CONFIGURACION DE V2RAY"
+                v2ray_opt "3" "REINICIAR SERVICIO V2RAY"
+                v2ray_opt "4" "REINSTALAR V2RAY" "$xv2ray"
+                v2ray_opt "5" "DESINSTALAR V2RAY"
+                v2ray_opt "6" "VOLVER <<<"
+            else
+                v2ray_opt "1" "INSTALAR V2RAY" "$xv2ray"
+                v2ray_opt "0" "VOLVER <<<"
+            fi
             v2ray_line
             tput civis
             echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} "
             read x
             tput cnorm
             clear
+            if [[ "$v2ray_running" != "1" ]]; then
+                case $x in
+                1 | 01)
+                    intallv2ray
+                    ;;
+                0 | 00)
+                    conexao
+                    exit
+                    ;;
+                *)
+                    echo -e "\033[1;31mOpcion no valida!\033[0m"
+                    sleep 2
+                    ;;
+                esac
+                continue
+            fi
             case $x in
             4 | 04)
                 intallv2ray

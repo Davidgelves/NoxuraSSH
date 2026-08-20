@@ -466,12 +466,15 @@ hyst_follow_logs() {
 hyst_menu() {
 	while true; do
 		hyst_clear
-		hyst_show_summary
 		if [[ ! -f "$HYST_CONF" ]]; then
+			hyst_red_line
+			echo -e "${CYAN}                       UDP-HYSTERIA v1${NC}"
+			hyst_red_line
 			hyst_opt "1" "${WHITE}INSTALAR HYSTERIA v1${NC}"
 			hyst_red_line
 			hyst_opt "0" "${RED}Volver${NC}"
 		else
+			hyst_show_summary
 			hyst_opt "1" "${WHITE}RECONFIGURAR UDP-HYSTERIA v1${NC}"
 			hyst_opt "2" "${WHITE}MODIFICAR OBFS${NC}"
 			hyst_red_line

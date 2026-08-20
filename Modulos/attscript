@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-echo -e "\033[1;33mINICIANDO ACTUALIZACIÓN SSH-PLUS \033[0m"
+echo -e "\033[1;33mINICIANDO ACTUALIZACIÓN NoxuraSSH \033[0m"
 sleep 2s
 # Mismo repo que Install/list (edita en Install/list o exporta aqui):
 SSHPLUS_GH_USER_REPO="${SSHPLUS_GH_USER_REPO:-Davidgelves/ssh-pro-vpn}"

@@ -92,21 +92,19 @@ otimize_python() {
     update-alternatives --set python3 /usr/bin/python3.6
 }
 show_install_banner() {
-    printf "${CYAN}%s${RESET}\n" "+----------------------------------------------------------+"
-    printf "${CYAN}|${RESET}  ${CYAN}\033[1m%-10s${RESET} ${CYAN}|${RESET}  ${WHITE}%-38s${RESET}${CYAN}|${RESET}\n" "NoxuraSSH" "Desarrollado por: J DAVID AG"
-    printf "${CYAN}%s${RESET}\n" "+----------------------------------------------------------+"
-    printf "\n"
-    printf "  ${CYAN}\033[1m%s${RESET}\n" "SISTEMAS SOPORTADOS (x64)"
-    printf "  ${CYAN}%s${RESET}\n" "--------------------------------------------------------"
-    printf "    ${CYAN}[+]${RESET} ${WHITE}%-27s${RESET} ${CYAN}[+]${RESET} ${WHITE}%s${RESET}\n" "Ubuntu 18 / 20 / 22 / 24" "Debian 9 / 10 / 11 / 12"
-    printf "\n"
-    printf "  ${CYAN}\033[1m%s${RESET}\n" "INFORMACION DEL SCRIPT"
-    printf "  ${CYAN}%s${RESET}\n" "--------------------------------------------------------"
-    printf "    ${CYAN}(i)${RESET} ${GREEN}SSH-Plus        :${RESET} ${WHITE}Compatible con Ubuntu 18+ y Debian 9+${RESET}\n"
-    printf "    ${CYAN}(i)${RESET} ${GREEN}V2Ray           :${RESET} ${WHITE}Validado principalmente en Ubuntu 18 x64${RESET}\n"
-    printf "    ${CYAN}(i)${RESET} ${GREEN}Nota            :${RESET} ${WHITE}Use una VPS limpia para mejor estabilidad${RESET}\n"
-    printf "\n"
-    printf "${CYAN}%s${RESET}\n" "------------------------------------------------------------"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "${CYAN}\033[1m%s${RESET}\n" "            NoxuraSSH by J DAVID AG"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "${CYAN}\033[1m%s${RESET}\n" "SISTEMAS SOPORTADOS (x64)"
+    printf "${CYAN}%s${RESET}\n" "-----------------------------------------------------"
+    printf "${GREEN}[✔]${RESET} ${WHITE}> Ubuntu - 18, 20, 24${RESET}\n"
+    printf "${GREEN}[✔]${RESET} ${WHITE}> Debian - 9, 10, 11, 12${RESET}\n"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "${CYAN}\033[1m%s${RESET}\n" "INFORMACION DE SCRIPT"
+    printf "${CYAN}%s${RESET}\n" "-----------------------------------------------------"
+    printf "${YELLOW}(¡)${RESET} ${WHITE}V2Ray: recomendado Ubuntu 18/20 x64.${RESET}\n"
+    printf "${YELLOW}(¡)${RESET} ${WHITE}Nota: Use una VPS limpia para mejor estabilidad.${RESET}\n"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
 install_step_header() {
@@ -136,7 +134,7 @@ install_final_screen() {
 
 show_install_banner
 #-----------------------------------------------------------------------------------------------------------------
-printf '\n\033[1;36m[\342\226\266] VERIFICANDO ENLACE...\033[0m\n'
+printf '\n\033[1;36m[▸] Verificando enlace...\033[0m\n'
 rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/dev/null 2>&1
     verif_key
     sleep 3s
@@ -223,7 +221,7 @@ rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/d
     echo "clear" >>/root/.bashrc
     echo 'DATE=$(date +"%d-%m-%y")' >>/root/.bashrc
     echo 'TIME=$(date +"%T")' >>/root/.bashrc
-    echo 'figlet -k SSH-PLUS | lolcat' >>/root/.bashrc
+    echo 'figlet -k NoxuraSSH | lolcat' >>/root/.bashrc
     echo 'echo -e " NOMBRE DEL SERVIDOR : $HOSTNAME"' >>/root/.bashrc
     echo 'echo -e " SERVIDOR EN MARCHA : $(uptime -p)"' >>/root/.bashrc
     echo 'echo -e " FECHA : $DATE"' >>/root/.bashrc

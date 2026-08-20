@@ -98,7 +98,7 @@ _sshplus_dash_pad() {
 	printf '%*s' $(( width - ${#plain} > 0 ? width - ${#plain} : 0 )) ''
 }
 _sshplus_title() {
-	local t="SSH-PRO" w=${#t} l=$(( (_SSHPLUS_IW - w) / 2 )) r=$(( _SSHPLUS_IW - w - l ))
+	local t="NoxuraSSH" w=${#t} l=$(( (_SSHPLUS_IW - w) / 2 )) r=$(( _SSHPLUS_IW - w - l ))
 	_sshplus_frame_pre
 	printf '%*s\033[1;34m%s\033[0m%*s%s\n' "$l" '' "$t" "$r" '' "$_sshplus_K"
 }

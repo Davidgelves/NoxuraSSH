@@ -1,7 +1,7 @@
 #!/bin/bash
 # lang=es delscript
 clear
-echo -e "\033[1;32mDESEA DESINSTALAR SSH-PLUS?\033[1;33m"
+echo -e "\033[1;32mDESEA DESINSTALAR NoxuraSSH?\033[1;33m"
 echo -e "\033[1;33mSe eliminaran usuarios del panel, reglas de firewall (iptables) y se detendran los servicios instalados por el script.\033[0m"
 read -p "Continuar? [s/n] " resp
 if [[ "$resp" = s || "$resp" = S ]]; then
@@ -152,7 +152,7 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 		if [[ -f /etc/skel/.bashrc ]]; then
 			cp /etc/skel/.bashrc /root/.bashrc
 		else
-			echo '# ~/.bashrc - restaurado apos remocao SSH-PLUS' >/root/.bashrc
+			echo '# ~/.bashrc - restaurado apos remocao NoxuraSSH' >/root/.bashrc
 		fi
 		chmod 644 /root/.bashrc
 	}
@@ -186,7 +186,7 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 	sshplus_restore_bashrc_if_missing
 
 	clear
-	echo -e "\033[1;36mGracias por usar SSH-PLUS Dev. J DAVID AG\033[1;33m"
+	echo -e "\033[1;36mGracias por usar NoxuraSSH Dev. J DAVID AG\033[1;33m"
 	sleep 2
 	echo -e "\033[1;31m SCRIPT ELIMINADO CON EXITO\033[0m"
 	echo ""

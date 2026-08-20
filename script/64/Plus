@@ -41,20 +41,20 @@ fun_bar() {
         touch $HOME/fim
     ) >/dev/null 2>&1 &
     tput civis
-    printf "${CYAN}>${RESET} ${WHITE}ESPERE${RESET} ${GREEN}|"
+    printf "${CYAN}>${RESET} ${WHITE}ESPERE${RESET} ${CYAN}|"
     while true; do
         for ((i = 0; i < 18; i++)); do
             printf "#"
             sleep 0.1s
         done
         [[ -e $HOME/fim ]] && rm $HOME/fim && break
-        printf "${GREEN}|${RESET}\n"
+        printf "${CYAN}|${RESET}\n"
         sleep 1s
         tput cuu1
         tput dl1
-        printf "${CYAN}>${RESET} ${WHITE}ESPERE${RESET} ${GREEN}|"
+        printf "${CYAN}>${RESET} ${WHITE}ESPERE${RESET} ${CYAN}|"
     done
-    printf "${GREEN}|${RESET} ${WHITE}OK${RESET}\n"
+    printf "${CYAN}|${RESET} ${WHITE}OK${RESET}\n"
     tput cnorm
 }
 function verif_key() {

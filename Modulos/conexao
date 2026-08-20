@@ -2571,7 +2571,7 @@ PY
 			} || {
 				sts8="\033[1;31mx "
 			}
-			[[ "$(ps x | grep 'slowdns' | grep -v 'grep' | wc -l)" != '0' ]] && {
+			[[ "$(systemctl is-active slowdns 2>/dev/null)" = "active" || "$(pgrep -f 'dnstt-server.*slowdns|dnstt-server.*server.key' 2>/dev/null | wc -l)" != "0" ]] && {
 				sts9="\033[1;32mo "
 			} || {
 				sts9="\033[1;31mx "
@@ -2674,7 +2674,7 @@ PY
 			exit
 			;;
 			6 | 06) 
-			slow_setup
+			slowdnsmanager
 			;;
 			7 | 07)
 			hysteria-menu

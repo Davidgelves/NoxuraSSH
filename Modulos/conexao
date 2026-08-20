@@ -625,6 +625,48 @@ ensure_licence_conexao
 		fi
 	}
         fun_v2rayins() {
+			local opt v2_label
+	        v2rayinst(){
+	            source <(curl -sL https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/v2ray)
+                sleep 6
+	        }
+	        while true; do
+	            clear
+	            sshplus_line
+	            echo -e "${SSHPLUS_CYAN}                         V2RAY${SCOLOR}"
+	            sshplus_line
+	            if netstat -tunlp | grep v2ray >/dev/null 2>&1; then
+	                v2_label="REINSTALAR V2RAY"
+	            else
+	                v2_label="INSTALAR V2RAY"
+	            fi
+	            sshplus_opt "1" "$v2_label"
+	            sshplus_line
+	            sshplus_opt "0" "Volver"
+	            sshplus_line
+	            echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} "
+	            read opt
+	            case "$opt" in
+	                1)
+	                    clear
+	                    sshplus_line
+	                    echo -e "${SSHPLUS_CYAN}                         V2RAY${SCOLOR}"
+	                    sshplus_line
+	                    echo -e "${GREEN}ESTADO:${SCOLOR} \033[1;37m$v2_label\033[0m"
+	                    sshplus_line
+	                    v2rayinst
+	                    return
+	                    ;;
+	                0)
+	                    conexao
+	                    return
+	                    ;;
+	                *)
+	                    echo -e "\033[1;31mOpcion no valida!\033[0m"
+	                    sleep 1
+	                    ;;
+	            esac
+	        done
 			clear
 	        v2rayinst(){
 	            source <(curl -sL https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/v2ray)

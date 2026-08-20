@@ -120,6 +120,20 @@ install_step_header() {
     printf "\n"
 }
 
+install_final_screen() {
+    local final_date
+    final_date=$(date '+%Y-%m-%d <> %H:%M:%S')
+    clear
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "${CYAN}\033[1m%s${RESET}\n" "                  INSTALACION"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "${WHITE}%s${RESET}\n" "             INSTALACION COMPLETADA"
+    printf "${WHITE}%s${RESET}\n" "             $final_date"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "${GREEN}%s${RESET} ${WHITE}%s${RESET}\n" "PARA INICIAR ESCRIBA:" "menu"
+    printf "${CYAN}%s${RESET}\n" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+}
+
 show_install_banner
 #-----------------------------------------------------------------------------------------------------------------
 printf '\n\033[1;36m[\342\226\266] VERIFICANDO ENLACE...\033[0m\n'
@@ -205,7 +219,6 @@ rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/d
     fun_bar "$_Ink/list $_lnk $_Ink $_1nk $key"
     wget --no-cache -qO /bin/menu "${SSHPRO_RAW}/Modulos/menu?_=$(date +%s)" 2>/dev/null && chmod +x /bin/menu
     cd $HOME
-    install_step_header "INSTALACION COMPLETADA" "PARA INICIAR ESCRIBA: menu"
     cd $HOME
     echo "clear" >>/root/.bashrc
     echo 'DATE=$(date +"%d-%m-%y")' >>/root/.bashrc
@@ -218,12 +231,5 @@ rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/d
     echo 'echo -e "(Desarrollado por) J DAVID AG"' >>/root/.bashrc
     echo 'echo -e "\033[1;31m ESCRIBA ( menu ) PARA ENTRAR\033[0m."' >>/root/.bashrc
     echo 'echo -e ""' >>/root/.bashrc
-    date=$(date '+%Y-%m-%d <> %H:%M:%S')
-    printf "${WHITE}%s${RESET}\n" "$system                          $date"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
-    printf "${CYAN}\033[1m%s${RESET}\n" "                  INSTALACION FINALIZADA"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
-    printf "${GREEN}%s${RESET} ${WHITE}%s${RESET}\n" "COMANDO:" "menu"
-    printf "${WHITE}%s${RESET}\n" "Desarrollado por: J DAVID AG"
-    printf "${CYAN}%s${RESET}\n" "============================================================"
+    install_final_screen
     rm -f "$HOME/Plus" 2>/dev/null; cat /dev/null > ~/.bash_history && history -c

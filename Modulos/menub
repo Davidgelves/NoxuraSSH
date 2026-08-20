@@ -33,7 +33,7 @@ while true; do
 	_menub_opt "0" "VOLVER" ""
 	_menub_line
 	tput civis
-	echo -ne "${YELLOW}ELIJA OPCION DESEADA${CYAN} : ${NC}"
+	echo -ne "${WHITE}Opcion: ${NC}"
 	read x
 	tput cnorm
 	clear

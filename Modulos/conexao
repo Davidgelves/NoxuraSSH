@@ -2651,7 +2651,7 @@ PY
 			sshplus_opt_pair "9" "BADVPN" "$badsts" "0" "VOLVER" ""
 			sshplus_line
 			tput civis
-			echo -ne "\033[1;32mELIJA OPCION DESEADA\033[1;33m : \033[0m";
+			echo -ne "\033[1;37mOpcion: \033[0m";
 			read x
 			tput cnorm
 			clear

@@ -368,7 +368,7 @@ hyst_change_range() {
 		hyst_opt "2" "${WHITE}PONER REGLA DE RANGOS IPTABLES${NC}"
 		hyst_opt "0" "${WHITE}VOLVER${NC}"
 		hyst_line
-		echo -ne "${GREEN}ELIJA OPCION DESEADA${YELLOW} : ${NC}"
+		echo -ne "${WHITE}Opcion: ${NC}"
 		read -r range_opt
 		case "$range_opt" in
 			1)

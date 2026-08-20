@@ -696,7 +696,6 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
             echo -e "\033[1;31mx "
             fi`;
             v2ray_line
-            echo ""
             v2ray_opt "1" "ADMINISTRAR USUARIOS V2RAY"
             [[ "$(netstat -tunlp | grep v2ray 1> /dev/null 2> /dev/null; echo $?)" = "0" ]] && v2ray_inst_text="REINSTALAR V2RAY" || v2ray_inst_text="INSTALAR V2RAY"
             v2ray_opt "2" "CONFIGURACION DE V2RAY"
@@ -704,11 +703,9 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
             v2ray_opt "4" "$v2ray_inst_text" "$xv2ray"
             v2ray_opt "5" "DESINSTALAR V2RAY"
             v2ray_opt "6" "VOLVER <<<"
-            echo ""
             v2ray_line
-            echo ""
             tput civis
-            echo -ne "\033[1;32mELIJA OPCION DESEADA\033[1;33m : \033[0m"
+            echo -ne "\033[1;37mOpcion: \033[0m"
             read x
             tput cnorm
             clear

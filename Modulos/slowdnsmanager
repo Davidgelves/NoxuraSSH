@@ -473,6 +473,30 @@ slow_summary() {
 	fi
 }
 
+slow_config_menu() {
+	while true; do
+		clear
+		slow_title "CONFIGURACION SLOWDNS"
+		slow_opt "1" "MIS CLAVES SLOWDNS"
+		slow_opt "2" "GENERAR NUEVO PAR DE CLAVES"
+		slow_opt "3" "PAR DE CLAVES PERSONALES"
+		slow_opt "4" "MODIFICAR PUERTO DE TRAFICO"
+		slow_opt "5" "MODIFICAR DOMINIO NS"
+		slow_opt "0" "VOLVER"
+		slow_line
+		echo -ne "${DARK_GREEN}Opcion:${NC} "
+		read -r cfg_opt
+		case "$cfg_opt" in
+			1) slow_show_keys ;;
+			2) slow_generate_keys && slow_restart && echo -e "${GREEN}Nuevo par de claves generado.${NC}" && slow_pause ;;
+			3) slow_custom_keys ;;
+			4) slow_change_traffic ;;
+			5) slow_change_domain ;;
+			0) return ;;
+		esac
+	done
+}
+
 while true; do
 	clear
 	if [[ ! -f "$SLOW_CONF" ]]; then
@@ -486,43 +510,29 @@ while true; do
 		slow_title "SLOWDNS"
 		slow_summary
 		slow_line
-		slow_opt "1" "RECONFIGURAR SLOWDNS"
+		slow_opt "1" "CONFIGURACION DE SLOWDNS"
+		slow_opt "2" "ESTADO DEL SERVICIO"
+		slow_opt "3" "REINICIAR SERVICIO"
+		slow_opt "4" "INICIAR/PARAR SERVICIO" "$(slow_status_text)"
+		slow_opt "5" "DIAGNOSTICO SLOWDNS"
+		slow_opt "6" "LOG SLOWDNS EN TIEMPO REAL"
+		slow_opt "7" "REINSTALAR"
+		slow_opt "8" "DESINSTALAR SLOWDNS"
 		slow_line
-		slow_opt "2" "MIS CLAVES SLOWDNS"
-		slow_opt "3" "GENERAR NUEVO PAR DE CLAVES"
-		slow_opt "4" "PAR DE CLAVES PERSONALES"
-		slow_line
-		slow_opt "5" "MODIFICAR PUERTO DE TRAFICO"
-		slow_opt "6" "MODIFICAR DOMINIO NS"
-		slow_line
-		slow_opt "7" "ESTADO DEL SERVICIO"
-		slow_opt "8" "REINICIAR SERVICIO"
-		slow_opt "9" "INICIAR/PARAR SERVICIO" "$(slow_status_text)"
-		slow_line
-		slow_opt "10" "LOG SLOWDNS"
-		slow_opt "11" "LOG SLOWDNS EN TIEMPO REAL"
-		slow_opt "14" "DIAGNOSTICO SLOWDNS"
-		slow_line
-		printf "%b  %b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}Volver${NC}" "${NEON}[12]${NC} ${CYAN}>${NC} ${WHITE}REINSTALAR${NC}" "${NEON}[13]${NC} ${CYAN}>${NC} ${WHITE}DESINSTALAR${NC}"
+		slow_opt "0" "Volver"
 	fi
 	slow_line
 	echo -ne "${DARK_GREEN}Opcion:${NC} "
 	read -r opt
 	case "$opt" in
-		1) slow_configure ;;
-		2) [[ -f "$SLOW_CONF" ]] && slow_show_keys ;;
-		3) [[ -f "$SLOW_CONF" ]] && slow_generate_keys && slow_restart && echo -e "${GREEN}Nuevo par de claves generado.${NC}" && slow_pause ;;
-		4) [[ -f "$SLOW_CONF" ]] && slow_custom_keys ;;
-		5) [[ -f "$SLOW_CONF" ]] && slow_change_traffic ;;
-		6) [[ -f "$SLOW_CONF" ]] && slow_change_domain ;;
-		7) [[ -f "$SLOW_CONF" ]] && slow_service_status ;;
-		8) [[ -f "$SLOW_CONF" ]] && slow_restart && echo -e "${GREEN}Servicio reiniciado.${NC}" && slow_pause ;;
-		9) [[ -f "$SLOW_CONF" ]] && slow_toggle ;;
-		10) [[ -f "$SLOW_CONF" ]] && slow_logs ;;
-		11) [[ -f "$SLOW_CONF" ]] && slow_logs_live ;;
-		12) [[ -f "$SLOW_CONF" ]] && slow_download_bin && slow_configure ;;
-		13) [[ -f "$SLOW_CONF" ]] && slow_load_conf && slow_uninstall ;;
-		14) [[ -f "$SLOW_CONF" ]] && slow_diagnostics ;;
+		1) [[ -f "$SLOW_CONF" ]] && slow_config_menu || slow_configure ;;
+		2) [[ -f "$SLOW_CONF" ]] && slow_service_status ;;
+		3) [[ -f "$SLOW_CONF" ]] && slow_restart && echo -e "${GREEN}Servicio reiniciado.${NC}" && slow_pause ;;
+		4) [[ -f "$SLOW_CONF" ]] && slow_toggle ;;
+		5) [[ -f "$SLOW_CONF" ]] && slow_diagnostics ;;
+		6) [[ -f "$SLOW_CONF" ]] && slow_logs_live ;;
+		7) [[ -f "$SLOW_CONF" ]] && slow_download_bin && slow_configure ;;
+		8) [[ -f "$SLOW_CONF" ]] && slow_uninstall ;;
 		0) conexao; exit ;;
 	esac
 done

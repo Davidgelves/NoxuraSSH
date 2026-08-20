@@ -181,11 +181,18 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
          case "$uuidopc" in
          1)
          UUID=`uuidgen`
+         while grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" /etc/v2ray/config.json 2>/dev/null; do
+         UUID=`uuidgen`
+         done
          break
          ;;
          2)
          echo -ne "\e[91m> UUID: \033[1;37m" && read UUID
          [[ -z "$UUID" ]] && echo -e "$msg17" && continue
+         if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" /etc/v2ray/config.json 2>/dev/null; then
+         echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
+         continue
+         fi
          break
          ;;
          *)

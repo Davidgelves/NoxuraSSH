@@ -276,11 +276,43 @@ slow_detect_targets() {
 		done < <(netstat -nplt 2>/dev/null)
 	fi
 
+	if pgrep -f '/etc/SSHPlus/proxy.py' >/dev/null 2>&1; then
+		port="$(ps x | grep '[S]SHPlus/proxy.py' | head -1 | awk '{print $NF}')"
+		slow_add_target "PROXY SOCKS" "$port"
+	fi
+	if pgrep -f '/etc/SSHPlus/wsproxy.py' >/dev/null 2>&1; then
+		port="$(ps x | grep '[S]SHPlus/wsproxy.py' | head -1 | awk '{print $NF}')"
+		slow_add_target "WEBSOCKET" "$port"
+	fi
+	if [[ -f /etc/autostart ]]; then
+		while IFS= read -r port; do slow_add_target "PROXY SOCKS" "$port"; done < <(grep -oE 'proxy.py [0-9]+' /etc/autostart 2>/dev/null | awk '{print $2}')
+		while IFS= read -r port; do slow_add_target "WEBSOCKET" "$port"; done < <(grep -oE 'wsproxy.py [0-9]+' /etc/autostart 2>/dev/null | awk '{print $2}')
+	fi
+	if [[ -f /etc/default/dropbear ]]; then
+		port="$(grep -E '^DROPBEAR_PORT=' /etc/default/dropbear 2>/dev/null | cut -d= -f2 | grep -oE '[0-9]+' | head -1)"
+		slow_add_target "DROPBEAR" "$port"
+		while IFS= read -r port; do slow_add_target "DROPBEAR" "$port"; done < <(grep -oE -- '-p[[:space:]]+[0-9]+' /etc/default/dropbear 2>/dev/null | awk '{print $2}')
+	fi
+	if [[ -f /etc/stunnel/stunnel.conf ]]; then
+		port="$(awk '/^[[:space:]]*accept[[:space:]]*=/{print $NF}' /etc/stunnel/stunnel.conf 2>/dev/null | grep -oE '[0-9]+' | tail -1)"
+		slow_add_target "SSL TUNNEL" "$port"
+	fi
+	if [[ -f /etc/openvpn/server.conf ]]; then
+		port="$(awk '/^port[[:space:]]/{print $2}' /etc/openvpn/server.conf 2>/dev/null | head -1)"
+		slow_add_target "OPENVPN" "$port"
+	fi
+	if [[ -f /etc/squid/squid.conf || -f /etc/squid3/squid.conf ]]; then
+		while IFS= read -r port; do slow_add_target "SQUID" "$port"; done < <(awk '/^[[:space:]]*http_port[[:space:]]+[0-9]+/{print $2}' /etc/squid/squid.conf /etc/squid3/squid.conf 2>/dev/null | grep -oE '[0-9]+')
+	fi
+	if [[ -f /etc/v2ray/config.json ]]; then
+		while IFS= read -r port; do slow_add_target "V2RAY" "$port"; done < <(grep -oE '"port"[[:space:]]*:[[:space:]]*[0-9]+' /etc/v2ray/config.json 2>/dev/null | grep -oE '[0-9]+')
+	fi
+
 	slow_add_target "OPENSSH" "22"
 }
 
 slow_pick_traffic() {
-	local opt manual i left dots pad
+	local opt i left dots pad
 	slow_detect_targets
 	while true; do
 		clear
@@ -297,18 +329,11 @@ slow_pick_traffic() {
 			echo -e "${NEON}[$((i + 1))]${NC} ${CYAN}>${NC} ${WHITE}${SLOW_TARGET_LABELS[$i]} ${YELLOW}${dots}${GREEN}${SLOW_TARGET_PORTS[$i]}${NC}"
 		done
 		slow_line
-		printf "%b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}CANCELAR${NC}" "${NEON}[99]${NC} ${CYAN}>${NC} ${WHITE}INGRESAR MANUALMENTE${NC}"
+		slow_opt "0" "CANCELAR"
 		slow_line
 		echo -ne "${DARK_GREEN}Opcion:${NC} "
 		read -r opt
 		[[ "$opt" = "0" ]] && return 1
-		if [[ "$opt" = "99" || "$opt" = "5" ]]; then
-			echo -ne "${DARK_GREEN}PUERTO DE TRAFICO:${NC} "
-			read -r manual
-			[[ "$manual" =~ ^[0-9]+$ ]] || continue
-			SLOW_TRAFFIC="$manual"
-			return 0
-		fi
 		if [[ "$opt" =~ ^[0-9]+$ ]] && [[ "$opt" -ge 1 ]] && [[ "$opt" -le "${#SLOW_TARGET_PORTS[@]}" ]]; then
 			SLOW_TRAFFIC="${SLOW_TARGET_PORTS[$((opt - 1))]}"
 			return 0

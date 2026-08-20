@@ -1,140 +1,142 @@
 #!/bin/bash
-remove_ovp () {
-if [[ -e /etc/debian_version ]]; then
-	GROUPNAME=nogroup
-fi
-user="$1"
-cd /etc/openvpn/easy-rsa/
-./easyrsa --batch revoke $user
-./easyrsa gen-crl
-rm -rf pki/reqs/$user.req
-rm -rf pki/private/$user.key
-rm -rf pki/issued/$user.crt
-rm -rf /etc/openvpn/crl.pem
-cp /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn/crl.pem
-chown nobody:$GROUPNAME /etc/openvpn/crl.pem
-[[ -e $HOME/$user.ovpn ]] && rm $HOME/$user.ovpn > /dev/null 2>&1
-[[ -e /var/www/html/openvpn/$user.zip ]] && rm /var/www/html/openvpn/$user.zip > /dev/null 2>&1
-} > /dev/null 2>&1
+# lang=es remover
+
+NC='\033[0m'
+WHITE='\033[1;37m'
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+CYAN='\033[1;38;2;76;228;255m'
+NEON='\033[1;38;2;0;255;127m'
+DARK_GREEN='\033[0;32m'
+
+database="/root/usuarios.db"
+
+rm_line() {
+	echo -e "${CYAN}============================================================${NC}"
+}
+
+rm_title() {
+	rm_line
+	echo -e "${CYAN}$1${NC}"
+	rm_line
+}
+
+rm_opt() {
+	echo -e "${NEON}[$1]${NC} ${CYAN}>${NC} ${WHITE}$2${NC}"
+}
+
+rm_prompt() {
+	echo -ne "${DARK_GREEN}Opcion:${NC} "
+}
+
+remove_ovp() {
+	local user="$1" GROUPNAME
+	[[ -e /etc/debian_version ]] && GROUPNAME=nogroup
+	cd /etc/openvpn/easy-rsa/ || return
+	./easyrsa --batch revoke "$user"
+	./easyrsa gen-crl
+	rm -rf "pki/reqs/$user.req" "pki/private/$user.key" "pki/issued/$user.crt"
+	rm -rf /etc/openvpn/crl.pem
+	cp /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn/crl.pem
+	chown nobody:$GROUPNAME /etc/openvpn/crl.pem
+	[[ -e "$HOME/$user.ovpn" ]] && rm "$HOME/$user.ovpn" >/dev/null 2>&1
+	[[ -e "/var/www/html/openvpn/$user.zip" ]] && rm "/var/www/html/openvpn/$user.zip" >/dev/null 2>&1
+} >/dev/null 2>&1
+
+rm_is_script_user() {
+	local user="$1"
+	[[ "$user" =~ ^(nobody|systemd-|polkitd|messagebus|daemon|bin|sys|sync|games|man|lp|mail|news|uucp|proxy|www-data|backup|list|irc|gnats|_apt)$ ]] && return 1
+	[[ -e "/etc/SSHPlus/senha/$user" ]] && return 0
+	[[ -f "$database" ]] && grep -qw "$user" "$database" && return 0
+	return 1
+}
+
+rm_load_users() {
+	mapfile -t RM_USERS < <(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd | sort)
+	RM_FILTERED=()
+	for user in "${RM_USERS[@]}"; do
+		rm_is_script_user "$user" || continue
+		RM_FILTERED+=("$user")
+	done
+}
+
+rm_delete_user() {
+	local user="$1" uid
+	[[ -z "$user" ]] && return 1
+	uid="$(id -u "$user" 2>/dev/null)"
+	[[ -n "$uid" ]] && pkill -u "$uid" >/dev/null 2>&1 || true
+	deluser --force "$user" >/dev/null 2>&1 || userdel --force "$user" >/dev/null 2>&1 || true
+	if [[ -f "$database" ]]; then
+		grep -v "^$user[[:space:]]" "$database" > /tmp/sshplus_users.$$ && cat /tmp/sshplus_users.$$ > "$database"
+		rm -f /tmp/sshplus_users.$$
+	fi
+	rm -f "/etc/SSHPlus/senha/$user" >/dev/null 2>&1
+	[[ -x /bin/hysteria-menu ]] && /bin/hysteria-menu --sync >/dev/null 2>&1 || true
+	[[ -e /etc/openvpn/server.conf ]] && remove_ovp "$user"
+}
+
+rm_one_menu() {
+	local opt user
+	while true; do
+		clear
+		rm_title "                   ELIMINAR USUARIOS"
+		echo -e "${WHITE}                   LISTA DE USUARIOS${NC}"
+		rm_line
+		rm_load_users
+		for i in "${!RM_FILTERED[@]}"; do
+			rm_opt "$((i + 1))" "${RM_FILTERED[$i]}"
+		done
+		rm_line
+		rm_opt "0" "VOLVER"
+		rm_line
+		rm_prompt
+		read -r opt
+		[[ "$opt" = "0" ]] && return
+		if [[ "$opt" =~ ^[0-9]+$ ]] && [[ "$opt" -ge 1 ]] && [[ "$opt" -le "${#RM_FILTERED[@]}" ]]; then
+			user="${RM_FILTERED[$((opt - 1))]}"
+			rm_delete_user "$user"
+			echo -e "\n${GREEN}Usuario $user eliminado correctamente.${NC}"
+			sleep 2
+			return
+		fi
+	done
+}
+
+rm_all_menu() {
+	local opc user
+	clear
+	rm_title "             ELIMINAR TODOS LOS USUARIOS?"
+	echo -ne "${DARK_GREEN}DESEA ELIMINAR TODOS LOS USUARIOS [s/n]:${NC} "
+	read -r opc
+	[[ "$opc" =~ ^[sS]$ ]] || return
+	rm_load_users
+	for user in "${RM_FILTERED[@]}"; do
+		rm_delete_user "$user"
+	done
+	: > "$database"
+	rm -f /var/www/html/openvpn/*.zip >/dev/null 2>&1
+	echo -e "\n${GREEN}Usuarios eliminados correctamente.${NC}"
+	sleep 2
+}
+
 [[ ! -e /usr/lib/sshplus ]] && {
-	echo -e "\n\033[1;31mLicencia/entorno no válido. Operación cancelada.\033[0m"
+	echo -e "\n${RED}Licencia/entorno no valido. Operacion cancelada.${NC}"
 	sleep 2
 	menu
 }
-database="/root/usuarios.db"
-clear
-tput setaf 7 ; tput setab 4 ; tput bold ; printf '%32s%s%-13s\n' "Remover usuario SSH" ; tput sgr0
-echo ""
-echo -e "\033[1;31m[\033[1;36m1\033[1;31m]\033[1;33m REMOVER UN USUARIO"
-echo -e "\033[1;31m[\033[1;36m2\033[1;31m]\033[1;33m REMOVER TODOS LOS USUARIOS"
-echo -e "\033[1;31m[\033[1;36m3\033[1;31m]\033[1;33m VOLVER"
-echo ""
-read -p "$(echo -e "\033[1;32m¿Qué desea hacer\033[1;31m?\033[1;37m : ")" -e resp
-if [[ "$resp" = "1" ]]; then
-clear
-tput setaf 7 ; tput setab 4 ; tput bold ; printf '%32s%s%-13s\n' "Remover usuario SSH" ; tput sgr0
-echo ""
-echo -e "\033[1;33mLISTA DE USUARIOS: \033[0m"
-echo ""
-_userT=$(awk -F: '$3>=1000 {print $1}' /etc/passwd | grep -v nobody)
-i=0
-unset _userPass
-while read _user; do
-	i=$(expr $i + 1)
-	_oP=$i
-	[[ $i == [1-9] ]] && i=0$i && oP+=" 0$i"
-	echo -e "\033[1;31m[\033[1;36m$i\033[1;31m] \033[1;37m- \033[1;32m$_user\033[0m"
-	_userPass+="\n${_oP}:${_user}"
-done <<< "${_userT}"
-echo ""
-num_user=$(awk -F: '$3>=1000 {print $1}' /etc/passwd | grep -v nobody | wc -l)
-echo -ne "\033[1;32mEscriba o seleccione un usuario \033[1;33m[\033[1;36m1\033[1;31m-\033[1;36m$num_user\033[1;33m]\033[1;37m: " ; read option
-user=$(echo -e "${_userPass}" | grep -E "\b$option\b" | cut -d: -f2)
-if [[ -z $option ]]; then
-	tput setaf 7 ; tput setab 1 ; tput bold ; echo "" ; echo "  Usuario vacío o inválido!   " ; echo "" ; tput sgr0
-	exit 1
-elif [[ -z $user ]]; then
-	tput setaf 7 ; tput setab 1 ; tput bold ; echo "" ; echo " Usuario vacío o inválido! " ; echo "" ; tput sgr0
-	exit 1
-else
-	if grep -w "$user" /etc/passwd > /dev/null 2>&1; then
-		echo ""
-		_uid="$(id -u "$user" 2>/dev/null)"
-		[[ -n "$_uid" ]] && pkill -u "$_uid" > /dev/null 2>&1
-		deluser --force "$user" > /dev/null 2>&1
-		echo -e "\E[41;1;37m Usuario $user removido con éxito! \E[0m"
-		grep -v "^$user[[:space:]]" /root/usuarios.db > /tmp/ph ; cat /tmp/ph > /root/usuarios.db
-		rm "/etc/SSHPlus/senha/$user" 1>/dev/null 2>/dev/null
-		[[ -x /bin/hysteria-menu ]] && /bin/hysteria-menu --sync >/dev/null 2>&1 || true
-		if [[ -e /etc/openvpn/server.conf ]]; then
-			remove_ovp "$user"
-		fi
-		sleep 2
-		menu
-	elif [[ "$(grep -w "$user" "$database" | wc -l)" -ne "0" ]]; then
-		ps x | grep "$user" | grep -v grep | grep -v pt > /tmp/rem
-		if [[ "$(grep -c "$user" /tmp/rem)" -eq 0 ]]; then
-			deluser --force "$user" > /dev/null 2>&1
-			echo ""
-			echo -e "\E[41;1;37m Usuario $user removido con éxito! \E[0m"
-			grep -v "^$user[[:space:]]" /root/usuarios.db > /tmp/ph ; cat /tmp/ph > /root/usuarios.db
-			rm "/etc/SSHPlus/senha/$user" 1>/dev/null 2>/dev/null
-			[[ -x /bin/hysteria-menu ]] && /bin/hysteria-menu --sync >/dev/null 2>&1 || true
-			if [[ -e /etc/openvpn/server.conf ]]; then
-				remove_ovp "$user"
-		    fi
-			sleep 2
-			menu
-		else
-		    echo ""
-			tput setaf 7 ; tput setab 4 ; tput bold ; echo "" ; echo "Usuario conectado. Desconectando..." ; tput sgr0
-			_uid="$(id -u "$user" 2>/dev/null)"
-			[[ -n "$_uid" ]] && pkill -u "$_uid" > /dev/null 2>&1
-			deluser --force "$user" > /dev/null 2>&1
-			echo -e "\E[41;1;37m Usuario $user removido con éxito! \E[0m"
-			grep -v "^$user[[:space:]]" /root/usuarios.db > /tmp/ph ; cat /tmp/ph > /root/usuarios.db
-			rm "/etc/SSHPlus/senha/$user" 1>/dev/null 2>/dev/null
-			[[ -x /bin/hysteria-menu ]] && /bin/hysteria-menu --sync >/dev/null 2>&1 || true
-			if [[ -e /etc/openvpn/server.conf ]]; then
-				remove_ovp "$user"
-		    fi
-			sleep 2
-			menu
-		fi
-	else
-		tput setaf 7 ; tput setab 4 ; tput bold ; echo "" ; echo "El usuario $user no existe!" ; echo "" ; tput sgr0
-	fi
-fi
-elif [[ "$resp" = "2" ]]; then
+
+while true; do
 	clear
-	tput setaf 7 ; tput setab 4 ; tput bold ; printf '%32s%s%-13s\n' "Remover usuario SSH" ; tput sgr0
-	echo ""
-	echo -ne "\033[1;33m¿REALMENTE DESEA REMOVER TODOS LOS USUARIOS \033[1;37m[s/n]: "; read opc	
-	if [[ "$opc" = "s" ]]; then
-	echo -e "\n\033[1;33mAguarde\033[1;32m.\033[1;31m.\033[1;33m.\033[0m"
-		for user in $(awk -F: '$3 >= 1000 {print $1}' /etc/passwd | grep -vi '^nobody$'); do
-			_uid="$(id -u "$user" 2>/dev/null)"
-			[[ -n "$_uid" ]] && pkill -u "$_uid" > /dev/null 2>&1
-			deluser --force "$user" > /dev/null 2>&1
-        if [[ -e /etc/openvpn/server.conf ]]; then
-		   remove_ovp "$user"
-		fi
-		done
-		: > "$database"
-		[[ -x /bin/hysteria-menu ]] && /bin/hysteria-menu --sync >/dev/null 2>&1 || true
-        rm -f /var/www/html/openvpn/*.zip > /dev/null 2>&1
-		echo -e "\n\033[1;32m¡USUARIOS REMOVIDOS CON ÉXITO!\033[0m"
-		sleep 2
-		menu
-	else
-		echo -e "\n\033[1;31mVolviendo al menú...\033[0m"
-		sleep 2
-		menu
-	fi
-elif [[ "$resp" = "3" ]]; then
-	menu
-else
-	echo -e "\n\033[1;31m¡Opción inválida!\033[0m"
-	sleep 1.5s
-	menu
-fi
+	rm_title "              REMOVER USUARIO SSH Y HYSTERIA"
+	rm_opt "1" "ELIMINAR USUARIO"
+	rm_opt "2" "ELIMINAR TODOS LOS USUARIOS"
+	rm_opt "3" "VOLVER"
+	rm_line
+	rm_prompt
+	read -r resp
+	case "$resp" in
+		1) rm_one_menu ;;
+		2) rm_all_menu ;;
+		3) menu; exit ;;
+	esac
+done

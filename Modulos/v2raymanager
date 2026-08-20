@@ -683,7 +683,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
         while true $x != "ok"; do
             [[ ! -e '/home/sshplus' ]] && exit 0
             clear
-            v2ray_title "V2RAY PRO Dev. J DAVID AG"
+            v2ray_title "V2RAY"
             xv2ray1=`if netstat -tunlp |grep v2ray 1> /dev/null 2> /dev/null; then
             echo -e "\e[92m ACTIVADO"
             else

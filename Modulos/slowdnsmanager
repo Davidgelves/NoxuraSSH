@@ -199,23 +199,29 @@ slow_detect_targets() {
 }
 
 slow_pick_traffic() {
-	local opt manual i
+	local opt manual i left dots pad
 	slow_detect_targets
 	while true; do
 		clear
-		slow_title "REDIRIGIR TRAFICO SLOWDNS"
-		echo -e "${WHITE}A QUE PUERTO DESEA REDIRIGIR${DARK_GREEN}:${NC}"
+		slow_title "CONFIGURAR SLOWDNS (REDIRECCION)"
+		echo -e "${WHITE}PUERTO SLOWDNS (escucha)${DARK_GREEN}:${NC} ${GREEN}${SLOW_PORT}${NC}"
+		slow_line
+		echo -e "${YELLOW}      A QUE PUERTO REDIRIGIR EL TRAFICO?${NC}"
 		slow_line
 		for i in "${!SLOW_TARGET_PORTS[@]}"; do
-			slow_opt "$((i + 1))" "${SLOW_TARGET_LABELS[$i]} ${SLOW_TARGET_PORTS[$i]}"
+			left="[$((i + 1))] > ${SLOW_TARGET_LABELS[$i]} "
+			pad=$((50 - ${#left} - ${#SLOW_TARGET_PORTS[$i]}))
+			[[ "$pad" -lt 2 ]] && pad=2
+			dots="$(printf '%*s' "$pad" '' | tr ' ' '.')"
+			echo -e "${NEON}[$((i + 1))]${NC} ${CYAN}>${NC} ${WHITE}${SLOW_TARGET_LABELS[$i]} ${YELLOW}${dots}${GREEN}${SLOW_TARGET_PORTS[$i]}${NC}"
 		done
-		slow_opt "99" "INGRESAR PUERTO MANUAL"
-		slow_opt "0" "CANCELAR"
+		slow_line
+		printf "%b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}CANCELAR${NC}" "${NEON}[99]${NC} ${CYAN}>${NC} ${WHITE}INGRESAR MANUALMENTE${NC}"
 		slow_line
 		echo -ne "${DARK_GREEN}Opcion:${NC} "
 		read -r opt
 		[[ "$opt" = "0" ]] && return 1
-		if [[ "$opt" = "99" ]]; then
+		if [[ "$opt" = "99" || "$opt" = "5" ]]; then
 			echo -ne "${DARK_GREEN}PUERTO DE TRAFICO:${NC} "
 			read -r manual
 			[[ "$manual" =~ ^[0-9]+$ ]] || continue

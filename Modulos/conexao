@@ -2562,7 +2562,7 @@ PY
 			[[ ! -e '/home/sshplus' ]] && exit 0
 			clear
 			sshplus_line
-			echo -e "\033[1;34m                 CONFIGURACION DE PROTOCOLOS\033[0m"
+			echo -e "${SSHPLUS_CYAN}                 CONFIGURACION DE PROTOCOLOS${SCOLOR}"
 			sshplus_line
 			echo -e "\033[1;32mSERVICIO: \033[1;33mOPENSSH \033[1;32mPUERTO: \033[1;37m$(grep 'Port' /etc/ssh/sshd_config | cut -d' ' -f2 | grep -v 'no' | xargs)" && sts6="\033[1;32mo "
 			[[ "$(netstat -tlpn | grep 'docker' | wc -l)" != '0' ]] && {

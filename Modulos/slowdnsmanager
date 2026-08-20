@@ -74,7 +74,7 @@ slow_detect_arch() {
 slow_install_deps() {
 	if command -v apt-get >/dev/null 2>&1; then
 		apt-get update -y >/dev/null 2>&1 || true
-		apt-get install -y curl wget iptables net-tools ca-certificates >/dev/null 2>&1 || true
+		apt-get install -y curl wget iptables net-tools ca-certificates dnsutils >/dev/null 2>&1 || true
 	fi
 }
 
@@ -158,6 +158,7 @@ slow_restart() {
 slow_check_connection() {
 	slow_load_conf
 	slow_line
+	echo -e "${DARK_GREEN}COMANDO:${NC} ${WHITE}${SLOW_BIN} -udp :${SLOW_PORT} -privkey-file ${SLOW_KEY} ${SLOW_DOMAIN} 127.0.0.1:${SLOW_TRAFFIC}${NC}"
 	if systemctl is-active --quiet slowdns 2>/dev/null; then
 		echo -e "${GREEN}SERVICIO SLOWDNS ACTIVO.${NC}"
 	else
@@ -174,7 +175,33 @@ slow_check_connection() {
 	else
 		echo -e "${RED}NO SE ENCONTRO REDIRECCION UDP ${SLOW_REDIRECT:-53} > ${SLOW_PORT}.${NC}"
 	fi
+	if command -v dig >/dev/null 2>&1 && [[ -n "$SLOW_DOMAIN" ]]; then
+		echo -e "${DARK_GREEN}DNS NS:${NC} ${WHITE}$(dig +short NS "$SLOW_DOMAIN" 2>/dev/null | xargs)${NC}"
+		echo -e "${DARK_GREEN}DNS A:${NC} ${WHITE}$(dig +short A "$SLOW_DOMAIN" 2>/dev/null | xargs)${NC}"
+	fi
 	slow_line
+}
+
+slow_diagnostics() {
+	clear
+	slow_title "DIAGNOSTICO SLOWDNS"
+	slow_check_connection
+	echo -e "${DARK_GREEN}CONFIG:${NC}"
+	[[ -f "$SLOW_CONF" ]] && sed 's/^/  /' "$SLOW_CONF" || echo -e "  ${RED}No existe ${SLOW_CONF}${NC}"
+	slow_line
+	echo -e "${DARK_GREEN}SYSTEMD:${NC}"
+	systemctl status slowdns --no-pager -l 2>/dev/null | tail -n 18 || echo -e "  ${RED}Servicio no instalado.${NC}"
+	slow_line
+	echo -e "${DARK_GREEN}ULTIMOS ERRORES:${NC}"
+	journalctl -u slowdns -n 40 --no-pager 2>/dev/null || true
+	slow_line
+	echo -e "${DARK_GREEN}UDP LISTEN:${NC}"
+	(ss -ulnp 2>/dev/null || netstat -unlp 2>/dev/null) | grep -E "(:${SLOW_PORT}|:53)" || echo -e "  ${RED}Sin escucha UDP detectada.${NC}"
+	slow_line
+	echo -e "${DARK_GREEN}IPTABLES NAT:${NC}"
+	iptables -t nat -S PREROUTING 2>/dev/null | grep -E "dport (${SLOW_REDIRECT:-53}|${SLOW_PORT})|to-ports ${SLOW_PORT}" || echo -e "  ${RED}Sin regla NAT detectada.${NC}"
+	slow_line
+	slow_pause
 }
 
 slow_status_text() {
@@ -354,6 +381,7 @@ slow_toggle() {
 slow_logs() {
 	clear
 	slow_title "LOG SLOWDNS"
+	slow_check_connection
 	journalctl -u slowdns -n 80 --no-pager 2>/dev/null || tail -n 80 "$SLOW_LOG" 2>/dev/null
 	slow_pause
 }
@@ -403,13 +431,13 @@ while true; do
 	clear
 	if [[ ! -f "$SLOW_CONF" ]]; then
 		slow_line
-		echo -e "${CYAN}                       UDP-SLOWDNS${NC}"
+		echo -e "${CYAN}                         SLOWDNS${NC}"
 		slow_line
 		slow_opt "1" "INSTALAR SLOWDNS"
 		slow_line
 		slow_opt "0" "Volver"
 	else
-		slow_title "UDP-SLOWDNS"
+		slow_title "SLOWDNS"
 		slow_summary
 		slow_line
 		slow_opt "1" "RECONFIGURAR SLOWDNS"
@@ -427,6 +455,7 @@ while true; do
 		slow_line
 		slow_opt "10" "LOG SLOWDNS"
 		slow_opt "11" "LOG SLOWDNS EN TIEMPO REAL"
+		slow_opt "14" "DIAGNOSTICO SLOWDNS"
 		slow_line
 		printf "%b  %b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}Volver${NC}" "${NEON}[12]${NC} ${CYAN}>${NC} ${WHITE}REINSTALAR${NC}" "${NEON}[13]${NC} ${CYAN}>${NC} ${WHITE}DESINSTALAR${NC}"
 	fi
@@ -447,6 +476,7 @@ while true; do
 		11) [[ -f "$SLOW_CONF" ]] && slow_logs_live ;;
 		12) [[ -f "$SLOW_CONF" ]] && slow_download_bin && slow_configure ;;
 		13) [[ -f "$SLOW_CONF" ]] && slow_load_conf && slow_uninstall ;;
+		14) [[ -f "$SLOW_CONF" ]] && slow_diagnostics ;;
 		0) conexao; exit ;;
 	esac
 done

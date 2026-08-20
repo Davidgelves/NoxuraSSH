@@ -131,19 +131,26 @@ EOF
 }
 
 slow_apply_redirect() {
+	local old_rule
 	iptables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
 	iptables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-	iptables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	while IFS= read -r old_rule; do
+		[[ -z "$old_rule" ]] && continue
+		iptables -t nat ${old_rule/-A /-D } >/dev/null 2>&1 || true
+	done < <(iptables -t nat -S PREROUTING 2>/dev/null | grep -E -- "-p udp .*--dport ${SLOW_REDIRECT:-53} .* -j REDIRECT")
 	iptables -I INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
 	iptables -I INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-	iptables -t nat -A PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	iptables -t nat -I PREROUTING 1 -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
 	if command -v ip6tables >/dev/null 2>&1; then
 		ip6tables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
 		ip6tables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-		ip6tables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+		while IFS= read -r old_rule; do
+			[[ -z "$old_rule" ]] && continue
+			ip6tables -t nat ${old_rule/-A /-D } >/dev/null 2>&1 || true
+		done < <(ip6tables -t nat -S PREROUTING 2>/dev/null | grep -E -- "-p udp .*--dport ${SLOW_REDIRECT:-53} .* -j REDIRECT")
 		ip6tables -I INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
 		ip6tables -I INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-		ip6tables -t nat -A PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+		ip6tables -t nat -I PREROUTING 1 -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
 	fi
 }
 
@@ -176,8 +183,12 @@ slow_check_connection() {
 		echo -e "${RED}NO SE ENCONTRO REDIRECCION UDP ${SLOW_REDIRECT:-53} > ${SLOW_PORT}.${NC}"
 	fi
 	if command -v dig >/dev/null 2>&1 && [[ -n "$SLOW_DOMAIN" ]]; then
-		echo -e "${DARK_GREEN}DNS NS:${NC} ${WHITE}$(dig +short NS "$SLOW_DOMAIN" 2>/dev/null | xargs)${NC}"
-		echo -e "${DARK_GREEN}DNS A:${NC} ${WHITE}$(dig +short A "$SLOW_DOMAIN" 2>/dev/null | xargs)${NC}"
+		local dns_ns dns_a
+		dns_ns="$(dig +short NS "$SLOW_DOMAIN" 2>/dev/null | xargs)"
+		dns_a="$(dig +short A "$SLOW_DOMAIN" 2>/dev/null | xargs)"
+		echo -e "${DARK_GREEN}DNS NS:${NC} ${WHITE}${dns_ns:-NO RESUELVE}${NC}"
+		echo -e "${DARK_GREEN}DNS A:${NC} ${WHITE}${dns_a:-NO RESUELVE}${NC}"
+		[[ -z "$dns_ns$dns_a" ]] && echo -e "${RED}El dominio NS no resuelve. Revise los registros DNS antes de probar el cliente.${NC}"
 	fi
 	slow_line
 }
@@ -395,6 +406,8 @@ slow_logs_live() {
 slow_uninstall() {
 	clear
 	slow_title "DESINSTALAR SLOWDNS"
+	slow_load_conf
+	local old_rule
 	echo -ne "${DARK_GREEN}CONFIRMAR DESINSTALACION [s/n]:${NC} "; read -r resp
 	[[ "$resp" =~ ^[sS]$ ]] || return
 	systemctl stop slowdns >/dev/null 2>&1 || true
@@ -403,11 +416,17 @@ slow_uninstall() {
 	systemctl daemon-reload >/dev/null 2>&1 || true
 	iptables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
 	iptables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-	iptables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+	while IFS= read -r old_rule; do
+		[[ -z "$old_rule" ]] && continue
+		iptables -t nat ${old_rule/-A /-D } >/dev/null 2>&1 || true
+	done < <(iptables -t nat -S PREROUTING 2>/dev/null | grep -E -- "-p udp .*--dport ${SLOW_REDIRECT:-53} .* -j REDIRECT")
 	if command -v ip6tables >/dev/null 2>&1; then
 		ip6tables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
 		ip6tables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-		ip6tables -t nat -D PREROUTING -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
+		while IFS= read -r old_rule; do
+			[[ -z "$old_rule" ]] && continue
+			ip6tables -t nat ${old_rule/-A /-D } >/dev/null 2>&1 || true
+		done < <(ip6tables -t nat -S PREROUTING 2>/dev/null | grep -E -- "-p udp .*--dport ${SLOW_REDIRECT:-53} .* -j REDIRECT")
 	fi
 	rm -rf "$SLOW_DIR" "$SLOW_LOG"
 	echo -e "${GREEN}SlowDNS desinstalado.${NC}"

@@ -43,7 +43,7 @@ hyst_red_line() {
 }
 
 hyst_opt() {
-	echo -e "${NEON}[$1]${NC} ${CYAN}>${NC} $2"
+	echo -e "${NEON}[$1]${NC} ${WHITE}>${NC} $2"
 }
 
 hyst_pause() {
@@ -369,7 +369,7 @@ hyst_change_range() {
 		hyst_opt "2" "${WHITE}PONER REGLA DE RANGOS IPTABLES${NC}"
 		hyst_opt "0" "${WHITE}VOLVER${NC}"
 		hyst_line
-		echo -ne "${DARK_GREEN}Opcion:${NC} "
+		echo -ne "${CYAN}Opcion:${NC} "
 		read -r range_opt
 		case "$range_opt" in
 			1)
@@ -487,10 +487,10 @@ hyst_menu() {
 			hyst_opt "7" "${WHITE}LOG UDP-HYSTERIA v1${NC}"
 			hyst_opt "8" "${WHITE}LOG UDP-HYSTERIA v1 EN TIEMPO REAL${NC}"
 			hyst_red_line
-			printf "%b  %b  %b\n" "${NEON}[0]${NC} ${CYAN}>${NC} ${WHITE}Volver${NC}" "${NEON}[9]${NC} ${CYAN}>${NC} ${WHITE}REINSTALAR${NC}" "${NEON}[10]${NC} ${CYAN}>${NC} ${WHITE}DESINSTALAR${NC}"
+			printf "%b  %b  %b\n" "${NEON}[0]${NC} ${WHITE}>${NC} ${WHITE}Volver${NC}" "${NEON}[9]${NC} ${WHITE}>${NC} ${WHITE}REINSTALAR${NC}" "${NEON}[10]${NC} ${WHITE}>${NC} ${WHITE}DESINSTALAR${NC}"
 		fi
 		hyst_red_line
-		echo -ne "${DARK_GREEN}Opcion:${NC} "
+		echo -ne "${CYAN}Opcion:${NC} "
 		read -r opt
 		case "$opt" in
 			1) hyst_configure ;;

@@ -39,7 +39,7 @@ sshplus_line() {
 sshplus_opt() {
 	local n="${1#0}"
 	[[ -z "$n" ]] && n="0"
-	printf '%b[%s]\033[0m %b>\033[0m \033[1;37m%s\033[0m %b\n' "$SSHPLUS_NUM" "$n" "$SSHPLUS_CYAN" "$2" "$3"
+	printf '%b[%s]\033[0m \033[1;37m>\033[0m \033[1;37m%s\033[0m %b\n' "$SSHPLUS_NUM" "$n" "$2" "$3"
 }
 sshplus_opt_cell() {
 	local n="${1#0}" text="$2" st="$3" max="${4:-19}" cell num rest
@@ -50,7 +50,7 @@ sshplus_opt_cell() {
 	[[ "$max" -lt 12 ]] && max=12
 	text="${text:0:max}"
 	printf -v rest ' > %-*s' "$max" "$text"
-	printf '%b%s\033[0m%b%s\033[0m%b' "$SSHPLUS_NUM" "$num" "$SSHPLUS_CYAN" "${rest:0:3}" "\033[1;37m${rest:3}\033[0m$st"
+	printf '%b%s\033[0m\033[1;37m%s\033[0m%b' "$SSHPLUS_NUM" "$num" "$rest" "\033[1;37m$st\033[0m"
 }
 sshplus_opt_pair() {
 	if [[ "${SSHPLUS_COMPACT:-0}" == 1 ]]; then
@@ -280,7 +280,7 @@ ensure_licence_conexao
 				fun_bar 'apt update -y' "apt install squid3 -y"
 			} || {
 				echo -e "\n\033[1;31m[\033[1;36m1\033[1;31m] \033[1;37m• \033[1;33mSQUID VERSAO 3.3.X\n\033[1;31m[\033[1;36m2\033[1;31m] \033[1;37m• \033[1;33mSQUID VERSAO 3.5.X\033[0m\n"
-				read -p "$(echo -e "\033[1;32mELIJA UNA OPCION \033[1;37m: ")" -e -i 1 opc
+				echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} "; read -e -i 1 opc
 				[[ -z "$opc" ]] && {
 					echo -e "\n\033[1;31mOpcion no valida!"
 					sleep 2
@@ -1716,10 +1716,10 @@ exit 0' >$RCLOCAL
 				done
 			fi
 			echo -e "\033[1;31m════════════════════════════════════════════\033[0m"
-			echo -e "\033[1;32m[0]\033[1;37m\E[41;1;37m CANCELAR \E[0m    \033[1;32m[5]\033[1;37m\E[41;1;37m INGRESAR MANUALMENTE \E[0m"
+			echo -e "${SSHPLUS_NUM}[0]${SCOLOR} \033[1;37m>\033[0m \033[1;37mCANCELAR\033[0m    ${SSHPLUS_NUM}[5]${SCOLOR} \033[1;37m>\033[0m \033[1;37mINGRESAR MANUALMENTE\033[0m"
 			echo -e "\033[1;31m════════════════════════════════════════════\033[0m"
 			echo ""
-			echo -ne "\033[1;37mIngresa una opcion: \033[0m"
+			echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} "
 			read ch
 			case "$ch" in
 				0) return 1 ;;
@@ -1943,7 +1943,7 @@ PY
 		sshplus_opt "6" "MODIFICAR ESTADO DEL WEBSOCKET"
 		sshplus_opt "0" "VOLVER"
 		sshplus_line
-		echo -ne "${SSHPLUS_DARK_GREEN}Opcion:${SCOLOR} "
+		echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} "
 		read resposta
 		if [[ "$resposta" = '1' ]]; then
 			if pgrep -f '/etc/SSHPlus/proxy.py' >/dev/null 2>&1; then
@@ -2652,7 +2652,7 @@ PY
 			sshplus_opt_pair "9" "BADVPN" "$badsts" "0" "VOLVER" ""
 			sshplus_line
 			tput civis
-			echo -ne "${SSHPLUS_DARK_GREEN}Opcion:${SCOLOR} ";
+			echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} ";
 			read x
 			tput cnorm
 			clear

@@ -19,7 +19,7 @@ _menub_line() {
 }
 
 _menub_opt() {
-	echo -e "${NEON}[$1]${NC} ${CYAN}>${NC} ${WHITE}$2${NC} $3"
+	echo -e "${NEON}[$1]${NC} ${WHITE}>${NC} ${WHITE}$2${NC} $3"
 }
 
 while true; do
@@ -35,7 +35,7 @@ while true; do
 	_menub_opt "0" "VOLVER" ""
 	_menub_line
 	tput civis
-	echo -ne "${DARK_GREEN}Opcion:${NC} "
+	echo -ne "${CYAN}Opcion:${NC} "
 	read x
 	tput cnorm
 	clear

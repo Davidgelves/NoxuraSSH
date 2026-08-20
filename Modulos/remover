@@ -22,11 +22,11 @@ rm_title() {
 }
 
 rm_opt() {
-	echo -e "${NEON}[$1]${NC} ${CYAN}>${NC} ${WHITE}$2${NC}"
+	echo -e "${NEON}[$1]${NC} ${WHITE}>${NC} ${WHITE}$2${NC}"
 }
 
 rm_prompt() {
-	echo -ne "${DARK_GREEN}Opcion:${NC} "
+	echo -ne "${CYAN}Opcion:${NC} "
 }
 
 remove_ovp() {

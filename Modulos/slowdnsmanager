@@ -35,7 +35,7 @@ slow_title() {
 }
 
 slow_opt() {
-	echo -e "${NEON}[$1]${NC} ${CYAN}>${NC} ${WHITE}$2${NC} $3"
+	echo -e "${NEON}[$1]${NC} ${WHITE}>${NC} ${WHITE}$2${NC} $3"
 }
 
 slow_pause() {
@@ -326,12 +326,12 @@ slow_pick_traffic() {
 			pad=$((50 - ${#left} - ${#SLOW_TARGET_PORTS[$i]}))
 			[[ "$pad" -lt 2 ]] && pad=2
 			dots="$(printf '%*s' "$pad" '' | tr ' ' '.')"
-			echo -e "${NEON}[$((i + 1))]${NC} ${CYAN}>${NC} ${WHITE}${SLOW_TARGET_LABELS[$i]} ${YELLOW}${dots}${GREEN}${SLOW_TARGET_PORTS[$i]}${NC}"
+			echo -e "${NEON}[$((i + 1))]${NC} ${WHITE}>${NC} ${WHITE}${SLOW_TARGET_LABELS[$i]} ${YELLOW}${dots}${GREEN}${SLOW_TARGET_PORTS[$i]}${NC}"
 		done
 		slow_line
 		slow_opt "0" "CANCELAR"
 		slow_line
-		echo -ne "${DARK_GREEN}Opcion:${NC} "
+		echo -ne "${CYAN}Opcion:${NC} "
 		read -r opt
 		[[ "$opt" = "0" ]] && return 1
 		if [[ "$opt" =~ ^[0-9]+$ ]] && [[ "$opt" -ge 1 ]] && [[ "$opt" -le "${#SLOW_TARGET_PORTS[@]}" ]]; then
@@ -484,7 +484,7 @@ slow_config_menu() {
 		slow_opt "5" "MODIFICAR DOMINIO NS"
 		slow_opt "0" "VOLVER"
 		slow_line
-		echo -ne "${DARK_GREEN}Opcion:${NC} "
+		echo -ne "${CYAN}Opcion:${NC} "
 		read -r cfg_opt
 		case "$cfg_opt" in
 			1) slow_show_keys ;;
@@ -522,7 +522,7 @@ while true; do
 		slow_opt "0" "Volver"
 	fi
 	slow_line
-	echo -ne "${DARK_GREEN}Opcion:${NC} "
+	echo -ne "${CYAN}Opcion:${NC} "
 	read -r opt
 	case "$opt" in
 		1) [[ -f "$SLOW_CONF" ]] && slow_config_menu || slow_configure ;;

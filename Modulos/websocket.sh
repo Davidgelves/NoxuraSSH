@@ -6,6 +6,8 @@ RED='\033[1;31m'
 GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
+CYAN='\033[1;38;2;76;228;255m'
+NEON='\033[1;38;2;0;255;127m'
 WHITE='\033[1;37m'
 NC='\033[0m'
 RAW_REPO="${SSHPLUS_RAW:-https://raw.githubusercontent.com/${SSHPLUS_GH_USER_REPO:-Davidgelves/ssh-pro-vpn}/${SSHPLUS_GH_BRANCH:-main}}"
@@ -159,10 +161,10 @@ main() {
         cur_port=$(ps x | grep '[S]SHPlus/wsproxy.py' | head -1 | awk '{print $NF}')
         echo -e "${GREEN}WebSocket activo${NC} Puerto: ${cur_port:-desconocido}"
         echo ""
-        echo -e "${YELLOW}[1] Desactivar WebSocket${NC}"
-        echo -e "${YELLOW}[0] Volver${NC}"
+        echo -e "${NEON}[1]${NC} ${WHITE}>${NC} ${WHITE}Desactivar WebSocket${NC}"
+        echo -e "${NEON}[0]${NC} ${WHITE}>${NC} ${WHITE}Volver${NC}"
         echo ""
-        read -r -p "Opcion: " choice
+        echo -ne "${CYAN}Opcion:${NC} "; read -r choice
         if [[ "$choice" == "1" ]]; then
             stop_websocket
             echo -e "${GREEN}WebSocket desactivado.${NC}"

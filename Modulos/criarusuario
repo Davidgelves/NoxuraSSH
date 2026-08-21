@@ -7,6 +7,23 @@ IP=$(cat /etc/IP)
 cor1='\033[41;1;37m'
 cor2='\033[44;1;37m'
 scor='\033[0m'
+SSHPLUS_CYAN=$'\033[1;38;2;76;228;255m'
+SSHPLUS_DARK_GREEN=$'\033[0;32m'
+SSHPLUS_WHITE=$'\033[1;37m'
+SSHPLUS_RESET=$'\033[0m'
+sshplus_line() {
+    echo -e "${SSHPLUS_CYAN}============================================================${SSHPLUS_RESET}"
+}
+sshplus_access_data() {
+    sshplus_line
+    echo -e "${SSHPLUS_CYAN}                      DATOS DE ACCESO${SSHPLUS_RESET}"
+    sshplus_line
+    echo -e "${SSHPLUS_DARK_GREEN}USUARIO:${SSHPLUS_RESET} ${SSHPLUS_WHITE}$username${SSHPLUS_RESET}"
+    echo -e "${SSHPLUS_DARK_GREEN}CONTRASENA:${SSHPLUS_RESET} ${SSHPLUS_WHITE}$password${SSHPLUS_RESET}"
+    echo -e "${SSHPLUS_DARK_GREEN}EXPIRA:${SSHPLUS_RESET} ${SSHPLUS_WHITE}$gui${SSHPLUS_RESET}"
+    echo -e "${SSHPLUS_DARK_GREEN}LIMITE DE CONEXIONES:${SSHPLUS_RESET} ${SSHPLUS_WHITE}$sshlimiter${SSHPLUS_RESET}"
+    sshplus_line
+}
 # Gerar client.ovpn
 newclient() {
     cp /etc/openvpn/client-common.txt ~/$1.ovpn
@@ -253,12 +270,12 @@ fun_edithost() {
 }
 [[ ! -e /usr/lib/sshplus ]] && exit 0
 tput setaf 7;tput setab 4;tput bold;printf '%30s%s%-15s\n' "CREAR USUARIO SSH";tput sgr0
-#echo -ne "\033[1;32m📝 NOME:\033[1;37m ";read namee
+#echo -ne "\033[1;32mNOME:\033[1;37m ";read namee
 #[[ -z $namee ]] && {
 #	echo -e "\n${cor1}Nome vazio ou invalido!${scor}\n"
 #	exit 1
 #}
-echo -ne "\033[1;32m🗣️ USUARIO:\033[1;37m ";read username
+echo -ne "\033[1;32mUSUARIO:\033[1;37m ";read username
 [[ -z $username ]] && {
 	echo -e "\n${cor1}Usuario vacío o no válido.${scor}\n"
 	exit 1
@@ -279,7 +296,7 @@ sizemax=$(echo ${#username})
 	echo -e "${cor1}Use como máximo 25 caracteres.${scor}\n"
 	exit 1
 }
-echo -ne "\033[1;32m🔑 CONTRASEÑA:\033[1;37m ";read password
+echo -ne "\033[1;32mCONTRASEÑA:\033[1;37m ";read password
 [[ -z $password ]] && {
 	echo -e "\n${cor1}Contraseña vacía o no válida.${scor}\n"
 	exit 1
@@ -289,7 +306,7 @@ sizepass=$(echo ${#password})
 	echo -e "\n${cor1}Contraseña corta: use al menos 4 caracteres.${scor}\n"
 	exit 1
 }
-echo -ne "\033[1;32m⌛ EXPIRA (días):\033[1;37m ";read dias
+echo -ne "\033[1;32mEXPIRA (días):\033[1;37m ";read dias
 [[ -z $dias ]] && {
 	echo -e "\n${cor1}Indique el número de días.${scor}\n"
 	exit 1
@@ -302,7 +319,7 @@ echo -ne "\033[1;32m⌛ EXPIRA (días):\033[1;37m ";read dias
 	echo -e "\n${cor1}El número debe ser mayor que cero.${scor}\n"
 	exit 1
 }
-echo -ne "\033[1;32m📲 LÍMITE DE CONEXIONES:\033[1;37m ";read sshlimiter
+echo -ne "\033[1;32mLÍMITE DE CONEXIONES:\033[1;37m ";read sshlimiter
 [[ -z $sshlimiter ]] && {
 	echo -e "\n${cor1}Límite de conexiones vacío.${scor}\n"
 	exit 1
@@ -342,12 +359,8 @@ echo "$username $sshlimiter" >>/root/usuarios.db
 			}
 		}
 		clear
-		#echo -e "\033[1;32m 📝NOME: \033[1;37m$nomee"
-		echo -e "\E[44;1;37m====== DATOS DE ACCESO ======\E[0m"
-		echo -e "\033[1;32m 🗣️ USUARIO: \033[1;37m$username"
-		echo -e "\033[1;32m 🔑 CONTRASEÑA: \033[1;37m$password"
-		echo -e "\033[1;32m ⌛ EXPIRA: \033[1;37m$gui"
-		echo -e "\033[1;32m 📲 LÍMITE DE CONEXIONES: \033[1;37m$sshlimiter"
+		#echo -e "\033[1;32m NOME: \033[1;37m$nomee"
+		sshplus_access_data
 		sleep 1
 		function aguarde() {
 			helice() {
@@ -382,20 +395,12 @@ echo "$username $sshlimiter" >>/root/usuarios.db
 		}
 	} || {
 		clear
-		#echo -e "\033[1;32m 📝NOME: \033[1;37m$nomee"
-		echo -e "\E[44;1;37m====== DATOS DE ACCESO ======\E[0m"
-		echo -e "\033[1;32m 🗣️ USUARIO: \033[1;37m$username"
-		echo -e "\033[1;32m 🔑 CONTRASEÑA: \033[1;37m$password"
-		echo -e "\033[1;32m ⌛ EXPIRA: \033[1;37m$gui"
-		echo -e "\033[1;32m 📲 LÍMITE DE CONEXIONES: \033[1;37m$sshlimiter"
+		#echo -e "\033[1;32m NOME: \033[1;37m$nomee"
+		sshplus_access_data
 	}
 } || {
 	clear
-		#echo -e "\033[1;32m 📝NOME: \033[1;37m$nomee"
-		echo -e "\E[44;1;37m====== DATOS DE ACCESO ======\E[0m"
-		echo -e "\033[1;32m 🗣️ USUARIO: \033[1;37m$username"
-		echo -e "\033[1;32m 🔑 CONTRASEÑA: \033[1;37m$password"
-		echo -e "\033[1;32m ⌛ EXPIRA: \033[1;37m$gui"
-		echo -e "\033[1;32m 📲 LÍMITE DE CONEXIONES: \033[1;37m$sshlimiter"
+		#echo -e "\033[1;32m NOME: \033[1;37m$nomee"
+		sshplus_access_data
 }
-echo -ne "\n\033[1;31mENTER \033[1;33mpara volver al menú\033[0m"; read
+echo -ne "\n${SSHPLUS_CYAN}Enter${SSHPLUS_RESET} ${SSHPLUS_WHITE}para volver al menu${SSHPLUS_RESET}"; read

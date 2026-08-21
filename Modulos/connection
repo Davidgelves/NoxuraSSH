@@ -71,11 +71,11 @@ ensure_licence_conexao() {
 	[[ -f /usr/lib/licence ]] && return 0
 	[[ -f /usr/lib/sshplus ]] && cp -f /usr/lib/sshplus /usr/lib/licence && return 0
 	[[ -f /etc/rec/licence ]] && cp -f /etc/rec/licence /usr/lib/licence && return 0
-	echo 'by: @KIRITO_SSH' >/usr/lib/licence
+	echo 'By J DAVID AG' >/usr/lib/licence
 	chmod 644 /usr/lib/licence
 }
 ensure_licence_conexao
-[[ $(awk -F" " '{print $2}' /usr/lib/licence 2>/dev/null) == '@KIRITO_SSH' ]] && {
+[[ $(awk -F" " '{print $2}' /usr/lib/licence 2>/dev/null) == 'J DAVID AG' ]] && {
 	# Ubuntu 22+: netstat/ss mostram "python3"; o binario e so "python3" (sem "python")
 	SSHPLUS_PY="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo python3)"
 	# free viene de procps; en VPS mínimas o PATH raro puede faltar → /proc/meminfo

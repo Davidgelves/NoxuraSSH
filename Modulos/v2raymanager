@@ -138,6 +138,11 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     }
     unistallv2 () {
     source <(curl -sL https://multi.netlify.app/v2ray.sh) --remove > /dev/null 2>&1
+    systemctl stop xray >/dev/null 2>&1
+    systemctl disable xray >/dev/null 2>&1
+    rm -f /etc/systemd/system/xray.service /usr/local/bin/xray /usr/bin/xray /bin/xray >/dev/null 2>&1
+    rm -rf /usr/local/etc/xray /etc/xray /var/log/xray >/dev/null 2>&1
+    systemctl daemon-reload >/dev/null 2>&1
     rm -rf /etc/SSHPlus/RegV2ray > /dev/null 2>&1
     echo -e "\n\033[1;32mV2RAY ELIMINADO CORRECTAMENTE.\033[0m"
     echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
@@ -612,6 +617,114 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     ajustes_v2ray
     }
 
+    instalar_xray_xhttp() {
+    local port path domain uuid user exp xray_url arch asset
+    clear
+    v2ray_title "INSTALAR XRAY XHTTP"
+    echo -ne "${SSHPLUS_DARK_GREEN}PUERTO XRAY XHTTP [Enter = 8443]:${SCOLOR} " && read port
+    [[ -z "$port" ]] && port="8443"
+    [[ ! "$port" =~ ^[0-9]+$ ]] && echo -e "\033[1;31mPuerto no valido.\033[0m" && pausa_v2ray && ajustes_v2ray
+    echo -ne "${SSHPLUS_DARK_GREEN}PATH XHTTP [Enter = /xhttp]:${SCOLOR} " && read path
+    [[ -z "$path" ]] && path="/xhttp"
+    [[ "$path" != /* ]] && path="/$path"
+    echo -ne "${SSHPLUS_DARK_GREEN}DOMINIO/SNI [opcional]:${SCOLOR} " && read domain
+    echo -ne "${SSHPLUS_DARK_GREEN}USUARIO [Enter = xhttp]:${SCOLOR} " && read user
+    [[ -z "$user" ]] && user="xhttp"
+    uuid="$(uuidgen)"
+    exp="$(date '+%Y-%m-%d' -d '+365 days' 2>/dev/null || date '+%Y-%m-%d')"
+
+    mkdir -p /usr/local/etc/xray /etc/SSHPlus/v2ray /etc/SSHPlus
+    arch="$(uname -m)"
+    case "$arch" in
+    x86_64|amd64) asset="Xray-linux-64.zip" ;;
+    aarch64|arm64) asset="Xray-linux-arm64-v8a.zip" ;;
+    *) echo -e "\033[1;31mArquitectura no soportada: $arch\033[0m"; pausa_v2ray; ajustes_v2ray ;;
+    esac
+    xray_url="https://github.com/XTLS/Xray-core/releases/latest/download/${asset}"
+    if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -y >/dev/null 2>&1 || true
+    apt-get install -y unzip curl wget ca-certificates >/dev/null 2>&1 || true
+    fi
+    cd /tmp || { echo -e "\033[1;31mNo se pudo acceder a /tmp\033[0m"; pausa_v2ray; ajustes_v2ray; }
+    rm -rf xray-install xray.zip
+    mkdir -p xray-install
+    if command -v curl >/dev/null 2>&1; then
+    curl -L -o xray.zip "$xray_url"
+    else
+    wget -O xray.zip "$xray_url"
+    fi
+    unzip -o xray.zip -d xray-install >/dev/null 2>&1 || { echo -e "\033[1;31mNo se pudo descomprimir Xray.\033[0m"; pausa_v2ray; ajustes_v2ray; }
+    install -m 755 xray-install/xray /usr/local/bin/xray || { echo -e "\033[1;31mNo se pudo instalar /usr/local/bin/xray.\033[0m"; pausa_v2ray; ajustes_v2ray; }
+
+    cat >/usr/local/etc/xray/config.json <<EOF
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "tag": "vless-xhttp",
+      "listen": "0.0.0.0",
+      "port": ${port},
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "${uuid}",
+            "email": "${user}@noxurassh"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "none",
+        "xhttpSettings": {
+          "path": "${path}"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    }
+  ]
+}
+EOF
+
+    cat >/etc/systemd/system/xray.service <<EOF
+[Unit]
+Description=NoxuraSSH Xray XHTTP Service
+After=network.target nss-lookup.target
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/xray run -config /usr/local/etc/xray/config.json
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload >/dev/null 2>&1
+    systemctl enable xray >/dev/null 2>&1
+    systemctl restart xray >/dev/null 2>&1
+    [[ -f /etc/SSHPlus/RegV2ray ]] || touch /etc/SSHPlus/RegV2ray
+    grep -q "$uuid" /etc/SSHPlus/RegV2ray 2>/dev/null || echo "  $uuid | $user | $exp " >> /etc/SSHPlus/RegV2ray
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    echo -e "\033[1;37mXRAY XHTTP INSTALADO\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}PUERTO:${SCOLOR} \033[1;37m$port\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}PATH:${SCOLOR} \033[1;37m$path\033[0m"
+    [[ -n "$domain" ]] && echo -e "${SSHPLUS_DARK_GREEN}DOMINIO:${SCOLOR} \033[1;37m$domain\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}UUID:${SCOLOR} \033[1;37m$uuid\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    pausa_v2ray
+    ajustes_v2ray
+    }
+
     menu_usuarios_v2ray() {
     clear
     v2ray_title "ADMINISTRAR USUARIOS V2RAY"
@@ -647,10 +760,11 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     v2ray_opt "4" "MODIFICAR JSON V2RAY"
     v2ray_opt "5" "MODIFICAR UUID V2RAY"
     v2ray_opt "6" "MODIFICAR PATH V2RAY"
+    v2ray_opt "7" "INSTALAR XRAY XHTTP"
     v2ray_line
     v2ray_opt "0" "VOLVER"
     v2ray_line
-    selection=$(selection_fun 6)
+    selection=$(selection_fun 7)
     case ${selection} in
     1)protocolv2ray ;;
     2)tls ;;
@@ -658,6 +772,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     4)editar_json_v2ray ;;
     5)modificar_uuid_v2ray ;;
     6)modificar_path_v2ray ;;
+    7)instalar_xray_xhttp ;;
     0)fun_v2raymanager ;;
     esac
     }
@@ -665,7 +780,11 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
     reiniciar_v2ray() {
     clear
     v2ray_title "REINICIAR SERVICIO V2RAY"
+    if systemctl is-active xray >/dev/null 2>&1; then
+    systemctl restart xray >/dev/null 2>&1
+    else
     v2ray restart > /dev/null 2>&1
+    fi
     echo -e "\033[1;32mServicio V2RAY reiniciado correctamente.\033[0m"
     v2ray_line
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
@@ -677,7 +796,7 @@ sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
             [[ ! -e '/home/sshplus' ]] && exit 0
             clear
             v2ray_title "V2RAY"
-            if netstat -tunlp | grep v2ray >/dev/null 2>&1; then
+            if netstat -tunlp | grep -E 'v2ray|xray' >/dev/null 2>&1; then
                 v2ray_running=1
             else
                 v2ray_running=0

@@ -2674,13 +2674,17 @@ PY
 			} || {
 				trojansts="\033[1;31mx "
 			}
-			[[ "$(netstat -tunlp | grep 'v2ray' | wc -l)" != '0' ]] && {
+			[[ "$(netstat -tunlp | grep -E 'v2ray|xray' | wc -l)" != '0' ]] && {
 				_v2_pt=""
 				if command -v jq >/dev/null 2>&1 && [[ -f /etc/v2ray/config.json ]]; then
 					_v2_pt="$(jq -r '[.inbounds[]?.port] | map(select(. != null)) | unique | join(" ")' /etc/v2ray/config.json 2>/dev/null)"
 				fi
+				if [[ -z "${_v2_pt// }" ]] && command -v jq >/dev/null 2>&1 && [[ -f /usr/local/etc/xray/config.json ]]; then
+					_v2_pt="$(jq -r '[.inbounds[]?.port] | map(select(. != null)) | unique | join(" ")' /usr/local/etc/xray/config.json 2>/dev/null)"
+				fi
 				[[ -z "${_v2_pt// }" && -f /etc/v2ray/config.json ]] && _v2_pt="$(grep -oE '"port"[[:space:]]*:[[:space:]]*[0-9]+' /etc/v2ray/config.json 2>/dev/null | grep -oE '[0-9]+' | sort -n | uniq | xargs)"
-				[[ -z "${_v2_pt// }" ]] && _v2_pt="$(netstat -tunlp 2>/dev/null | grep 'v2ray' | awk '{print $4}' | cut -d: -f2 | xargs)"
+				[[ -z "${_v2_pt// }" && -f /usr/local/etc/xray/config.json ]] && _v2_pt="$(grep -oE '"port"[[:space:]]*:[[:space:]]*[0-9]+' /usr/local/etc/xray/config.json 2>/dev/null | grep -oE '[0-9]+' | sort -n | uniq | xargs)"
+				[[ -z "${_v2_pt// }" ]] && _v2_pt="$(netstat -tunlp 2>/dev/null | grep -E 'v2ray|xray' | awk '{print $4}' | cut -d: -f2 | xargs)"
 				echo -e "\033[1;32mSERVICIO: \033[1;33mV2RAY \033[1;32mPUERTO: \033[1;37m${_v2_pt:-N/A}"
 				xv2ray="\033[1;32mo "
 			} || {

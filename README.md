@@ -42,20 +42,6 @@ menu
 
 ## Desinstalacion
 
-Desde el menu principal:
-
-```text
-menu
-```
-
-Luego seleccione la opcion:
-
-```text
-DESINSTALAR SCRIPT
-```
-
-Tambien puede ejecutar directamente:
-
 ```bash
 delscript
 ```
@@ -69,6 +55,7 @@ El script incluye menus para administrar o instalar:
 - SSL Tunnel
 - Dropbear
 - V2Ray
+- V2Ray XHTTP, en fase de pruebas
 - SlowDNS
 - Hysteria v1
 - Trojan-Go
@@ -91,6 +78,7 @@ El script incluye menus para administrar o instalar:
 - Configurar puertos y servicios.
 - Reiniciar servicios desde el menu.
 - Administrar V2Ray con UUID, path, TLS y configuracion.
+- Instalar y probar V2Ray XHTTP, aun en revision.
 - Administrar SlowDNS con claves, dominio NS, puerto y diagnostico.
 - Ver logs de servicios cuando esten disponibles.
 
@@ -118,6 +106,7 @@ NoxuraSSH sigue en desarrollo. Se estan ajustando:
 - Compatibilidad entre sistemas.
 - Instalacion y desinstalacion limpia.
 - Modulos V2Ray, SlowDNS, Hysteria y servicios relacionados.
+- Compatibilidad y estabilidad de V2Ray XHTTP.
 
 ## Aviso
 

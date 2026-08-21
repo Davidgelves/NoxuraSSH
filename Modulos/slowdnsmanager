@@ -345,7 +345,7 @@ slow_configure() {
 	clear
 	slow_title "CONFIGURAR SLOWDNS"
 	slow_load_conf
-	echo -ne "${DARK_GREEN}PUERTO SLOWDNS:${NC} "; read -r new_port
+	echo -ne "${DARK_GREEN}PUERTO SLOWDNS [Enter = 5300]:${NC} "; read -r new_port
 	echo -ne "${DARK_GREEN}DOMINIO NS:${NC} "; read -r new_domain
 	[[ -n "$new_port" ]] && SLOW_PORT="$new_port"
 	[[ -n "$new_domain" ]] && SLOW_DOMAIN="$new_domain"

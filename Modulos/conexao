@@ -2621,6 +2621,11 @@ PY
 				sts8="\033[1;31mx "
 			}
 			[[ "$(systemctl is-active slowdns 2>/dev/null)" = "active" || "$(pgrep -f 'dnstt-server.*slowdns|dnstt-server.*server.key' 2>/dev/null | wc -l)" != "0" ]] && {
+				_slow_pt=""
+				[[ -f /etc/slowdns/slowdns.conf ]] && _slow_pt="$(grep '^SLOW_PORT=' /etc/slowdns/slowdns.conf 2>/dev/null | head -1 | cut -d= -f2 | tr -d '"')"
+				[[ -z "${_slow_pt// }" ]] && _slow_pt="$(pgrep -af 'dnstt-server' 2>/dev/null | grep -oE -- '-udp :[0-9]+' | head -1 | grep -oE '[0-9]+')"
+				[[ -z "${_slow_pt// }" ]] && _slow_pt="5300"
+				echo -e "\033[1;32mSERVICIO: \033[1;33mSLOWDNS \033[1;32mPUERTO: \033[1;37m${_slow_pt}"
 				sts9="\033[1;32mo "
 			} || {
 				sts9="\033[1;31mx "
@@ -2670,11 +2675,23 @@ PY
 				trojansts="\033[1;31mx "
 			}
 			[[ "$(netstat -tunlp | grep 'v2ray' | wc -l)" != '0' ]] && {
+				_v2_pt=""
+				if command -v jq >/dev/null 2>&1 && [[ -f /etc/v2ray/config.json ]]; then
+					_v2_pt="$(jq -r '[.inbounds[]?.port] | map(select(. != null)) | unique | join(" ")' /etc/v2ray/config.json 2>/dev/null)"
+				fi
+				[[ -z "${_v2_pt// }" && -f /etc/v2ray/config.json ]] && _v2_pt="$(grep -oE '"port"[[:space:]]*:[[:space:]]*[0-9]+' /etc/v2ray/config.json 2>/dev/null | grep -oE '[0-9]+' | sort -n | uniq | xargs)"
+				[[ -z "${_v2_pt// }" ]] && _v2_pt="$(netstat -tunlp 2>/dev/null | grep 'v2ray' | awk '{print $4}' | cut -d: -f2 | xargs)"
+				echo -e "\033[1;32mSERVICIO: \033[1;33mV2RAY \033[1;32mPUERTO: \033[1;37m${_v2_pt:-N/A}"
 				xv2ray="\033[1;32mo "
 			} || {
 				xv2ray="\033[1;31mx "
 			}
 			[[ "$(systemctl is-active hysteria-server 2>/dev/null)" = "active" ]] && {
+				_hyst_pt=""
+				[[ -f /etc/hysteria/sshplus.env ]] && _hyst_pt="$(grep '^HYST_PORT=' /etc/hysteria/sshplus.env 2>/dev/null | head -1 | cut -d= -f2 | tr -d '"')"
+				[[ -z "${_hyst_pt// }" && -f /etc/hysteria/config.json ]] && _hyst_pt="$(grep -oE '"listen"[[:space:]]*:[[:space:]]*"[^"]+"' /etc/hysteria/config.json 2>/dev/null | grep -oE '[0-9]+' | head -1)"
+				[[ -z "${_hyst_pt// }" ]] && _hyst_pt="$(ss -ulnp 2>/dev/null | grep 'hysteria' | awk '{print $5}' | grep -oE '[0-9]+$' | head -1)"
+				echo -e "\033[1;32mSERVICIO: \033[1;33mHYSTERIA v1 \033[1;32mPUERTO: \033[1;37m${_hyst_pt:-N/A}"
 				hysteriasts="\033[1;32mo "
 			} || {
 				hysteriasts="\033[1;31mx "

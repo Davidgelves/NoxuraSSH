@@ -1,6 +1,5 @@
 ﻿#!/bin/bash
 clear
-apt-get install lolcat -y &>/dev/null
 apt-get install figlet -y &>/dev/null
 apt-get install curl -y &>/dev/null
 apt install git -y &>/dev/null 
@@ -221,13 +220,22 @@ rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/d
     echo "clear" >>/root/.bashrc
     echo 'DATE=$(date +"%d-%m-%y")' >>/root/.bashrc
     echo 'TIME=$(date +"%T")' >>/root/.bashrc
-    echo 'figlet -k NoxuraSSH | lolcat' >>/root/.bashrc
-    echo 'echo -e " NOMBRE DEL SERVIDOR : $HOSTNAME"' >>/root/.bashrc
-    echo 'echo -e " SERVIDOR EN MARCHA : $(uptime -p)"' >>/root/.bashrc
-    echo 'echo -e " FECHA : $DATE"' >>/root/.bashrc
-    echo 'echo -e " HORA : $TIME"' >>/root/.bashrc
-    echo 'echo -e "(Desarrollado por) J DAVID AG"' >>/root/.bashrc
-    echo 'echo -e "\033[1;31m ESCRIBA ( menu ) PARA ENTRAR\033[0m."' >>/root/.bashrc
-    echo 'echo -e ""' >>/root/.bashrc
+    cat <<'BASHRC_BANNER' >>/root/.bashrc
+CYAN=$'\033[1;38;2;76;228;255m'
+WHITE=$'\033[1;37m'
+GREEN=$'\033[0;32m'
+RESET=$'\033[0m'
+echo -e "${CYAN}============================================================${RESET}"
+echo -e "${CYAN}                         NoxuraSSH${RESET}"
+echo -e "${CYAN}                     by J DAVID AG${RESET}"
+echo -e "${CYAN}============================================================${RESET}"
+echo -e "${GREEN}NOMBRE DEL SERVIDOR:${RESET} ${WHITE}$HOSTNAME${RESET}"
+echo -e "${GREEN}SERVIDOR EN MARCHA:${RESET} ${WHITE}$(uptime -p)${RESET}"
+echo -e "${GREEN}FECHA:${RESET} ${WHITE}$DATE${RESET}"
+echo -e "${GREEN}HORA:${RESET} ${WHITE}$TIME${RESET}"
+echo -e "${CYAN}============================================================${RESET}"
+echo -e "${CYAN}ESCRIBA:${RESET} ${WHITE}menu${RESET}"
+echo -e ""
+BASHRC_BANNER
     install_final_screen
     rm -f "$HOME/Plus" 2>/dev/null; cat /dev/null > ~/.bash_history && history -c

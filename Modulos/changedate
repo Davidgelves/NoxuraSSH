@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es mudardata
+# lang=es changedate
 database="/root/usuarios.db"
 SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'

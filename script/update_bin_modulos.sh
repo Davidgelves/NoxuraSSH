@@ -55,7 +55,7 @@ rm -f /etc/SSHPlus/ShellBot.sh /etc/SSHPlus/cabecalho /etc/SSHPlus/open.py /etc/
 
 _dir1='/bin'
 _dir2='/etc/SSHPlus'
-_mdls=("addhost" "ajuda" "sshplus_lang" "alterarlimite" "alterarsenha" "tcptweaker.sh" "gltunnel" "utili" "multi" "apache2menu" "check" "chuser" "limit" "rps_cpu" "attscript" "badvpn" "badpro" "badpro1" "badvpn2" "badvpn3" "banner" "bashtop" "ddos" "blocksite" "blockt" "blockuser" "bot" "botssh" "conexao" "criarteste" "criarusuario" "delhost" "delscript" "detalhes" "droplimiter" "expcleaner" "fr" "hysteria-menu" "infousers" "inst-botteste" "initcheck" "instsqd" "limiter" "menu" "menub" "mudardata" "mtuning" "open.py" "otimizar" "painelv2ray" "proxy.py" "reiniciarservicos" "reiniciarsistema" "remover" "senharoot" "ShellBot.sh" "speedtest" "sshmonitor" "swapmemory" "trafegototal" "trojan-go" "uexpired" "userbackup" "verifatt" "verifbot" "v2raymanager" "webmin.sh" "websocket.sh" "wsproxy.py" "pkill.sh")
+_mdls=("addhost" "ajuda" "sshplus_lang" "changelimit" "changepass" "tcptweaker.sh" "gltunnel" "utili" "multi" "apache2menu" "check" "chuser" "limit" "rps_cpu" "attscript" "badvpn" "badpro" "badpro1" "badvpn2" "badvpn3" "banner" "bashtop" "ddos" "blocksite" "blockt" "blockuser" "bot" "botssh" "connection" "createtest" "createuser" "delhost" "delscript" "detalhes" "droplimiter" "expcleaner" "fr" "hysteria-menu" "infousers" "inst-botteste" "initcheck" "instsqd" "limiter" "menu" "menub" "changedate" "mtuning" "open.py" "otimizar" "painelv2ray" "proxy.py" "reiniciarservicos" "reiniciarsistema" "removeuser" "senharoot" "ShellBot.sh" "speedtest" "sshmonitor" "swapmemory" "trafegototal" "trojan-go" "uexpired" "userbackup" "verifatt" "verifbot" "v2raymanager" "webmin.sh" "websocket.sh" "wsproxy.py" "pkill.sh")
 
 echo "[*] Origen: ${SSHPLUS_RAW}/Modulos/"
 for _arq in "${_mdls[@]}"; do
@@ -72,22 +72,37 @@ done
 for _f in cabecalho bot open.py proxy.py wsproxy.py; do
 	[[ -e "$_dir1/$_f" ]] && mv -f "$_dir1/$_f" "$_dir2/"
 done
+sshplus_compat_alias() {
+	local old="$1" new="$2"
+	[[ -e "$_dir1/$new" ]] || return 0
+	rm -f "$_dir1/$old" 2>/dev/null || true
+	ln -s "$_dir1/$new" "$_dir1/$old" 2>/dev/null || cp -f "$_dir1/$new" "$_dir1/$old"
+	chmod +x "$_dir1/$old" 2>/dev/null || true
+}
+sshplus_compat_alias conexao connection
+sshplus_compat_alias criarusuario createuser
+sshplus_compat_alias criarteste createtest
+sshplus_compat_alias remover removeuser
+sshplus_compat_alias mudardata changedate
+sshplus_compat_alias alterarsenha changepass
+sshplus_compat_alias alterarlimite changelimit
 _lvk=$(wget -qO- "${SSHPLUS_RAW}/Modulos/versao" || true)
 if [[ -n "${_lvk:-}" ]]; then
 	echo "$_lvk" | sed -n '1 p' | cut -d' ' -f2 >/bin/versao 2>/dev/null || true
 	cat /bin/versao >/home/sshplus 2>/dev/null || true
 fi
 echo "[OK] Modulos actualizados en /bin (repo ${SSHPLUS_GH_USER_REPO} @ ${SSHPLUS_GH_BRANCH})."
-if [[ -f /bin/conexao ]]; then
-	rm -f /usr/bin/conexao 2>/dev/null || true
-	ln -s /bin/conexao /usr/bin/conexao 2>/dev/null || cp -f /bin/conexao /usr/bin/conexao
-	chmod +x /usr/bin/conexao 2>/dev/null || true
-	if grep -q 'fun_socks' /bin/conexao 2>/dev/null; then
-		echo "[OK] /bin/conexao descargado (menú proxy SOCKS presente)."
+if [[ -f /bin/connection ]]; then
+	rm -f /usr/bin/connection /usr/bin/conexao 2>/dev/null || true
+	ln -s /bin/connection /usr/bin/connection 2>/dev/null || cp -f /bin/connection /usr/bin/connection
+	ln -s /bin/connection /usr/bin/conexao 2>/dev/null || cp -f /bin/connection /usr/bin/conexao
+	chmod +x /usr/bin/connection /usr/bin/conexao 2>/dev/null || true
+	if grep -q 'fun_socks' /bin/connection 2>/dev/null; then
+		echo "[OK] /bin/connection descargado (menú proxy SOCKS presente)."
 	else
-		echo "[!] /bin/conexao parece incompleto (¿repo/rama distinta?). Comprueba: grep fun_socks /bin/conexao"
+		echo "[!] /bin/connection parece incompleto (¿repo/rama distinta?). Comprueba: grep fun_socks /bin/connection"
 	fi
-	ls -la /bin/conexao 2>/dev/null || true
+	ls -la /bin/connection /bin/conexao 2>/dev/null || true
 fi
 echo ""
 echo "Si el menú sigue igual: sal de SSH, vuelve a entrar, o ejecuta: hash -r"

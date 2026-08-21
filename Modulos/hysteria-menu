@@ -503,7 +503,7 @@ hyst_menu() {
 			8) [[ -f "$HYST_CONF" ]] && hyst_follow_logs ;;
 			9) [[ -f "$HYST_CONF" ]] && hyst_reinstall ;;
 			10) [[ -f "$HYST_CONF" ]] && hyst_uninstall ;;
-			0|00) clear; conexao; exit ;;
+			0|00) clear; connection; exit ;;
 			*) echo -e "${RED}Opcion no valida.${NC}"; sleep 1 ;;
 		esac
 	done

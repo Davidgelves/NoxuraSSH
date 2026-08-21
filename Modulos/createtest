@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es - Crear usuario SSH de prueba.
+# lang=es createtest
 
 NC='\033[0m'
 WHITE='\033[1;37m'

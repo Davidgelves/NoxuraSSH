@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es alterarlimite
+# lang=es changepass
 database="/root/usuarios.db"
 SSHPLUS_CYAN=$'\033[38;2;76;228;255m'
 SSHPLUS_NUM=$'\033[1;38;2;0;255;127m'
@@ -37,19 +37,23 @@ clear
 [[ -f "$database" ]] || show_error "Archivo $database no encontrado"
 
 line
-title "CAMBIAR LIMITE DE CONEXIONES"
+title "CAMBIAR CONTRASENA DEL USUARIO"
 line
-echo -e "${SSHPLUS_CYAN}\033[1mUSUARIOS:                   LIMITE:\033[0m"
+echo -e "${SSHPLUS_CYAN}\033[1mUSUARIOS:                   CONTRASENA:\033[0m"
 echo -e "${SSHPLUS_CYAN}\033[1m------------------------------------------------------------\033[0m"
 
 i=0
 unset _userPass
-while read -r user limit _rest; do
+while read -r user _limit _rest; do
 	[[ -z "$user" ]] && continue
 	valid_sshplus_user "$user" || continue
-	[[ "$limit" =~ ^[0-9]+$ ]] || limit=1
 	i=$((i + 1))
-	printf '%b[%s]\033[0m \033[1;37m> %-25s %s\033[0m\n' "$SSHPLUS_NUM" "$i" "$user" "$limit"
+	if [[ -e "/etc/SSHPlus/senha/$user" ]]; then
+		password="$(cat "/etc/SSHPlus/senha/$user")"
+	else
+		password="Null"
+	fi
+	printf '%b[%s]\033[0m \033[1;37m> %-25s %s\033[0m\n' "$SSHPLUS_NUM" "$i" "$user" "$password"
 	_userPass+="\n${i}:${user}"
 done < "$database"
 
@@ -60,23 +64,32 @@ line
 
 echo -ne "\033[1;32mOpcion\033[1;33m: \033[0m"; read -r option
 [[ "$option" == "0" || "$option" == "00" ]] && exit 0
-[[ -z "$option" ]] && show_error "Usuario vacio o inexistente"
+[[ -z "$option" ]] && show_error "Campo vacio o no valido."
 
-usuario="$(echo -e "${_userPass}" | grep -E "^${option}:" | cut -d: -f2)"
-[[ -z "$usuario" ]] && show_error "Usuario vacio o inexistente"
-getent passwd "$usuario" >/dev/null 2>&1 || show_error "El usuario $usuario no fue encontrado"
+user="$(echo -e "${_userPass}" | grep -E "^${option}:" | cut -d: -f2)"
+[[ -z "$user" ]] && show_error "Nombre vacio o no valido."
+getent passwd "$user" >/dev/null 2>&1 || show_error "El usuario $user no existe."
 
-echo -ne "\n\033[1;32mNuevo limite para el usuario \033[1;33m$usuario\033[1;37m: "; read -r sshnum
-[[ "$sshnum" =~ ^[0-9]+$ ]] || show_error "Numero invalido"
-[[ "$sshnum" -gt 0 ]] || show_error "Debe ingresar un numero mayor que cero."
+echo -ne "\n\033[1;32mNueva contrasena para el usuario \033[1;33m$user\033[1;37m: "; read -r password
+sizepass=${#password}
+[[ "$sizepass" -ge 4 ]] || show_error "Contrasena vacia o no valida (minimo 4 caracteres)."
 
-grep -v "^$usuario[[:space:]]" "$database" > /tmp/a
-mv /tmp/a "$database"
-echo "$usuario $sshnum" >> "$database"
+if ps x | grep "$user" | grep -v grep | grep -v pt >/tmp/rem 2>/dev/null && grep -q "$user" /tmp/rem 2>/dev/null; then
+	echo ""
+	tput setaf 7; tput setab 4; tput bold
+	echo "Usuario conectado. Desconectando..."
+	tput sgr0
+	pkill -f "$user"
+fi
+
+echo "$user:$password" | chpasswd
+mkdir -p /etc/SSHPlus/senha
+echo "$password" > "/etc/SSHPlus/senha/$user"
+[[ -x /bin/hysteria-menu ]] && /bin/hysteria-menu --sync >/dev/null 2>&1 || true
 
 tput setaf 7; tput setab 4; tput bold
 echo ""
-echo "Limite aplicado al usuario $usuario: $sshnum"
+echo "La contrasena del usuario $user se cambio a: $password"
+echo ""
 tput sgr0
-sleep 2
 exit 0

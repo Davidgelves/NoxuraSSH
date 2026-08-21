@@ -135,7 +135,7 @@ ensure_licence_conexao
 		done
 	}
 
-	# Puerto en LISTEN (evita falsos positivos del verif_ptrs global); vuelve al menú SOCKS, no sale de conexao.
+	# Puerto en LISTEN (evita falsos positivos del verif_ptrs global); vuelve al menú SOCKS, no sale de connection.
 	verif_ptrs_socks() {
 		local porta=$1
 		if command -v lsof >/dev/null 2>&1; then
@@ -658,7 +658,7 @@ ensure_licence_conexao
 	                    return
 	                    ;;
 	                0)
-	                    conexao
+	                    connection
 	                    return
 	                    ;;
 	                *)
@@ -680,7 +680,7 @@ ensure_licence_conexao
 	            [[ "$resp" != @(s|sim|S|SIM) ]] && {
 	                echo -e "\n${RED}Volviendo...${SCOLOR}"
 	                sleep 2
-	                conexao
+	                connection
 	            }
 	            v2rayinst
 	        else
@@ -691,7 +691,7 @@ ensure_licence_conexao
 	            [[ "$resp" != @(s|sim|S|SIM) ]] && {
 	                echo -e "\n${RED}Volviendo...${SCOLOR}"
 	                sleep 2
-	                conexao
+	                connection
 	            }
 	            v2rayinst
             fi
@@ -753,7 +753,7 @@ ensure_licence_conexao
                 [[ "$resp" != @(s|sim|S|SIM) ]] && {
                     echo -e "\n${RED}Volviendo...${SCOLOR}"
                     sleep 2
-                    conexao
+                    connection
                 }
                 echo -e "\n\033[1;32mCompatible con Ubuntu 16+\033[1;33m"
                 echo -e "\n\033[1;32mINSTALANDO CHISEL !\033[1;33m"

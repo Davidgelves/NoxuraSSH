@@ -254,17 +254,17 @@ _sshplus_user_menu() {
 			1 | 01)
 				clear
 				_sshplus_sync_criarusuario
-				criarusuario
+				createuser
 				;;
 			2 | 02)
 				clear
 				_sshplus_sync_criarteste
-				criarteste
+				createtest
 				echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
 				;;
 			3 | 03)
 				clear
-				remover
+				removeuser
 				sleep 3
 				;;
 			4 | 04)
@@ -273,16 +273,16 @@ _sshplus_user_menu() {
 				;;
 			5 | 05)
 				clear
-				mudardata
+				changedate
 				;;
 			6 | 06)
 				clear
-				alterarlimite
+				changelimit
 				;;
 			7 | 07)
 				clear
 				_sshplus_sync_alterarsenha
-				alterarsenha
+				changepass
 				;;
 			8 | 08)
 				clear
@@ -561,19 +561,22 @@ _sshplus_ram_used_pct() {
 }
 # Si el modulo en /bin es antiguo (portugues), bajar la version del repo una vez.
 _sshplus_sync_criarteste() {
-	if ! grep -q 'lang=es' /bin/criarteste 2>/dev/null; then
-		wget -qO /bin/criarteste "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/criarteste" && chmod +x /bin/criarteste
+	if ! grep -q 'lang=es' /bin/createtest 2>/dev/null; then
+		wget -qO /bin/createtest "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/createtest" && chmod +x /bin/createtest
 	fi
+	[[ -e /bin/criarteste ]] || ln -s /bin/createtest /bin/criarteste 2>/dev/null || cp -f /bin/createtest /bin/criarteste
 }
 _sshplus_sync_criarusuario() {
-	if ! grep -q 'lang=es criarusuario' /bin/criarusuario 2>/dev/null; then
-		wget -qO /bin/criarusuario "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/criarusuario" && chmod +x /bin/criarusuario
+	if ! grep -q 'lang=es createuser' /bin/createuser 2>/dev/null; then
+		wget -qO /bin/createuser "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/createuser" && chmod +x /bin/createuser
 	fi
+	[[ -e /bin/criarusuario ]] || ln -s /bin/createuser /bin/criarusuario 2>/dev/null || cp -f /bin/createuser /bin/criarusuario
 }
 _sshplus_sync_alterarsenha() {
-	if ! grep -q 'lang=es alterarsenha' /bin/alterarsenha 2>/dev/null; then
-		wget -qO /bin/alterarsenha "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/alterarsenha" && chmod +x /bin/alterarsenha
+	if ! grep -q 'lang=es changepass' /bin/changepass 2>/dev/null; then
+		wget -qO /bin/changepass "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/changepass" && chmod +x /bin/changepass
 	fi
+	[[ -e /bin/alterarsenha ]] || ln -s /bin/changepass /bin/alterarsenha 2>/dev/null || cp -f /bin/changepass /bin/alterarsenha
 }
 _sshplus_sync_expcleaner() {
 	if ! grep -q 'lang=es expcleaner' /bin/expcleaner 2>/dev/null; then
@@ -1025,7 +1028,7 @@ case "$x" in
    ;;
    2 | 02)
    clear
-   /bin/conexao
+   /bin/connection
    exit;
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;

@@ -836,7 +836,7 @@ EOF
                     intallv2ray
                     ;;
                 0 | 00)
-                    conexao
+                    connection
                     exit
                     ;;
                 *)
@@ -863,7 +863,7 @@ EOF
                 unistallv2
                 ;;
             6 | 06)
-                conexao
+                connection
                 exit;
                 ;;
             0 | 00)

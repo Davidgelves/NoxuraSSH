@@ -533,6 +533,6 @@ while true; do
 		6) [[ -f "$SLOW_CONF" ]] && slow_logs_live ;;
 		7) [[ -f "$SLOW_CONF" ]] && slow_download_bin && slow_configure ;;
 		8) [[ -f "$SLOW_CONF" ]] && slow_uninstall ;;
-		0) conexao; exit ;;
+		0) connection; exit ;;
 	esac
 done

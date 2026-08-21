@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es remover
+# lang=es removeuser
 
 NC='\033[0m'
 WHITE='\033[1;37m'

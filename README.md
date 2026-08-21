@@ -1,11 +1,11 @@
-# SSH-PLUS (version saneada)
+# NoxuraSSH (version saneada)
 
 Este proyecto fue ajustado para uso mas seguro de BadVPN UDPGW en Debian/Ubuntu.
 
 ## Cambios de seguridad
 
 - Se elimino el flujo de instalacion por `bash <(wget ...)`.
-- El entrypoint `ssh-plus` ya no descarga ni ejecuta scripts remotos.
+- El entrypoint `noxurassh` ya no descarga ni ejecuta scripts remotos.
 - Se usa instalador local: `instalar-badvpn-seguro.sh`.
 - Se configura `systemd` en lugar de `screen` + `/etc/autostart`.
 - No se usa `chmod 777`.
@@ -15,8 +15,8 @@ Este proyecto fue ajustado para uso mas seguro de BadVPN UDPGW en Debian/Ubuntu.
 Copiar la carpeta al VPS y ejecutar:
 
 ```bash
-chmod +x ./ssh-plus ./instalar-badvpn-seguro.sh
-sudo ./ssh-plus
+chmod +x ./noxurassh ./instalar-badvpn-seguro.sh
+sudo ./noxurassh
 ```
 
 ## Idioma / Language
@@ -34,8 +34,8 @@ se pedira el idioma al inicio y se guardara en `/etc/SSHPlus/lang` para el menu.
 Tambien puedes forzarlo por variable:
 
 ```bash
-sudo LANG_CHOICE=es ./ssh-plus
-sudo LANG_CHOICE=en ./ssh-plus
+sudo LANG_CHOICE=es ./noxurassh
+sudo LANG_CHOICE=en ./noxurassh
 ```
 
 ## Variables opcionales

@@ -359,7 +359,7 @@ def main(host=LISTENING_ADDR, port=LISTENING_PORT):
 
 
 if __name__ == '__main__':
-    # Chamada tipica do SSH-PLUS: wsproxy.py 8080 (sem flags)
+    # Chamada tipica do NoxuraSSH: wsproxy.py 8080 (sem flags)
     if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
         try:
             LISTENING_PORT = int(sys.argv[1])

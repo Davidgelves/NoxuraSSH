@@ -29,7 +29,7 @@ tput cnorm
 IP=$(cat /etc/IP)
 _sshplus_sync_sshplus_lang() {
 	if [[ ! -f /bin/sshplus_lang ]] || ! grep -q 'sshplus_lang' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_USER_ADMIN' /bin/sshplus_lang 2>/dev/null || ! grep -q 'CONFIGURACION DE PROTOCOLOS\|PROTOCOL CONFIGURATION' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_SCRIPT_SETTINGS' /bin/sshplus_lang 2>/dev/null || ! grep -q 'L_CHECKUSERS' /bin/sshplus_lang 2>/dev/null; then
-		wget -qO /bin/sshplus_lang "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/sshplus_lang" && chmod +x /bin/sshplus_lang
+		wget -qO /bin/sshplus_lang "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/sshplus_lang" && chmod +x /bin/sshplus_lang
 	fi
 }
 _sshplus_sync_sshplus_lang
@@ -562,52 +562,52 @@ _sshplus_ram_used_pct() {
 # Si el modulo en /bin es antiguo (portugues), bajar la version del repo una vez.
 _sshplus_sync_criarteste() {
 	if ! grep -q 'lang=es' /bin/createtest 2>/dev/null; then
-		wget -qO /bin/createtest "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/createtest" && chmod +x /bin/createtest
+		wget -qO /bin/createtest "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/createtest" && chmod +x /bin/createtest
 	fi
 	[[ -e /bin/criarteste ]] || ln -s /bin/createtest /bin/criarteste 2>/dev/null || cp -f /bin/createtest /bin/criarteste
 }
 _sshplus_sync_criarusuario() {
 	if ! grep -q 'lang=es createuser' /bin/createuser 2>/dev/null; then
-		wget -qO /bin/createuser "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/createuser" && chmod +x /bin/createuser
+		wget -qO /bin/createuser "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/createuser" && chmod +x /bin/createuser
 	fi
 	[[ -e /bin/criarusuario ]] || ln -s /bin/createuser /bin/criarusuario 2>/dev/null || cp -f /bin/createuser /bin/criarusuario
 }
 _sshplus_sync_alterarsenha() {
 	if ! grep -q 'lang=es changepass' /bin/changepass 2>/dev/null; then
-		wget -qO /bin/changepass "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/changepass" && chmod +x /bin/changepass
+		wget -qO /bin/changepass "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/changepass" && chmod +x /bin/changepass
 	fi
 	[[ -e /bin/alterarsenha ]] || ln -s /bin/changepass /bin/alterarsenha 2>/dev/null || cp -f /bin/changepass /bin/alterarsenha
 }
 _sshplus_sync_expcleaner() {
 	if ! grep -q 'lang=es expcleaner' /bin/expcleaner 2>/dev/null; then
-		wget -qO /bin/expcleaner "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/expcleaner" && chmod +x /bin/expcleaner
+		wget -qO /bin/expcleaner "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/expcleaner" && chmod +x /bin/expcleaner
 	fi
 }
 _sshplus_sync_infousers() {
 	if ! grep -q 'lang=es infousers' /bin/infousers 2>/dev/null; then
-		wget -qO /bin/infousers "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/infousers" && chmod +x /bin/infousers
+		wget -qO /bin/infousers "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/infousers" && chmod +x /bin/infousers
 	fi
 }
 _sshplus_sync_swapmemory() {
 	if ! grep -q 'lang=es swapmemory' /bin/swapmemory 2>/dev/null; then
-		wget -qO /bin/swapmemory "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/swapmemory" && chmod +x /bin/swapmemory
+		wget -qO /bin/swapmemory "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/swapmemory" && chmod +x /bin/swapmemory
 	fi
 }
 _sshplus_sync_gltunnel() {
 	if ! grep -q 'lang=es gltunnel' /bin/gltunnel 2>/dev/null; then
-		wget -qO /bin/gltunnel "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/gltunnel" && chmod +x /bin/gltunnel
+		wget -qO /bin/gltunnel "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/gltunnel" && chmod +x /bin/gltunnel
 	fi
 }
 _sshplus_sync_banner() {
 	if ! grep -q 'lang=es banner' /bin/banner 2>/dev/null; then
-		wget -qO /bin/banner "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/banner" && chmod +x /bin/banner
+		wget -qO /bin/banner "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/banner" && chmod +x /bin/banner
 	fi
 }
 _sshplus_sync_otimizar() {
 	local url="/Modulos/optimize" target
 	for target in /bin/optimize /usr/bin/optimize; do
 		if [[ ! -f "$target" ]] || ! grep -q 'lang=es optimize v2' "$target" 2>/dev/null; then
-			wget -qO "$target" "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main${url}" && chmod +x "$target"
+			wget -qO "$target" "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main${url}" && chmod +x "$target"
 		fi
 	done
 	hash -r 2>/dev/null || true
@@ -617,12 +617,12 @@ _sshplus_sync_otimizar() {
 }
 _sshplus_sync_userbackup() {
 	if ! grep -q 'lang=es userbackup' /bin/userbackup 2>/dev/null; then
-		wget -qO /bin/userbackup "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/userbackup" && chmod +x /bin/userbackup
+		wget -qO /bin/userbackup "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/userbackup" && chmod +x /bin/userbackup
 	fi
 }
 _sshplus_sync_utili() {
 	if ! grep -q 'lang=es utili' /bin/utili 2>/dev/null; then
-		wget -qO /bin/utili "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/utili" && chmod +x /bin/utili
+		wget -qO /bin/utili "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/utili" && chmod +x /bin/utili
 	fi
 }
 x="ok"

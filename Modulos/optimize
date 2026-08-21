@@ -2,7 +2,7 @@
 # Si /bin/optimize es antiguo (portugues), sustituir desde GitHub y reejecutar.
 _inf="${BASH_SOURCE[0]:-$0}"
 if ! grep -q 'lang=es optimize v2' "$_inf" 2>/dev/null; then
-	wget -qO /bin/optimize "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/optimize" && chmod +x /bin/optimize || {
+	wget -qO /bin/optimize "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/optimize" && chmod +x /bin/optimize || {
 		echo -e "\033[1;31mNo se pudo actualizar optimize desde GitHub.\033[0m"
 		exit 1
 	}

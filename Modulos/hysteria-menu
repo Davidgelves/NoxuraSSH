@@ -1,5 +1,5 @@
 #!/bin/bash
-# Hysteria v1 manager for SSH-Plus
+# Hysteria v1 manager for NoxuraSSH
 
 NC='\033[0m'
 RED='\033[1;31m'
@@ -24,7 +24,7 @@ HYST_SERVICE="/etc/systemd/system/hysteria-server.service"
 hyst_cleanup_old_menu_bins() {
 	for old in /bin/hysteria /usr/bin/hysteria; do
 		[[ -f "$old" ]] || continue
-		if grep -q 'Hysteria .* manager for SSH-Plus' "$old" 2>/dev/null; then
+		if grep -q 'Hysteria .* manager for NoxuraSSH' "$old" 2>/dev/null; then
 			rm -f "$old" 2>/dev/null || true
 		fi
 	done

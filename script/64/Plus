@@ -15,9 +15,9 @@ case "${SSHPRO_RAW:-}" in
 	unset SSHPRO_RAW
 	;;
 esac
-SSHPRO_RAW="${SSHPRO_RAW:-https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main}"
-# Mismo repo que SSHPRO_RAW: Install/list descarga /bin/menu y modulos (repo: ssh-pro-vpn)
-export SSHPLUS_GH_USER_REPO="${SSHPLUS_GH_USER_REPO:-Davidgelves/ssh-pro-vpn}"
+SSHPRO_RAW="${SSHPRO_RAW:-https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main}"
+SSHPRO_RAW_FALLBACK="https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main"
+export SSHPLUS_GH_USER_REPO="${SSHPLUS_GH_USER_REPO:-Davidgelves/NoxuraSSH}"
 export SSHPLUS_GH_BRANCH="${SSHPLUS_GH_BRANCH:-main}"
 _lnk=$(echo 'z1:y#x.5s0ul&p4hs$s.0a72d*n-e!v89e032:3r' | sed -e 's/[^a-z.]//ig' | rev)
 _Ink="/usr/local/lib"
@@ -133,7 +133,12 @@ install_final_screen() {
 show_install_banner
 #-----------------------------------------------------------------------------------------------------------------
 printf '\n\033[1;36mVerificando enlace...\033[0m\n'
-rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/dev/null 2>&1
+rm -f $_Ink/list >/dev/null 2>&1
+if ! wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/dev/null 2>&1; then
+    SSHPRO_RAW="$SSHPRO_RAW_FALLBACK"
+    export SSHPLUS_GH_USER_REPO="Davidgelves/ssh-pro-vpn"
+    wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/dev/null 2>&1
+fi
     verif_key
     sleep 3s
     echo "/bin/menu" >/bin/h && chmod +x /bin/h >/dev/null 2>&1

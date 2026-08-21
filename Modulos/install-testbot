@@ -10,7 +10,7 @@
     echo -e "\033[1;32mINICIANDO BOT DE PRUEBA \033[0m\n"
     cd $HOME/BOT
     rm -rf $HOME/BOT/botssh
-    wget -qO botssh "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Sistema/botssh" >/dev/null 2>&1
+    wget -qO botssh "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Sistema/botssh" >/dev/null 2>&1
     chmod 777 botssh
     echo ""
     sleep 1

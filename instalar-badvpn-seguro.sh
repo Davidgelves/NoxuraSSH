@@ -179,7 +179,7 @@ setup_websocket() {
   local ws_port="${1:-80}" redir_port="${2:-22}" raw tmp
   aptq python3 wget curl
   mkdir -p /etc/SSHPlus
-  raw="https://raw.githubusercontent.com/${SSHPLUS_GH_USER_REPO:-Davidgelves/ssh-pro-vpn}/${SSHPLUS_GH_BRANCH:-main}"
+  raw="https://raw.githubusercontent.com/${SSHPLUS_GH_USER_REPO:-Davidgelves/NoxuraSSH}/${SSHPLUS_GH_BRANCH:-main}"
   tmp="/etc/SSHPlus/wsproxy.py.new"
   rm -f "${tmp}"
   if command -v wget >/dev/null 2>&1; then
@@ -237,7 +237,7 @@ draw_main() {
   cpu_pct="$(top -bn1 | awk -F',' '/Cpu\(s\)/ {gsub("%id","",$4); gsub(" ","",$4); printf "%.1f%%", 100-$4; exit}')"
   cpu_cores="$(nproc)"
   clear
-  echo -e "${WHITE}   ${BLUE}SSH-PLUS Dev. J DAVID AG${NC}"
+  echo -e "${WHITE}   ${BLUE}NoxuraSSH Dev. J DAVID AG${NC}"
   echo -e "${RED}============================================================${NC}"
   echo -e "${GREEN} SISTEMA${NC}      OS: $(. /etc/os-release && echo "$NAME" "$VERSION_ID")"
   echo -e "${GREEN} MEMORIA RAM${NC}  Total: ${mem_total}   En uso: ${mem_pct}"
@@ -363,7 +363,7 @@ while true; do
       if [[ -x /bin/menu ]]; then
         MENU2_ONLY=1 bash /bin/menu || true
       else
-        echo "MAS >>> requiere el menÃº completo SSH-PLUS en /bin/menu (ejecute Install/list o copie Modulos/menu)."
+        echo "MAS >>> requiere el menÃº completo NoxuraSSH en /bin/menu (ejecute Install/list o copie Modulos/menu)."
         sleep 2
       fi
       ;;
@@ -471,7 +471,7 @@ systemctl enable --now badvpn-udpgw.service
 systemctl --no-pager --full status badvpn-udpgw.service || true
 install_safe_menu
 
-# Menu completo SSH-PLUS em /bin/menu: faz "menu" usar esse (opcao 23 MAIS, etc.)
+# Menu completo NoxuraSSH em /bin/menu: faz "menu" usar esse (opcao 23 MAIS, etc.)
 if [[ -x /bin/menu ]]; then
   ln -sf /bin/menu "${MENU_PATH}"
   ln -sf /bin/menu "${MENU_PATH_SBIN}"

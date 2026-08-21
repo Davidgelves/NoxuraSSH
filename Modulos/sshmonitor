@@ -2,7 +2,7 @@
 # lang=es sshmonitor
 _mon="${BASH_SOURCE[0]:-$0}"
 if ! grep -q 'lang=es sshmonitor' "$_mon" 2>/dev/null; then
-	wget -qO /bin/sshmonitor "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/sshmonitor" && chmod +x /bin/sshmonitor && exec /bin/sshmonitor
+	wget -qO /bin/sshmonitor "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/sshmonitor" && chmod +x /bin/sshmonitor && exec /bin/sshmonitor
 fi
 
 clear

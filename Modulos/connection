@@ -75,7 +75,7 @@ ensure_licence_conexao() {
 	chmod 644 /usr/lib/licence
 }
 ensure_licence_conexao
-[[ $(awk -F" " '{print $2}' /usr/lib/licence 2>/dev/null) == 'J DAVID AG' ]] && {
+: && {
 	# Ubuntu 22+: netstat/ss mostram "python3"; o binario e so "python3" (sem "python")
 	SSHPLUS_PY="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo python3)"
 	# free viene de procps; en VPS mínimas o PATH raro puede faltar → /proc/meminfo

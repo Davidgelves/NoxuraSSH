@@ -98,10 +98,24 @@ clear
 clear
 echo "ESCRIBA SU DOMINIO: "; read dm
 echo "ESCRIBA EL PROXY: "; read px
+if [[ -f /etc/v2ray/config.json ]]; then
 sed -i "44 s;$dm;$px;g" /etc/v2ray/config.json
+else
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    echo -e "\033[1;31mNo se encontro /etc/v2ray/config.json.\033[0m"
+    echo -e "\033[1;37mLa instalacion base de V2Ray no genero el archivo de configuracion.\033[0m"
+    echo -e "\033[1;37mPuede reinstalar V2Ray o usar CONFIGURACION DE V2RAY > INSTALAR XRAY XHTTP.\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
+    fun_v2raymanager
+fi
     linea_v2ray
     v2ray_title "INFORMACION DE CUENTA"
+    if ! command -v v2ray >/dev/null 2>&1; then
+    echo -e "\033[1;31mComando v2ray no encontrado.\033[0m"
+    else
     v2ray info
+    fi
     echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager

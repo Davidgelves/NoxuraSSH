@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 clear
 apt-get install figlet -y &>/dev/null
 apt-get install curl -y &>/dev/null

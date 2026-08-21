@@ -77,7 +77,7 @@ INSTALLER_LOCAL="${BASE_DIR}/script/${arch}/Plus"
 
 run_plus() {
     chmod +x "$1"
-    exec "$1"
+    exec bash "$1"
 }
 
 if [[ -f "${INSTALLER_LOCAL}" ]]; then

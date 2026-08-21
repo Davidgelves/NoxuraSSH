@@ -83,11 +83,19 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 		systemctl disable badvpn-udpgw 2>/dev/null
 		rm -f /etc/systemd/system/badvpn-udpgw.service
 
+		systemctl stop slowdns 2>/dev/null
+		systemctl disable slowdns 2>/dev/null
+		rm -f /etc/systemd/system/slowdns.service
+
 		systemctl stop sshplus-websocket 2>/dev/null
 		systemctl disable sshplus-websocket 2>/dev/null
 		rm -f /etc/systemd/system/sshplus-websocket.service
 		systemctl daemon-reload 2>/dev/null
 
+		systemctl stop v2ray 2>/dev/null
+		systemctl disable v2ray 2>/dev/null
+		systemctl stop xray 2>/dev/null
+		systemctl disable xray 2>/dev/null
 		systemctl stop stunnel4 2>/dev/null
 		systemctl stop sslh 2>/dev/null
 		systemctl stop danted 2>/dev/null
@@ -112,6 +120,11 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 		rm -f /etc/systemd/system/hysteria-server.service /usr/local/bin/hysteria /usr/local/bin/hysteria1 /usr/bin/hysteria /bin/hysteria /bin/hysteria-menu 2>/dev/null
 		rm -rf /etc/hysteria 2>/dev/null
 		systemctl daemon-reload >/dev/null 2>&1 || true
+		rm -f /usr/local/bin/dnstt-server /usr/bin/dnstt-server /bin/dnstt-server 2>/dev/null
+		rm -rf /etc/slowdns /var/log/slowdns.log 2>/dev/null
+		rm -rf /etc/v2ray /usr/local/etc/v2ray /var/log/v2ray 2>/dev/null
+		rm -rf /etc/xray /usr/local/etc/xray /var/log/xray 2>/dev/null
+		rm -f /usr/bin/v2ray /usr/local/bin/v2ray /bin/v2ray /usr/bin/xray /usr/local/bin/xray /bin/xray 2>/dev/null
 		rm -f /usr/local/bin/badvpn-udpgw 2>/dev/null
 		rm -rf /usr/local/src/badvpn-* 2>/dev/null
 		rm -rf /tmp/badvpn-* /tmp/sshplus-* 2>/dev/null

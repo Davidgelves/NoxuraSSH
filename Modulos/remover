@@ -137,6 +137,6 @@ while true; do
 	case "$resp" in
 		1) rm_one_menu ;;
 		2) rm_all_menu ;;
-		3) menu; exit ;;
+		3) exit ;;
 	esac
 done

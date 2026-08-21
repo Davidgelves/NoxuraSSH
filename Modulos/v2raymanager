@@ -135,12 +135,95 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     fun_v2raymanager
     }
 
+    v2ray_restart_service() {
+    if systemctl is-active xray >/dev/null 2>&1; then
+    systemctl restart xray >/dev/null 2>&1
+    elif systemctl is-active v2ray >/dev/null 2>&1; then
+    systemctl restart v2ray >/dev/null 2>&1
+    else
+    v2ray restart >/dev/null 2>&1
+    fi
+    }
+
+    v2ray_set_websocket() {
+    local cfg path host tmp
+    clear
+    v2ray_title "ACTIVAR WEBSOCKET V2RAY"
+    cfg="$(v2ray_config_file)"
+    [[ -z "$cfg" ]] && echo -e "\033[1;31mNo se encontro config.json de V2Ray/Xray.\033[0m" && pausa_v2ray && ajustes_v2ray
+    v2ray_ensure_legacy_config "$cfg"
+    cfg="/etc/v2ray/config.json"
+    echo -ne "${SSHPLUS_DARK_GREEN}PATH WEBSOCKET [Enter = /]:${SCOLOR} " && read path
+    [[ -z "$path" ]] && path="/"
+    [[ "$path" != /* ]] && path="/$path"
+    echo -ne "${SSHPLUS_DARK_GREEN}HOST/DOMINIO [opcional]:${SCOLOR} " && read host
+    cp "$cfg" "$cfg.bak-$(date +%s)"
+    if command -v jq >/dev/null 2>&1; then
+    tmp="${cfg}.tmp"
+    if [[ -n "$host" ]]; then
+    jq --arg path "$path" --arg host "$host" '
+      .inbounds |= map(
+        .streamSettings = ((.streamSettings // {}) + {
+          "network": "ws",
+          "security": (.streamSettings.security // "none"),
+          "wsSettings": {
+            "path": $path,
+            "headers": {
+              "Host": $host
+            }
+          }
+        })
+      )
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+    else
+    jq --arg path "$path" '
+      .inbounds |= map(
+        .streamSettings = ((.streamSettings // {}) + {
+          "network": "ws",
+          "security": (.streamSettings.security // "none"),
+          "wsSettings": {
+            "path": $path
+          }
+        })
+      )
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+    fi
+    else
+    echo -e "\033[1;31mjq no esta instalado; use MODIFICAR JSON V2RAY o instale jq.\033[0m"
+    pausa_v2ray
+    ajustes_v2ray
+    fi
+    v2ray_restart_service
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    echo -e "\033[1;32mWebSocket aplicado correctamente.\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}PATH:${SCOLOR} \033[1;37m$path\033[0m"
+    [[ -n "$host" ]] && echo -e "${SSHPLUS_DARK_GREEN}HOST:${SCOLOR} \033[1;37m$host\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    pausa_v2ray
+    ajustes_v2ray
+    }
+
     protocolv2ray () {
+    local opt
+    clear
     v2ray_title "CAMBIAR PROTOCOLO V2RAY"
+    v2ray_opt "1" "Abrir selector original"
+    v2ray_opt "3" "WebSocket"
+    v2ray_line
+    v2ray_opt "0" "VOLVER"
+    v2ray_line
+    echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} " && read opt
+    case "$opt" in
+    3 | 03) v2ray_set_websocket ;;
+    1 | 01)
     v2ray stream
     v2ray_line
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
+    ;;
+    0 | 00) ajustes_v2ray ;;
+    *) echo -e "\033[1;31mOpcion no valida!\033[0m"; sleep 2; protocolv2ray ;;
+    esac
     }
     tls () {
     clear

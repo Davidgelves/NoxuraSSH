@@ -11,7 +11,7 @@ usuario/tu-repo|tu_usuario/tu_repo) SSHPLUS_GH_USER_REPO="Davidgelves/ssh-pro-vp
 esac
 SSHPLUS_GH_BRANCH="${SSHPLUS_GH_BRANCH:-main}"
 SSHPLUS_RAW="https://raw.githubusercontent.com/${SSHPLUS_GH_USER_REPO}/${SSHPLUS_GH_BRANCH}"
-_lvk=$(wget -qO- "${SSHPLUS_RAW}/Modulos/versao")
+_lvk=$(wget -qO- "${SSHPLUS_RAW}/Modulos/version")
 IP=$(wget -qO- ipv4.icanhazip.com)
 IP2=$(wget -qO- http://whatismyip.akamai.com/)
 [[ "$IP" != "$IP2" ]] && ipdovps="$IP2" || ipdovps="$IP"
@@ -46,7 +46,7 @@ echo "PasswordAuthentication yes" >>/etc/ssh/sshd_config
 _dir1='/bin'
 _dir2='/etc/SSHPlus'
 rm $_dir2/ShellBot.sh $_dir2/cabecalho $_dir2/open.py $_dir2/proxy.py $_dir2/wsproxy.py >/dev/null 2>&1
-_mdls=("addhost" "ajuda" "sshplus_lang" "changelimit" "changepass" "tcptweaker.sh" "gltunnel" "utili" "multi" "apache2menu" "check" "chuser" "limit" "rps_cpu" "attscript" "badvpn" "badpro" "badpro1" "badvpn2" "badvpn3" "banner" "bashtop" "ddos" "blocksite" "blockt" "blockuser" "bot" "botssh" "connection" "createtest" "createuser" "delhost" "delscript" "detalhes" "droplimiter" "expcleaner" "fr" "hysteria-menu" "infousers" "inst-botteste" "initcheck" "instsqd" "limiter" "menu" "menub" "changedate" "mtuning" "open.py" "otimizar" "painelv2ray" "proxy.py" "reiniciarservicos" "reiniciarsistema" "removeuser" "senharoot" "ShellBot.sh" "slowdnsmanager" "speedtest" "sshmonitor" "swapmemory" "trafegototal" "trojan-go" "uexpired" "userbackup" "verifatt" "verifbot" "v2raymanager" "webmin.sh" "websocket.sh" "wsproxy.py" "pkill.sh")
+_mdls=("addhost" "help" "sshplus_lang" "changelimit" "changepass" "tcptweaker.sh" "gltunnel" "utili" "multi" "apache2menu" "check" "chuser" "limit" "rps_cpu" "attscript" "badvpn" "badpro" "badpro1" "badvpn2" "badvpn3" "banner" "bashtop" "ddos" "blocksite" "blockt" "blockuser" "bot" "botssh" "connection" "createtest" "createuser" "delhost" "delscript" "details" "droplimiter" "expcleaner" "fr" "hysteria-menu" "infousers" "install-testbot" "initcheck" "instsqd" "limiter" "menu" "menub" "changedate" "mtuning" "open.py" "optimize" "v2raypanel" "proxy.py" "restartservices" "restartsystem" "removeuser" "rootpass" "ShellBot.sh" "slowdnsmanager" "speedtest" "sshmonitor" "swapmemory" "totaltraffic" "trojan-go" "uexpired" "userbackup" "checkupdate" "checkbot" "v2raymanager" "webmin.sh" "websocket.sh" "wsproxy.py" "pkill.sh")
 for _arq in ${_mdls[@]}; do
 	[[ -e $_dir1/$_arq ]] && rm $_dir1/$_arq >/dev/null 2>&1
 	wget -c -P $_dir1 "${SSHPLUS_RAW}/Modulos/$_arq"
@@ -69,6 +69,20 @@ sshplus_compat_alias remover removeuser
 sshplus_compat_alias mudardata changedate
 sshplus_compat_alias alterarsenha changepass
 sshplus_compat_alias alterarlimite changelimit
+sshplus_compat_alias ajuda help
+sshplus_compat_alias detalhes details
+sshplus_compat_alias otimizar optimize
+sshplus_compat_alias painelv2ray v2raypanel
+sshplus_compat_alias reiniciarservicos restartservices
+sshplus_compat_alias reiniciarsistema restartsystem
+sshplus_compat_alias senharoot rootpass
+sshplus_compat_alias trafegototal totaltraffic
+sshplus_compat_alias versao version
+sshplus_compat_alias verifatt checkupdate
+sshplus_compat_alias verifbot checkbot
+sshplus_compat_alias botteste testbot
+sshplus_compat_alias botteste.sh testbot.sh
+sshplus_compat_alias inst-botteste install-testbot
 _arq_host="/etc/hosts"
 _host[0]="d1n212ccp6ldpw.cloudfront.net"
 _host[1]="dns.whatsapp.net"
@@ -101,12 +115,12 @@ clear
 crontab -r >/dev/null 2>&1
 (
 	crontab -l 2>/dev/null
-	echo "@daily /bin/verifatt"
+	echo "@daily /bin/checkupdate"
 	echo "@reboot /etc/autostart"
 	echo "* * * * * /etc/autostart"
 	echo "0 */6 * * * /bin/uexpired"
 ) | crontab -
-echo "$_lvk" | sed -n '1 p' | cut -d' ' -f2 >/bin/versao && cat /bin/versao >/home/sshplus
+echo "$_lvk" | sed -n '1 p' | cut -d' ' -f2 >/bin/version && cp -f /bin/version /bin/versao && cat /bin/version >/home/sshplus
 wget "${SSHPLUS_RAW}/Install/jq-linux64" >/dev/null 2>&1
 chmod +x jq-linux64 && mv jq-linux64 $(which jq)
 service cron restart >/dev/null 2>&1

@@ -55,7 +55,7 @@ rm -f /etc/SSHPlus/ShellBot.sh /etc/SSHPlus/cabecalho /etc/SSHPlus/open.py /etc/
 
 _dir1='/bin'
 _dir2='/etc/SSHPlus'
-_mdls=("addhost" "ajuda" "sshplus_lang" "changelimit" "changepass" "tcptweaker.sh" "gltunnel" "utili" "multi" "apache2menu" "check" "chuser" "limit" "rps_cpu" "attscript" "badvpn" "badpro" "badpro1" "badvpn2" "badvpn3" "banner" "bashtop" "ddos" "blocksite" "blockt" "blockuser" "bot" "botssh" "connection" "createtest" "createuser" "delhost" "delscript" "detalhes" "droplimiter" "expcleaner" "fr" "hysteria-menu" "infousers" "inst-botteste" "initcheck" "instsqd" "limiter" "menu" "menub" "changedate" "mtuning" "open.py" "otimizar" "painelv2ray" "proxy.py" "reiniciarservicos" "reiniciarsistema" "removeuser" "senharoot" "ShellBot.sh" "speedtest" "sshmonitor" "swapmemory" "trafegototal" "trojan-go" "uexpired" "userbackup" "verifatt" "verifbot" "v2raymanager" "webmin.sh" "websocket.sh" "wsproxy.py" "pkill.sh")
+_mdls=("addhost" "help" "sshplus_lang" "changelimit" "changepass" "tcptweaker.sh" "gltunnel" "utili" "multi" "apache2menu" "check" "chuser" "limit" "rps_cpu" "attscript" "badvpn" "badpro" "badpro1" "badvpn2" "badvpn3" "banner" "bashtop" "ddos" "blocksite" "blockt" "blockuser" "bot" "botssh" "connection" "createtest" "createuser" "delhost" "delscript" "details" "droplimiter" "expcleaner" "fr" "hysteria-menu" "infousers" "install-testbot" "initcheck" "instsqd" "limiter" "menu" "menub" "changedate" "mtuning" "open.py" "optimize" "v2raypanel" "proxy.py" "restartservices" "restartsystem" "removeuser" "rootpass" "ShellBot.sh" "speedtest" "sshmonitor" "swapmemory" "totaltraffic" "trojan-go" "uexpired" "userbackup" "checkupdate" "checkbot" "v2raymanager" "webmin.sh" "websocket.sh" "wsproxy.py" "pkill.sh")
 
 echo "[*] Origen: ${SSHPLUS_RAW}/Modulos/"
 for _arq in "${_mdls[@]}"; do
@@ -86,10 +86,25 @@ sshplus_compat_alias remover removeuser
 sshplus_compat_alias mudardata changedate
 sshplus_compat_alias alterarsenha changepass
 sshplus_compat_alias alterarlimite changelimit
-_lvk=$(wget -qO- "${SSHPLUS_RAW}/Modulos/versao" || true)
+sshplus_compat_alias ajuda help
+sshplus_compat_alias detalhes details
+sshplus_compat_alias otimizar optimize
+sshplus_compat_alias painelv2ray v2raypanel
+sshplus_compat_alias reiniciarservicos restartservices
+sshplus_compat_alias reiniciarsistema restartsystem
+sshplus_compat_alias senharoot rootpass
+sshplus_compat_alias trafegototal totaltraffic
+sshplus_compat_alias versao version
+sshplus_compat_alias verifatt checkupdate
+sshplus_compat_alias verifbot checkbot
+sshplus_compat_alias botteste testbot
+sshplus_compat_alias botteste.sh testbot.sh
+sshplus_compat_alias inst-botteste install-testbot
+_lvk=$(wget -qO- "${SSHPLUS_RAW}/Modulos/version" || true)
 if [[ -n "${_lvk:-}" ]]; then
-	echo "$_lvk" | sed -n '1 p' | cut -d' ' -f2 >/bin/versao 2>/dev/null || true
-	cat /bin/versao >/home/sshplus 2>/dev/null || true
+	echo "$_lvk" | sed -n '1 p' | cut -d' ' -f2 >/bin/version 2>/dev/null || true
+	cp -f /bin/version /bin/versao 2>/dev/null || true
+	cat /bin/version >/home/sshplus 2>/dev/null || true
 fi
 echo "[OK] Modulos actualizados en /bin (repo ${SSHPLUS_GH_USER_REPO} @ ${SSHPLUS_GH_BRANCH})."
 if [[ -f /bin/connection ]]; then

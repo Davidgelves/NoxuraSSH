@@ -65,7 +65,7 @@ echo -e "\033[1;32mMEMORIA RAM\033[0m"
 echo ""
 echo "No fue posible obtener la información"
 fi
-[[ ! -e /bin/versao ]] && rm -rf /etc/SSHPlus
+[[ ! -e /bin/version && ! -e /bin/versao ]] && rm -rf /etc/SSHPlus
 echo -e "\033[1;31m• \033[1;32mSERVICIOS EN EJECUCIÓN\033[1;31m •\033[0m"
 echo ""
 PT=$(lsof -V -i tcp -P -n | grep -v "ESTABLISHED" |grep -v "COMMAND" | grep "LISTEN")

@@ -57,9 +57,9 @@ fun_botOnOff() {
                 sed -i '/bot_plus/d' /etc/autostart
                 echo -e "ps x | grep 'bot_plus' | grep -v 'grep' || cd /etc/SSHPlus && sudo screen -dmS bot_plus ./bot $tokenbot $iduser && cd $HOME" >>/etc/autostart
             }
-            [[ $(crontab -l | grep -c "verifbot") = '0' ]] && (
+            [[ $(crontab -l | grep -c "checkbot") = '0' ]] && (
                 crontab -l 2>/dev/null
-                echo "@daily /bin/verifbot"
+                echo "@daily /bin/checkbot"
             ) | crontab -
             cd $HOME
         }
@@ -76,7 +76,7 @@ fun_botOnOff() {
             [[ $(grep -wc "bot_plus" /etc/autostart) != '0' ]] && {
                 sed -i '/bot_plus/d' /etc/autostart
             }
-            [[ $(crontab -l | grep -c "verifbot") != '0' ]] && crontab -l | grep -v 'verifbot' | crontab -
+            [[ $(crontab -l | grep -c "checkbot") != '0' ]] && crontab -l | grep -v 'checkbot' | crontab -
             sleep 1
         }
         fun_bar 'fun_bot2'

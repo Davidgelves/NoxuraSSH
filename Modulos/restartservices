@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es reiniciarservicos
+# lang=es restartservices
 clear
 fun_prog ()
 {

@@ -2772,7 +2772,7 @@ PY
 			;;
 			15 | 15)
 			clear
-			painelv2ray
+			v2raypanel
 			;;
 			16 | 16)
 			echo -e "\E[44;1;37m             LIMPIAR V2RAY              \E[0m"

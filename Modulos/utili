@@ -2,7 +2,7 @@
 # lang=es utili
 # blocksite no se sincroniza por wget: el repo remoto podía seguir sirviendo el binario PT y machacaba /bin/blocksite.
 _sshplus_sync_herramientas_submodulos() {
-	for _m in blockt ddos multi blockuser badvpn2 badvpn3 badpro badpro1 menub changedate delhost reiniciarservicos senharoot v2raymanager; do
+	for _m in blockt ddos multi blockuser badvpn2 badvpn3 badpro badpro1 menub changedate delhost restartservices rootpass v2raymanager; do
 		if [[ ! -f "/bin/$_m" ]] || ! grep -aFq "lang=es $_m" "/bin/$_m" 2>/dev/null; then
 			wget -qO "/bin/$_m" "https://raw.githubusercontent.com/Davidgelves/ssh-pro-vpn/main/Modulos/$_m" && chmod +x "/bin/$_m"
 		fi
@@ -229,7 +229,7 @@ while true; do
 		multi
 		;;
 	7 | 07)
-		trafegototal
+		totaltraffic
 		;;
 	8 | 08)
 		blockuser

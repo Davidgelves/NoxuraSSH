@@ -157,7 +157,12 @@ if [[ "$resp" = s || "$resp" = S ]]; then
 
 	sshplus_strip_root_bashrc() {
 		[[ ! -f /root/.bashrc ]] && return 0
-		grep -v -E 'figlet|lolcat|SSH-PLUS|SSHPLUS|NoxuraSSH|by J DAVID AG|ALFAINTERNET|JDAVIDAG1|Dev\. J DAVID AG|Desarrollado por|DIGITE \( menu \)|ESCRIBA:|ESCRIBA \( menu \)|NOME DO SERVIDOR|NOMBRE DEL SERVIDOR|SERVIDOR LIGADO|SERVIDOR EN MARCHA|FECHA:|FECHA :|HORA:|HORA :|DATE=\$\(date|TIME=\$\(date|CYAN=\$|WHITE=\$|GREEN=\$|RESET=\$|@ALFAINTERNET|@JDAVIDAG1' /root/.bashrc > /tmp/.bashrc.sshplus.tmp 2>/dev/null &&
+		awk '
+			/NOXURASSH_BANNER_START/ {skip=1; next}
+			/NOXURASSH_BANNER_END/ {skip=0; next}
+			skip {next}
+			{print}
+		' /root/.bashrc | grep -v -E 'figlet|lolcat|SSH-PLUS|SSHPLUS|NoxuraSSH|by J DAVID AG|ALFAINTERNET|JDAVIDAG1|Dev\. J DAVID AG|Desarrollado por|DIGITE \( menu \)|ESCRIBA:|ESCRIBA \( menu \)|NOME DO SERVIDOR|NOMBRE DEL SERVIDOR|SERVIDOR LIGADO|SERVIDOR EN MARCHA|FECHA:|FECHA :|HORA:|HORA :|DATE=\$\(date|TIME=\$\(date|CYAN=\$|WHITE=\$|GREEN=\$|RESET=\$|echo -e "\$\{CYAN\}=+|echo -e ""|^clear$|@ALFAINTERNET|@JDAVIDAG1' > /tmp/.bashrc.sshplus.tmp 2>/dev/null &&
 			mv /tmp/.bashrc.sshplus.tmp /root/.bashrc
 	}
 

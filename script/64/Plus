@@ -220,6 +220,7 @@ rm -f $_Ink/list >/dev/null 2>&1; wget -P $_Ink "${SSHPRO_RAW}/Install/list" >/d
     echo 'DATE=$(date +"%d-%m-%y")' >>/root/.bashrc
     echo 'TIME=$(date +"%T")' >>/root/.bashrc
     cat <<'BASHRC_BANNER' >>/root/.bashrc
+# NOXURASSH_BANNER_START
 CYAN=$'\033[1;38;2;76;228;255m'
 WHITE=$'\033[1;37m'
 GREEN=$'\033[0;32m'
@@ -235,6 +236,7 @@ echo -e "${GREEN}HORA:${RESET} ${WHITE}$TIME${RESET}"
 echo -e "${CYAN}============================================================${RESET}"
 echo -e "${CYAN}ESCRIBA:${RESET} ${WHITE}menu${RESET}"
 echo -e ""
+# NOXURASSH_BANNER_END
 BASHRC_BANNER
     install_final_screen
     rm -f "$HOME/Plus" 2>/dev/null; cat /dev/null > ~/.bash_history && history -c

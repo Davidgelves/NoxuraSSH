@@ -1029,7 +1029,6 @@ case "$x" in
    2 | 02)
    clear
    /bin/connection
-   exit;
    echo -ne "\n\033[1;31mENTER \033[1;33m${L_ENTER_MENU:-para volver al menu}\033[0m"; read
    ;;
    3 | 03)

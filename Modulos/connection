@@ -2608,7 +2608,6 @@ PY
 	x="ok"
 	fun_conexao() {
 		while true $x != "ok"; do
-			[[ ! -e '/home/sshplus' ]] && exit 0
 			clear
 			sshplus_line
 			echo -e "${SSHPLUS_CYAN}                 CONFIGURACION DE PROTOCOLOS${SCOLOR}"

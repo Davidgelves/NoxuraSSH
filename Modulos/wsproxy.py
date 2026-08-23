@@ -72,6 +72,15 @@ def _compose_initial_response():
         out += "\r\n"
         return out.encode("latin1")
 
+    if st == "200" and not p:
+        return (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Length: 0\r\n"
+            b"\r\n"
+            b"HTTP/1.1 200 Connection Established\r\n"
+            b"\r\n"
+        )
+
     # Para otros códigos, mantenemos el minibanner como cuerpo HTML y la línea de estado RFC.
     body = (str(COR) + str(MSG) + str(FTAG)).encode("latin1", errors="replace")
     out = f"HTTP/1.1 {st} {reason}\r\n"

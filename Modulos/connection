@@ -1872,11 +1872,7 @@ PATCHWS
 		echo -ne "\033[1;37mENCABEZADO PERSONALIZADO: \033[0m"
 		read -r ws_encab
 		if [[ -z "$ws_encab" ]]; then
-			if [[ "$ws_http_code" == "200" ]]; then
-				ws_post_final=$'\r\nContent-length: 0\r\n\r\nHTTP/1.1 200 Connection Established\r\n\r\n'
-			else
-				ws_post_final=""
-			fi
+			ws_post_final=""
 		else
 			ws_post_final="$ws_encab"
 		fi

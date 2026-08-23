@@ -195,9 +195,9 @@ main() {
         exit 1
     fi
 
-    read -r -e -i 101 -p "Estado HTTP (101 recomendado WebSocket): " http_code
-    [[ -z "$http_code" ]] && http_code=101
-    [[ ! "$http_code" =~ ^[0-9]{3}$ ]] && http_code=101
+    read -r -e -i 200 -p "Estado HTTP (200 default, 101 WebSocket): " http_code
+    [[ -z "$http_code" ]] && http_code=200
+    [[ ! "$http_code" =~ ^[0-9]{3}$ ]] && http_code=200
     read -r -p "Minibanner (opcional): " minibanner
     post_header=""
 

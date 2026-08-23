@@ -145,6 +145,38 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     fi
     }
 
+    v2ray_valid_uuid() {
+    [[ "$1" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]
+    }
+
+    v2ray_valid_port() {
+    [[ "$1" =~ ^[0-9]+$ ]] && [[ "$1" -ge 1 ]] && [[ "$1" -le 65535 ]]
+    }
+
+    v2ray_select_port() {
+    local cfg="$1" title="$2" ports count opt
+    ports="$(jq -r '.inbounds[]? | select((.settings.clients? | type) == "array") | .port' "$cfg")"
+    count="$(echo "$ports" | sed '/^$/d' | wc -l)"
+    [[ "$count" -lt 1 ]] && return 1
+    v2ray_title "$title" >&2
+    echo "$ports" | sed '/^$/d' | nl -w1 -s' | ' | while IFS= read -r line; do
+    printf "%b[%s]\033[0m \033[1;37m>\033[0m \033[1;37mPUERTO %s\033[0m\n" "$SSHPLUS_NUM" "${line%% | *}" "${line#* | }" >&2
+    done
+    v2ray_opt "0" "CANCELAR" >&2
+    v2ray_line >&2
+    while true; do
+    echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} " >&2
+    read opt
+    [[ "$opt" = "0" ]] && return 2
+    [[ "$opt" =~ ^[0-9]+$ ]] && [[ "$opt" -ge 1 ]] && [[ "$opt" -le "$count" ]] && {
+      echo "$ports" | sed '/^$/d' | sed -n "${opt}p"
+      return 0
+    }
+    echo -e "\033[1;31mOpcion no valida!\033[0m" >&2
+    sleep 1
+    done
+    }
+
     v2ray_set_websocket() {
     local cfg path host tmp
     clear
@@ -240,6 +272,59 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }
+
+    agregar_puerto_v2ray() {
+    local cfg tmp port base_port
+    clear
+    v2ray_title "AGREGAR PUERTO V2RAY"
+    cfg="$(v2ray_config_file)"
+    [[ -z "$cfg" ]] && echo -e "\033[1;31mNo se encontro config.json de V2Ray/Xray.\033[0m" && pausa_v2ray && ajustes_v2ray
+    v2ray_ensure_legacy_config "$cfg"
+    cfg="/etc/v2ray/config.json"
+    if ! command -v jq >/dev/null 2>&1; then
+    echo -e "\033[1;31mjq no esta instalado; no se puede modificar el JSON de forma segura.\033[0m"
+    pausa_v2ray
+    ajustes_v2ray
+    fi
+    base_port="$(jq -r '.inbounds[]? | select((.settings.clients? | type) == "array") | .port' "$cfg" | sed '/^$/d' | head -1)"
+    [[ -z "$base_port" ]] && echo -e "\033[1;31mNo hay inbound base con settings.clients para duplicar.\033[0m" && pausa_v2ray && ajustes_v2ray
+    echo -e "\033[1;33mPuerto base detectado: \033[1;37m$base_port\033[0m"
+    while true; do
+    echo -ne "${SSHPLUS_DARK_GREEN}NUEVO PUERTO V2RAY:${SCOLOR} " && read port
+    [[ -z "$port" ]] && echo -e "$msg17" && continue
+    if ! v2ray_valid_port "$port"; then
+    echo -e "\033[1;31mPuerto no valido. Use 1-65535.\033[0m"
+    continue
+    fi
+    if jq -e --argjson port "$port" '.inbounds[]? | select(.port == $port)' "$cfg" >/dev/null; then
+    echo -e "\033[1;31mYa existe un inbound con ese puerto.\033[0m"
+    continue
+    fi
+    break
+    done
+    cp "$cfg" "$cfg.bak-$(date +%s)"
+    tmp="${cfg}.tmp"
+    jq --argjson base "$base_port" --argjson port "$port" '
+      .inbounds += [
+        (.inbounds[] | select(.port == $base and ((.settings.clients? | type) == "array")) | .port = $port | .settings.clients = [])
+      ]
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
+      rm -f "$tmp"
+      echo -e "\033[1;31mNo se pudo agregar el nuevo puerto al config.json.\033[0m"
+      pausa_v2ray
+      ajustes_v2ray
+    }
+    jq -e --argjson port "$port" '.inbounds[]? | select(.port == $port)' "$cfg" >/dev/null || {
+      echo -e "\033[1;31mNo se pudo confirmar el nuevo puerto en config.json.\033[0m"
+      pausa_v2ray
+      ajustes_v2ray
+    }
+    v2ray_restart_service
+    echo -e "\033[1;32mPuerto agregado correctamente.\033[0m"
+    echo -e "\033[1;33mNuevo puerto: \033[1;37m$port\033[0m"
+    pausa_v2ray
+    ajustes_v2ray
+    }
     stats () {
     v2ray_title "ESTADISTICAS DE CONSUMO"
     v2ray stats
@@ -270,10 +355,24 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     addusr () {
     clear
     v2ray_title "ANADIR USUARIO | UUID V2RAY"
+    local cfg tmp port_sel
+    cfg="$(v2ray_config_file)"
+    [[ -z "$cfg" ]] && echo -e "\033[1;31mNo se encontro config.json de V2Ray/Xray.\033[0m" && pausa_v2ray && fun_v2raymanager
+    v2ray_ensure_legacy_config "$cfg"
+    cfg="/etc/v2ray/config.json"
+    if ! command -v jq >/dev/null 2>&1; then
+    echo -e "\033[1;31mjq no esta instalado; no se puede modificar el JSON de forma segura.\033[0m"
+    echo -e "\033[1;37mInstale jq y vuelva a intentar crear el usuario V2Ray.\033[0m"
+    pausa_v2ray
+    fun_v2raymanager
+    fi
+    port_sel="$(v2ray_select_port "$cfg" "SELECCIONAR PUERTO V2RAY")"
+    case "$?" in
+    1) echo -e "\033[1;31mNo hay puertos V2Ray con lista settings.clients en config.json.\033[0m"; pausa_v2ray; fun_v2raymanager ;;
+    2) fun_v2raymanager ;;
+    esac
     ##DIAS
     valid=$(date '+%C%y-%m-%d' -d " +31 days")		  
-    ##CORREO		  
-    MAILITO=$(cat /dev/urandom | tr -dc '[:alnum:]' | head -c 10)
     echo ""
     while true; do
     v2ray_prompt "NOMBRE DE USUARIO:"
@@ -293,7 +392,7 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
          case "$uuidopc" in
          1)
          UUID=`uuidgen`
-         while grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" /etc/v2ray/config.json 2>/dev/null; do
+         while grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; do
          UUID=`uuidgen`
          done
          break
@@ -301,7 +400,11 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
          2)
          v2ray_prompt "UUID:" && read UUID
          [[ -z "$UUID" ]] && echo -e "$msg17" && continue
-         if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" /etc/v2ray/config.json 2>/dev/null; then
+         if ! v2ray_valid_uuid "$UUID"; then
+         echo -e "\033[1;31mUUID no valido.\033[0m"
+         continue
+         fi
+         if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; then
          echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
          continue
          fi
@@ -312,12 +415,35 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
          ;;
          esac
     done
-    sed -i '13i\           \{' /etc/v2ray/config.json
-    sed -i '14i\           \"alterId": 0,' /etc/v2ray/config.json
-    sed -i '15i\           \"id": "'$UUID'",' /etc/v2ray/config.json
-    sed -i '16i\           \"email": "'$MAILITO'@gmail.com"' /etc/v2ray/config.json
-    sed -i '17i\           \},' /etc/v2ray/config.json
+    cp "$cfg" "$cfg.bak-$(date +%s)"
+    tmp="${cfg}.tmp"
+    jq --arg uuid "$UUID" --argjson port "$port_sel" '
+      .inbounds |= map(
+        if (.port == $port and ((.settings.clients? | type) == "array")) then
+          .settings.clients += [(
+            if .protocol == "vless" then
+              {"id": $uuid}
+            else
+              {"id": $uuid, "alterId": 0}
+            end
+          )]
+        else
+          .
+        end
+      )
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
+      rm -f "$tmp"
+      echo -e "\033[1;31mNo se pudo agregar el UUID al config.json.\033[0m"
+      pausa_v2ray
+      fun_v2raymanager
+    }
+    jq -e --arg uuid "$UUID" --argjson port "$port_sel" '.inbounds[]? | select(.port == $port) | .settings.clients[]? | select(.id == $uuid)' "$cfg" >/dev/null || {
+      echo -e "\033[1;31mNo se pudo agregar el UUID al puerto seleccionado.\033[0m"
+      pausa_v2ray
+      fun_v2raymanager
+    }
     printf '%b>\033[0m \033[1;37mUUID: %s\033[0m\n' "$SSHPLUS_CYAN" "$UUID"
+    printf '%b>\033[0m \033[1;37mPUERTO: %s\033[0m\n' "$SSHPLUS_CYAN" "$port_sel"
     while true; do
          v2ray_prompt "DURACION DEL UUID (DIAS):" && read diasuser
          if [[ -z "$diasuser" ]]; then
@@ -337,7 +463,7 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     echo "  $UUID | $nick | $valid " >> /etc/SSHPlus/RegV2ray
     Fecha=`date +%d-%m-%y-%R`
     cp /etc/SSHPlus/RegV2ray /etc/SSHPlus/v2ray/RegV2ray-"$Fecha"
-    v2ray restart > /dev/null 2>&1
+    v2ray_restart_service
     echo ""
     v2ray info > /etc/SSHPlus/v2ray/confuuid.log
     lineP=$(sed -n '/'${UUID}'/=' /etc/SSHPlus/v2ray/confuuid.log)
@@ -671,7 +797,16 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     modificar_uuid_v2ray() {
     clear
     v2ray_title "MODIFICAR UUID V2RAY"
-    [[ ! -e /etc/v2ray/config.json ]] && echo -e "\033[1;31mNo existe /etc/v2ray/config.json\033[0m" && pausa_v2ray && ajustes_v2ray
+    local cfg tmp
+    cfg="$(v2ray_config_file)"
+    [[ -z "$cfg" ]] && echo -e "\033[1;31mNo existe config.json de V2Ray/Xray\033[0m" && pausa_v2ray && ajustes_v2ray
+    v2ray_ensure_legacy_config "$cfg"
+    cfg="/etc/v2ray/config.json"
+    if ! command -v jq >/dev/null 2>&1; then
+    echo -e "\033[1;31mjq no esta instalado; no se puede modificar el JSON de forma segura.\033[0m"
+    pausa_v2ray
+    ajustes_v2ray
+    fi
     [[ ! -s /etc/SSHPlus/RegV2ray ]] && echo -e "\033[1;31mNo hay usuarios V2RAY registrados.\033[0m" && pausa_v2ray && ajustes_v2ray
     echo -e "\033[1;37m        SELECIONAR USUARIOS (UUID) PARA MODIFICAR\033[0m"
     v2ray_line
@@ -690,13 +825,42 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
     sleep 1
     done
     uuid_actual="${uuid_list[$((uuid_sel-1))]}"
-    grep -q "$uuid_actual" /etc/v2ray/config.json || { echo -e "\033[1;31mUUID no encontrado.\033[0m"; pausa_v2ray; ajustes_v2ray; }
+    grep -q "$uuid_actual" "$cfg" || { echo -e "\033[1;31mUUID no encontrado.\033[0m"; pausa_v2ray; ajustes_v2ray; }
     echo -ne "\e[91m >> Nuevo UUID (Enter para generar):\033[1;92m " && read uuid_nuevo
     [[ -z "$uuid_nuevo" ]] && uuid_nuevo="$(uuidgen)"
-    cp /etc/v2ray/config.json /etc/v2ray/config.json.bak-$(date +%s)
-    sed -i "s;$uuid_actual;$uuid_nuevo;g" /etc/v2ray/config.json
+    if ! v2ray_valid_uuid "$uuid_nuevo"; then
+    echo -e "\033[1;31mUUID no valido.\033[0m"
+    pausa_v2ray
+    ajustes_v2ray
+    fi
+    if grep -q "$uuid_nuevo" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$uuid_nuevo" "$cfg" 2>/dev/null; then
+    echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
+    pausa_v2ray
+    ajustes_v2ray
+    fi
+    cp "$cfg" "$cfg.bak-$(date +%s)"
+    tmp="${cfg}.tmp"
+    jq --arg old "$uuid_actual" --arg new "$uuid_nuevo" '
+      .inbounds |= map(
+        if ((.settings.clients? | type) == "array") then
+          .settings.clients |= map(if .id == $old then .id = $new else . end)
+        else
+          .
+        end
+      )
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
+      rm -f "$tmp"
+      echo -e "\033[1;31mNo se pudo modificar el UUID en config.json.\033[0m"
+      pausa_v2ray
+      ajustes_v2ray
+    }
+    grep -q "$uuid_nuevo" "$cfg" || {
+      echo -e "\033[1;31mNo se pudo confirmar el nuevo UUID en config.json.\033[0m"
+      pausa_v2ray
+      ajustes_v2ray
+    }
     [[ -e /etc/SSHPlus/RegV2ray ]] && sed -i "s;$uuid_actual;$uuid_nuevo;g" /etc/SSHPlus/RegV2ray
-    v2ray restart > /dev/null 2>&1
+    v2ray_restart_service
     echo -e "\033[1;32mUUID modificado correctamente.\033[0m"
     echo -e "\033[1;33mNuevo UUID: \033[1;37m$uuid_nuevo\033[0m"
     pausa_v2ray
@@ -781,8 +945,7 @@ sed -i "44 s;$dm;$px;g" "$config_v2ray"
       "settings": {
         "clients": [
           {
-            "id": "${uuid}",
-            "email": "${user}@noxurassh"
+            "id": "${uuid}"
           }
         ],
         "decryption": "none"
@@ -871,11 +1034,12 @@ EOF
     v2ray_opt "4" "MODIFICAR JSON V2RAY"
     v2ray_opt "5" "MODIFICAR UUID V2RAY"
     v2ray_opt "6" "MODIFICAR PATH V2RAY"
-    v2ray_opt "7" "INSTALAR XRAY XHTTP"
+    v2ray_opt "7" "AGREGAR PUERTO V2RAY"
+    v2ray_opt "8" "INSTALAR XRAY XHTTP"
     v2ray_line
     v2ray_opt "0" "VOLVER"
     v2ray_line
-    selection=$(selection_fun 7)
+    selection=$(selection_fun 8)
     case ${selection} in
     1)protocolv2ray ;;
     2)tls ;;
@@ -883,7 +1047,8 @@ EOF
     4)editar_json_v2ray ;;
     5)modificar_uuid_v2ray ;;
     6)modificar_path_v2ray ;;
-    7)instalar_xray_xhttp ;;
+    7)agregar_puerto_v2ray ;;
+    8)instalar_xray_xhttp ;;
     0)fun_v2raymanager ;;
     esac
     }
@@ -894,7 +1059,7 @@ EOF
     if systemctl is-active xray >/dev/null 2>&1; then
     systemctl restart xray >/dev/null 2>&1
     else
-    v2ray restart > /dev/null 2>&1
+    v2ray_restart_service
     fi
     echo -e "\033[1;32mServicio V2RAY reiniciado correctamente.\033[0m"
     v2ray_line

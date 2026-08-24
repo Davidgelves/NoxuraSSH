@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es createuser v4-2026
+# lang=es createuser v5-2026
 #====================================================
 #	@ogeniohacker 
 #====================================================
@@ -97,7 +97,7 @@ fun_bar() {
     comando[0]="$1"
     comando[1]="$2"
     (
-        [[ -e $HOME/fim ]] && rm $HOME/fim
+        [[ -e $HOME/fim ]] && rm -f $HOME/fim
         ${comando[0]} >/dev/null 2>&1
         ${comando[1]} >/dev/null 2>&1
         touch $HOME/fim
@@ -109,7 +109,7 @@ fun_bar() {
             echo -ne "\033[1;31m#"
             sleep 0.1s
         done
-        [[ -e $HOME/fim ]] && rm $HOME/fim && break
+        [[ -e $HOME/fim ]] && rm -f $HOME/fim && break
         echo -e "\033[1;33m]"
         sleep 1s
         tput cuu1
@@ -350,7 +350,6 @@ echo "$username $sshlimiter" >>/root/usuarios.db
 			}
 		}
 		clear
-		#echo -e "\033[1;32m NOME: \033[1;37m$nomee"
 		sshplus_access_data
 		sleep 1
 		function aguarde() {
@@ -385,13 +384,10 @@ echo "$username $sshlimiter" >>/root/usuarios.db
 			sleep 1
 		}
 	} || {
-		clear
-		#echo -e "\033[1;32m NOME: \033[1;37m$nomee"
 		sshplus_access_data
 	}
 } || {
 	clear
-		#echo -e "\033[1;32m NOME: \033[1;37m$nomee"
-		sshplus_access_data
+	sshplus_access_data
 }
-echo -ne "\n${SSHPLUS_CYAN}Enter${SSHPLUS_RESET} ${SSHPLUS_WHITE}para volver al menu${SSHPLUS_RESET}"; read
+echo -ne "\n\033[1;37m* \033[1;33mEnter para continuar\033[0m"; read

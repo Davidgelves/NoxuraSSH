@@ -527,7 +527,6 @@ v2ray_ensure_legacy_config "$config_v2ray"
     # 5. Activar TLS o NO
     local tls_opt="1" tls_mode="none" sni_domain=""
     local cur_domain="$(cat /etc/SSHPlus/v2ray/domain 2>/dev/null || cat /etc/xray/domain 2>/dev/null || cat /etc/v2ray/domain 2>/dev/null || echo "")"
-    [[ -z "$cur_domain" ]] && cur_domain="nc.netcolvpn.com"
     while true; do
         echo ""
         echo -e "\033[1;37m¿ACTIVAR SEGURIDAD TLS?\033[0m"
@@ -544,9 +543,24 @@ v2ray_ensure_legacy_config "$config_v2ray"
             2)
                 tls_mode="tls"
                 echo ""
-                v2ray_prompt "DOMINIO / SNI (actual: $cur_domain) [Enter para usar]:"
-                read user_domain
-                [[ -n "$user_domain" ]] && sni_domain="$user_domain" || sni_domain="$cur_domain"
+                if [[ -n "$cur_domain" ]]; then
+                    v2ray_prompt "DOMINIO / SNI (actual: $cur_domain) [Enter para usar]:"
+                    read user_domain
+                    [[ -n "$user_domain" ]] && sni_domain="$user_domain" || sni_domain="$cur_domain"
+                else
+                    while true; do
+                        v2ray_prompt "DOMINIO / SNI (ej: midominio.com):"
+                        read user_domain
+                        if [[ -z "$user_domain" ]]; then
+                            echo -e "\033[1;31mDebe ingresar un dominio para TLS.\033[0m"
+                            continue
+                        fi
+                        sni_domain="$user_domain"
+                        mkdir -p /etc/SSHPlus/v2ray
+                        echo "$sni_domain" > /etc/SSHPlus/v2ray/domain
+                        break
+                    done
+                fi
                 break
                 ;;
             *)

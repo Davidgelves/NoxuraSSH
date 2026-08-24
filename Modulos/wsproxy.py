@@ -304,12 +304,11 @@ class ConnectionHandler(threading.Thread):
                         data = in_.recv(BUFLEN)
                         if data:
                             if in_ is self.target:
-                                self.client.send(data)
+                                self.client.sendall(data)
                             else:
                                 while data:
                                     byte = self.target.send(data)
                                     data = data[byte:]
-
                             count = 0
                         else:
                             break

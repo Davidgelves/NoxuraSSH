@@ -109,7 +109,76 @@ slow_generate_keys() {
 	chmod 644 "$SLOW_PUB"
 }
 
+SLOW_IPTABLES="${SLOW_DIR}/iptables.sh"
+
+slow_tune_system() {
+	if [[ -f /etc/ssh/sshd_config ]]; then
+		sed -i '/^#\?MaxStartups/d' /etc/ssh/sshd_config
+		sed -i '/^#\?MaxSessions/d' /etc/ssh/sshd_config
+		sed -i '/^#\?ClientAliveInterval/d' /etc/ssh/sshd_config
+		sed -i '/^#\?ClientAliveCountMax/d' /etc/ssh/sshd_config
+		sed -i '/^#\?TCPKeepAlive/d' /etc/ssh/sshd_config
+		echo "MaxStartups 100:30:500" >> /etc/ssh/sshd_config
+		echo "MaxSessions 100" >> /etc/ssh/sshd_config
+		echo "ClientAliveInterval 10" >> /etc/ssh/sshd_config
+		echo "ClientAliveCountMax 6" >> /etc/ssh/sshd_config
+		echo "TCPKeepAlive yes" >> /etc/ssh/sshd_config
+		systemctl restart ssh >/dev/null 2>&1 || systemctl restart sshd >/dev/null 2>&1 || true
+	fi
+
+	sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1 || true
+	sysctl -w net.core.rmem_max=26214400 >/dev/null 2>&1 || true
+	sysctl -w net.core.rmem_default=26214400 >/dev/null 2>&1 || true
+	sysctl -w net.core.wmem_max=26214400 >/dev/null 2>&1 || true
+	sysctl -w net.core.wmem_default=26214400 >/dev/null 2>&1 || true
+	sysctl -w net.ipv4.udp_rmem_min=16384 >/dev/null 2>&1 || true
+	sysctl -w net.ipv4.udp_wmem_min=16384 >/dev/null 2>&1 || true
+	sysctl -w net.netfilter.nf_conntrack_udp_timeout=120 >/dev/null 2>&1 || true
+	sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=300 >/dev/null 2>&1 || true
+	sysctl -p >/dev/null 2>&1 || true
+
+	iptables -t mangle -C FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu >/dev/null 2>&1 || \
+		iptables -t mangle -I FORWARD 1 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu >/dev/null 2>&1 || true
+	iptables -t mangle -C OUTPUT -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu >/dev/null 2>&1 || \
+		iptables -t mangle -I OUTPUT 1 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu >/dev/null 2>&1 || true
+}
+
+slow_write_iptables_helper() {
+	mkdir -p "$SLOW_DIR"
+	cat > "$SLOW_IPTABLES" <<EOF
+#!/bin/bash
+ACTION="\$1"
+PORT="${SLOW_PORT:-$SLOW_PORT_DEFAULT}"
+REDIR="${SLOW_REDIRECT:-53}"
+
+clear_rules() {
+	iptables -D INPUT -p udp --dport "\$REDIR" -j ACCEPT >/dev/null 2>&1 || true
+	iptables -D INPUT -p udp --dport "\$PORT" -j ACCEPT >/dev/null 2>&1 || true
+	while iptables -t nat -C PREROUTING -p udp -m udp --dport "\$REDIR" -j REDIRECT --to-ports "\$PORT" >/dev/null 2>&1; do
+		iptables -t nat -D PREROUTING -p udp -m udp --dport "\$REDIR" -j REDIRECT --to-ports "\$PORT" >/dev/null 2>&1 || break
+	done
+	while iptables -t nat -C PREROUTING -p udp --dport "\$REDIR" -j REDIRECT --to-ports "\$PORT" >/dev/null 2>&1; do
+		iptables -t nat -D PREROUTING -p udp --dport "\$REDIR" -j REDIRECT --to-ports "\$PORT" >/dev/null 2>&1 || break
+	done
+}
+
+apply_rules() {
+	clear_rules
+	iptables -I INPUT 1 -p udp --dport "\$REDIR" -j ACCEPT >/dev/null 2>&1 || true
+	iptables -I INPUT 1 -p udp --dport "\$PORT" -j ACCEPT >/dev/null 2>&1 || true
+	iptables -t nat -I PREROUTING 1 -p udp -m udp --dport "\$REDIR" -j REDIRECT --to-ports "\$PORT" >/dev/null 2>&1 || true
+}
+
+case "\$ACTION" in
+	apply) apply_rules ;;
+	clear) clear_rules ;;
+esac
+EOF
+	chmod +x "$SLOW_IPTABLES" 2>/dev/null || true
+}
+
 slow_write_service() {
+	slow_write_iptables_helper
 	cat > "$SLOW_SERVICE" <<EOF
 [Unit]
 Description=SSHPlus SlowDNS DNSTT Server
@@ -118,9 +187,12 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+ExecStartPre=${SLOW_IPTABLES} apply
 ExecStart=${SLOW_BIN} -udp :${SLOW_PORT} -privkey-file ${SLOW_KEY} ${SLOW_DOMAIN} 127.0.0.1:${SLOW_TRAFFIC}
+ExecStopPost=${SLOW_IPTABLES} clear
 Restart=always
 RestartSec=3
+LimitNOFILE=infinity
 StandardOutput=append:${SLOW_LOG}
 StandardError=append:${SLOW_LOG}
 
@@ -147,24 +219,14 @@ slow_clean_redirects() {
 }
 
 slow_apply_redirect() {
-	iptables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
-	iptables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-	slow_clean_redirects iptables
-	iptables -I INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
-	iptables -I INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-	iptables -t nat -I PREROUTING 1 -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
-	if command -v ip6tables >/dev/null 2>&1; then
-		ip6tables -D INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
-		ip6tables -D INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-		slow_clean_redirects ip6tables
-		ip6tables -I INPUT -p udp --dport "${SLOW_REDIRECT:-53}" -j ACCEPT >/dev/null 2>&1 || true
-		ip6tables -I INPUT -p udp --dport "$SLOW_PORT" -j ACCEPT >/dev/null 2>&1 || true
-		ip6tables -t nat -I PREROUTING 1 -p udp --dport "${SLOW_REDIRECT:-53}" -j REDIRECT --to-ports "$SLOW_PORT" >/dev/null 2>&1 || true
-	fi
+	[[ -x "$SLOW_IPTABLES" ]] && "$SLOW_IPTABLES" apply && return 0
+	slow_write_iptables_helper
+	"$SLOW_IPTABLES" apply
 }
 
 slow_restart() {
 	slow_load_conf
+	slow_tune_system
 	slow_write_service
 	slow_apply_redirect
 	systemctl enable slowdns >/dev/null 2>&1 || true

@@ -46,6 +46,7 @@ _init_log_file()
 # (a veces en saltos distintos); enviar ambas respuestas mínimas antes del túnel TCP ayuda a esos clientes.
 RESPONSE = (
     b"HTTP/1.1 200 OK\r\n"
+    b"Connection: keep-alive\r\n"
     b"Content-Length: 0\r\n"
     b"\r\n"
     b"HTTP/1.1 200 Connection Established\r\n"
@@ -232,7 +233,9 @@ class ConnectionHandler(threading.Thread):
 
         self.target = socket.socket(soc_family, soc_type, proto)
         self.targetClosed = False
+        self.target.settimeout(10)
         self.target.connect(address)
+        self.target.settimeout(None)
 
     def method_CONNECT(self, path):
         self.log += " - CONNECT " + path

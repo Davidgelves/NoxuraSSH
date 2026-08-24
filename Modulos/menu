@@ -569,7 +569,7 @@ _sshplus_sync_criarteste() {
 	[[ -e /bin/criarteste ]] || ln -s /bin/createtest /bin/criarteste 2>/dev/null || cp -f /bin/createtest /bin/criarteste
 }
 _sshplus_sync_criarusuario() {
-	if ! grep -q 'lang=es createuser v3-2026' /bin/createuser 2>/dev/null; then
+	if ! grep -q 'lang=es createuser v4-2026' /bin/createuser 2>/dev/null; then
 		wget -qO /bin/createuser "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/createuser" && chmod +x /bin/createuser
 	fi
 	[[ -e /bin/criarusuario ]] || ln -s /bin/createuser /bin/criarusuario 2>/dev/null || cp -f /bin/createuser /bin/criarusuario

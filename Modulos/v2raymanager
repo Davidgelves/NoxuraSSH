@@ -418,134 +418,269 @@ v2ray_ensure_legacy_config "$config_v2ray"
     v2ray_ensure_legacy_config "$cfg"
     cfg="/etc/v2ray/config.json"
     if ! v2ray_require_jq; then
-    echo -e "\033[1;31mjq no esta instalado; no se puede modificar el JSON de forma segura.\033[0m"
-    echo -e "\033[1;37mInstale jq y vuelva a intentar crear el usuario V2Ray.\033[0m"
-    pausa_v2ray
-    fun_v2raymanager
+        echo -e "\033[1;31mjq no esta instalado; no se puede modificar el JSON de forma segura.\033[0m"
+        echo -e "\033[1;37mInstale jq y vuelva a intentar crear el usuario V2Ray.\033[0m"
+        pausa_v2ray
+        fun_v2raymanager
     fi
-    local port_count
-    port_count="$(jq '[.inbounds[]? | select((.settings.clients? | type) == "array")] | length' "$cfg" 2>/dev/null)"
-    [[ "$port_count" -lt 1 ]] 2>/dev/null && echo -e "\033[1;31mNo hay inbounds V2Ray con settings.clients en config.json.\033[0m" && pausa_v2ray && fun_v2raymanager
-    local all_ports
-    all_ports="$(jq -r '[.inbounds[]? | select((.settings.clients? | type) == "array") | .port] | join(", ")' "$cfg" 2>/dev/null)"
-    echo -e "\033[1;33mPuertos V2Ray detectados: \033[1;37m${all_ports}\033[0m"
-    echo -e "\033[1;32mEl usuario se agregara a TODOS los puertos.\033[0m"
-    ##DIAS
-    valid=$(date '+%C%y-%m-%d' -d " +31 days")		  
-    echo ""
+
+    # 1. Nombre de usuario
     while true; do
-    v2ray_prompt "NOMBRE DE USUARIO:"
-         read nick
-         nick="$(echo $nick|sed -e 's/[^a-z0-9 -]//ig')"
-         if [[ -z $nick ]]; then
-         echo -e "$msg17" && continue
-         elif [[ "${#nick}" -lt "2" ]]; then
-         echo -e "$msg02" && continue
-         elif [[ "${#nick}" -gt "20" ]]; then
-         echo -e "$msg03" && continue
-         fi
-         break
+        v2ray_prompt "NOMBRE DE USUARIO:"
+        read nick
+        nick="$(echo "$nick" | sed -e 's/[^a-z0-9 -]//ig')"
+        if [[ -z "$nick" ]]; then
+            echo -e "$msg17" && continue
+        elif [[ "${#nick}" -lt 2 ]]; then
+            echo -e "$msg02" && continue
+        elif [[ "${#nick}" -gt 20 ]]; then
+            echo -e "$msg03" && continue
+        fi
+        break
     done
+
+    # 2. Elegir Protocolo (VMess o VLESS)
+    local proto_choice="1" proto_name="VMess" proto_tag="vmess"
     while true; do
-         v2ray_prompt "UUID [1] GENERAR [2] ESCRIBIR:" && read uuidopc
-         case "$uuidopc" in
-         1)
-         UUID=`uuidgen`
-         while grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; do
-         UUID=`uuidgen`
-         done
-         break
-         ;;
-         2)
-         v2ray_prompt "UUID:" && read UUID
-         [[ -z "$UUID" ]] && echo -e "$msg17" && continue
-         if ! v2ray_valid_uuid "$UUID"; then
-         echo -e "\033[1;31mUUID no valido.\033[0m"
-         continue
-         fi
-         if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; then
-         echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
-         continue
-         fi
-         break
-         ;;
-         *)
-         echo -e "\033[1;31mOpcion no valida!\033[0m"
-         ;;
-         esac
+        echo ""
+        echo -e "\033[1;37mSELECCIONAR PROTOCOLO:\033[0m"
+        v2ray_opt "1" "VMess"
+        v2ray_opt "2" "VLESS"
+        v2ray_prompt "Opcion:" && read proto_choice
+        case "$proto_choice" in
+            1) proto_name="VMess"; proto_tag="vmess"; break ;;
+            2) proto_name="VLESS"; proto_tag="vless"; break ;;
+            *) echo -e "\033[1;31mOpcion no valida!\033[0m" ;;
+        esac
     done
+
+    # 3. Elegir Puerto (de los puertos configurados en el V2Ray)
+    mapfile -t v2_ports < <(jq -r '.inbounds[]? | select((.settings.clients? | type) == "array") | .port' "$cfg" 2>/dev/null | sed '/^$/d' | sort -n | uniq)
+    local selected_port="" selected_ports_disp="" apply_all=false
+    if [[ "${#v2_ports[@]}" -eq 0 ]]; then
+        v2ray_prompt "PUERTO V2RAY (ej: 80, 443, 8080):" && read selected_port
+        [[ -z "$selected_port" ]] && selected_port="80"
+        selected_ports_disp="$selected_port"
+    elif [[ "${#v2_ports[@]}" -eq 1 ]]; then
+        selected_port="${v2_ports[0]}"
+        selected_ports_disp="$selected_port"
+        echo -e "\033[1;33mPuerto V2Ray detectado: \033[1;37m${selected_port}\033[0m"
+    else
+        echo ""
+        echo -e "\033[1;37mSELECCIONAR PUERTO V2RAY:\033[0m"
+        for i in "${!v2_ports[@]}"; do
+            v2ray_opt "$((i+1))" "Puerto ${v2_ports[$i]}"
+        done
+        v2ray_opt "$(( ${#v2_ports[@]} + 1 ))" "TODOS LOS PUERTOS ($(IFS=,; echo "${v2_ports[*]}"))"
+        while true; do
+            v2ray_prompt "Opcion:" && read p_opt
+            if [[ "$p_opt" -ge 1 && "$p_opt" -le "${#v2_ports[@]}" ]] 2>/dev/null; then
+                selected_port="${v2_ports[$((p_opt-1))]}"
+                selected_ports_disp="$selected_port"
+                apply_all=false
+                break
+            elif [[ "$p_opt" -eq "$(( ${#v2_ports[@]} + 1 ))" ]] 2>/dev/null; then
+                apply_all=true
+                selected_port="${v2_ports[0]}"
+                selected_ports_disp="$(IFS=,; echo "${v2_ports[*]}")"
+                break
+            else
+                echo -e "\033[1;31mOpcion no valida!\033[0m"
+            fi
+        done
+    fi
+
+    # 4. Configurar UUID (Aleatorio o Manual)
+    while true; do
+        echo ""
+        echo -e "\033[1;37mCONFIGURAR UUID / ID:\033[0m"
+        v2ray_opt "1" "Generar automaticamente (Aleatorio)"
+        v2ray_opt "2" "Ingresar manualmente"
+        v2ray_prompt "Opcion:" && read uuidopc
+        case "$uuidopc" in
+            1)
+                UUID="$(command -v uuidgen >/dev/null 2>&1 && uuidgen || cat /proc/sys/kernel/random/uuid 2>/dev/null)"
+                [[ -z "$UUID" ]] && UUID="$(cat /proc/sys/kernel/random/uuid 2>/dev/null)"
+                while grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; do
+                    UUID="$(cat /proc/sys/kernel/random/uuid 2>/dev/null)"
+                done
+                break
+                ;;
+            2)
+                v2ray_prompt "UUID:" && read UUID
+                [[ -z "$UUID" ]] && echo -e "$msg17" && continue
+                if ! v2ray_valid_uuid "$UUID"; then
+                    echo -e "\033[1;31mUUID no valido.\033[0m"
+                    continue
+                fi
+                if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; then
+                    echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
+                    continue
+                fi
+                break
+                ;;
+            *)
+                echo -e "\033[1;31mOpcion no valida!\033[0m"
+                ;;
+        esac
+    done
+
+    # 5. Activar TLS o NO
+    local tls_opt="1" tls_mode="none" sni_domain=""
+    local cur_domain="$(cat /etc/SSHPlus/v2ray/domain 2>/dev/null || cat /etc/xray/domain 2>/dev/null || cat /etc/v2ray/domain 2>/dev/null || echo "")"
+    [[ -z "$cur_domain" ]] && cur_domain="nc.netcolvpn.com"
+    while true; do
+        echo ""
+        echo -e "\033[1;37m¿ACTIVAR SEGURIDAD TLS?\033[0m"
+        v2ray_opt "1" "NO  (security=none - HTTP / CDN Cloudflare)"
+        v2ray_opt "2" "SÍ  (security=tls - HTTPS / Certificado SSL)"
+        v2ray_prompt "Opcion:" && read tls_opt
+        case "$tls_opt" in
+            1)
+                tls_mode="none"
+                sni_domain="$(cat /etc/IP 2>/dev/null || echo "$IP")"
+                [[ -z "$sni_domain" ]] && sni_domain="$cur_domain"
+                break
+                ;;
+            2)
+                tls_mode="tls"
+                echo ""
+                v2ray_prompt "DOMINIO / SNI (actual: $cur_domain) [Enter para usar]:"
+                read user_domain
+                [[ -n "$user_domain" ]] && sni_domain="$user_domain" || sni_domain="$cur_domain"
+                break
+                ;;
+            *)
+                echo -e "\033[1;31mOpcion no valida!\033[0m"
+                ;;
+        esac
+    done
+
+    # 6. Duracion en dias
+    while true; do
+        echo ""
+        v2ray_prompt "DURACION DEL USUARIO (DIAS):" && read diasuser
+        if [[ -z "$diasuser" ]]; then
+            echo -e "$msg17" && continue
+        elif [[ "$diasuser" != +([0-9]) ]]; then
+            echo -e "$msg08" && continue
+        elif [[ "$diasuser" -gt "360" ]]; then
+            echo -e "$msg09" && continue
+        fi
+        break
+    done
+
+    local valid=$(date '+%C%y-%m-%d' -d " +$diasuser days")
+    local datexp=$(date "+%F" -d " + $diasuser days")
+
+    # 7. Agregar al config.json
     cp "$cfg" "$cfg.bak-$(date +%s)"
     tmp="${cfg}.tmp"
-    jq --arg uuid "$UUID" '
-      .inbounds |= map(
-        if ((.settings.clients? | type) == "array") then
-          .settings.clients += [(
-            if .protocol == "vless" then
-              {"id": $uuid}
+    local client_json
+    if [[ "$proto_tag" == "vless" ]]; then
+        client_json='{"id": $uuid}'
+    else
+        client_json='{"id": $uuid, "alterId": 0}'
+    fi
+
+    if [[ "$apply_all" == true ]]; then
+        jq --arg uuid "$UUID" --arg proto "$proto_tag" '
+          .inbounds |= map(
+            if ((.settings.clients? | type) == "array") then
+              .settings.clients += [(
+                if ($proto == "vless" or .protocol == "vless") then
+                  {"id": $uuid}
+                else
+                  {"id": $uuid, "alterId": 0}
+                end
+              )]
             else
-              {"id": $uuid, "alterId": 0}
+              .
             end
-          )]
-        else
-          .
-        end
-      )
-    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
-      rm -f "$tmp"
-      echo -e "\033[1;31mNo se pudo agregar el UUID al config.json.\033[0m"
-      pausa_v2ray
-      fun_v2raymanager
-    }
-    jq -e --arg uuid "$UUID" '.inbounds[]? | select((.settings.clients? | type) == "array") | .settings.clients[]? | select(.id == $uuid)' "$cfg" >/dev/null || {
-      echo -e "\033[1;31mNo se pudo agregar el UUID.\033[0m"
-      pausa_v2ray
-      fun_v2raymanager
-    }
-    printf '%b>\033[0m \033[1;37mUUID: %s\033[0m\n' "$SSHPLUS_CYAN" "$UUID"
-    printf '%b>\033[0m \033[1;37mPUERTOS: %s\033[0m\n' "$SSHPLUS_CYAN" "$all_ports"
-    while true; do
-         v2ray_prompt "DURACION DEL UUID (DIAS):" && read diasuser
-         if [[ -z "$diasuser" ]]; then
-         echo -e "$msg17" && continue
-         elif [[ "$diasuser" != +([0-9]) ]]; then
-         echo -e "$msg08" && continue
-         elif [[ "$diasuser" -gt "360" ]]; then
-         echo -e "$msg09" && continue
-         fi
-         break
-    done
-    #Lim
-    [[ $(cat /etc/passwd |grep $1: |grep -vi [a-z]$1 |grep -v [0-9]$1 > /dev/null) ]] && return 1
-    valid=$(date '+%C%y-%m-%d' -d " +$diasuser days") && datexp=$(date "+%F" -d " + $diasuser days")
-    printf '%b>\033[0m \033[1;37mEXPIRA EL: %s\033[0m\n' "$SSHPLUS_CYAN" "$datexp"
-    ##Registro
+          )
+        ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+    else
+        local tgt_p=$selected_port
+        jq --arg uuid "$UUID" --argjson tgt "$tgt_p" --arg proto "$proto_tag" '
+          .inbounds |= map(
+            if (.port == $tgt and ((.settings.clients? | type) == "array")) then
+              .settings.clients += [(
+                if ($proto == "vless" or .protocol == "vless") then
+                  {"id": $uuid}
+                else
+                  {"id": $uuid, "alterId": 0}
+                end
+              )]
+            elif ((.settings.clients? | type) == "array" and .port == $tgt) then
+              .settings.clients += [{"id": $uuid, "alterId": 0}]
+            else
+              .
+            end
+          )
+        ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+    fi
+
+    # 8. Registro y reinicio
     mkdir -p /etc/SSHPlus/v2ray
     echo "  $UUID | $nick | $valid " >> /etc/SSHPlus/RegV2ray
-    Fecha=`date +%d-%m-%y-%R`
-    cp /etc/SSHPlus/RegV2ray /etc/SSHPlus/v2ray/RegV2ray-"$Fecha"
     v2ray_restart_service
-    echo ""
-    if command -v v2ray >/dev/null 2>&1; then
-    v2ray info > /etc/SSHPlus/v2ray/confuuid.log
+
+    # 9. Generar Enlace URI
+    local server_host="$(cat /etc/IP 2>/dev/null || echo "$IP")"
+    [[ -z "$server_host" ]] && server_host="$sni_domain"
+    local net_type="$(jq -r --argjson p "${selected_port:-80}" '.inbounds[]? | select(.port == $p) | .streamSettings.network // "ws"' "$cfg" 2>/dev/null)"
+    [[ -z "$net_type" || "$net_type" == "null" ]] && net_type="ws"
+    local path_ws="$(jq -r --argjson p "${selected_port:-80}" '.inbounds[]? | select(.port == $p) | .streamSettings.wsSettings.path // .streamSettings.xhttpSettings.path // "/v2ray"' "$cfg" 2>/dev/null)"
+    [[ -z "$path_ws" || "$path_ws" == "null" ]] && path_ws="/v2ray"
+
+    local uri=""
+    if [[ "$proto_tag" == "vmess" ]]; then
+        local vmess_json
+        vmess_json=$(cat <<EOF
+{
+  "v": "2",
+  "ps": "$nick",
+  "add": "${server_host}",
+  "port": "${selected_port}",
+  "id": "$UUID",
+  "aid": "0",
+  "scy": "auto",
+  "net": "${net_type}",
+  "type": "none",
+  "host": "${sni_domain}",
+  "path": "${path_ws}",
+  "tls": "${tls_mode}",
+  "sni": "${sni_domain}"
+}
+EOF
+)
+        local vmess_b64="$(printf '%s' "$vmess_json" | base64 -w 0 2>/dev/null || printf '%s' "$vmess_json" | base64 | tr -d '\n')"
+        uri="vmess://${vmess_b64}"
     else
-    {
-      echo "UUID: $UUID"
-      echo "PUERTOS: $all_ports"
-      echo "USUARIO: $nick"
-      echo "EXPIRA: $datexp"
-    } > /etc/SSHPlus/v2ray/confuuid.log
+        local enc_path="$(printf '%s' "$path_ws" | sed 's/\//%2F/g')"
+        if [[ "$tls_mode" == "tls" ]]; then
+            uri="vless://${UUID}@${server_host}:${selected_port}?type=${net_type}&security=tls&sni=${sni_domain}&host=${sni_domain}&path=${enc_path}#${nick}"
+        else
+            uri="vless://${UUID}@${server_host}:${selected_port}?type=${net_type}&security=none&path=${enc_path}&host=${sni_domain}#${nick}"
+        fi
     fi
-    lineP=$(sed -n '/'${UUID}'/=' /etc/SSHPlus/v2ray/confuuid.log)
-    numl1=4
-    let suma=$lineP+$numl1
-    sed -n ${suma}p /etc/SSHPlus/v2ray/confuuid.log 
-    echo ""
-    sed -i "11 s;104.16.18.94%3A443;$nick;g" /etc/SSHPlus/v2ray/confuuid.log
-    cat /etc/SSHPlus/v2ray/confuuid.log  | sed -n '11 p'
-    echo "" 
-    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
-    echo -e "\e[92m           UUID AGREGADO CORRECTAMENTE "
-    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+
+    # 10. Mostrar Ficha y URI
+    clear
+    v2ray_title "USUARIO V2RAY CREADO CON EXITO"
+    v2ray_line
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "USUARIO:" "$nick"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PROTOCOLO:" "$proto_name"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PUERTO(S):" "$selected_ports_disp"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "UUID / ID:" "$UUID"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "SEGURIDAD TLS:" "$tls_mode"
+    [[ "$tls_mode" == "tls" ]] && printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "DOMINIO / SNI:" "$sni_domain"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PATH:" "$path_ws"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s (%s dias)\033[0m\n" "EXPIRA:" "$datexp" "$diasuser"
+    v2ray_line
+    echo -e "\033[1;33mENLACE URI (Copiar para importar):\033[0m\n"
+    echo -e "\033[1;36m${uri}\033[0m\n"
+    v2ray_line
     echo -e "\033[1;37m* \033[1;33mEnter para continuar\033[1;31m" && read enter
     fun_v2raymanager
     }

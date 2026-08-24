@@ -1461,6 +1461,36 @@ EOF
       0)fun_v2raymanager ;;
     esac
     fi
+    menu_usuarios_v2ray() {
+        while true; do
+            clear
+            v2ray_title "ADMINISTRAR USUARIOS V2RAY"
+            v2ray_opt "1" "ANADIR USUARIO | UUID"
+            v2ray_opt "2" "ELIMINAR USUARIO V2RAY"
+            v2ray_opt "3" "USUARIOS REGISTRADOS"
+            v2ray_opt "4" "INFORMACION DE CUENTA"
+            v2ray_opt "5" "LIMITAR MB POR PUERTO / UUID"
+            v2ray_opt "6" "ESTADISTICAS DE CONSUMO"
+            v2ray_opt "7" "LIMPIAR USUARIOS EXPIRADOS"
+            v2ray_line
+            v2ray_opt "0" "VOLVER"
+            v2ray_line
+            tput civis
+            echo -ne "${SSHPLUS_CYAN}Opcion:${SCOLOR} "
+            read usropt
+            tput cnorm
+            case "$usropt" in
+                1 | 01) addusr ;;
+                2 | 02) delusr ;;
+                3 | 03) mosusr_kk ;;
+                4 | 04) infocuenta ;;
+                5 | 05) lim_port ;;
+                6 | 06) stats ;;
+                7 | 07) limpiador_activador ;;
+                0 | 00) break ;;
+                *) echo -e "\033[1;31mOpcion no valida!\033[0m"; sleep 1 ;;
+            esac
+        done
     }
 
     ajustes_v2ray() {

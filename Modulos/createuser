@@ -1,5 +1,5 @@
 #!/bin/bash
-# lang=es createuser v5-2026
+# lang=es createuser v6-2026
 #====================================================
 #	@ogeniohacker 
 #====================================================
@@ -266,26 +266,32 @@ fun_edithost() {
         fun_edithost
     fi
 }
-tput setaf 7;tput setab 4;tput bold;printf '%30s%s%-15s\n' "CREAR USUARIO SSH";tput sgr0
+local_err=""
 while true; do
+	clear
+	tput setaf 7;tput setab 4;tput bold;printf '%30s%s%-15s\n' "CREAR USUARIO SSH";tput sgr0
+	[[ -n "$local_err" ]] && { echo -e "$local_err"; local_err=""; }
 	echo -ne "\033[1;32mUSUARIO:\033[1;37m ";read username
 	[[ -z $username ]] && exit 0
 	if grep -q "^${username}:" /etc/passwd 2>/dev/null || grep -qw "$username" /root/usuarios.db 2>/dev/null; then
-		echo -e "\033[1;31m¡El usuario '$username' ya existe!\033[0m"
+		local_err="\033[1;31m¡El usuario '$username' ya existe!\033[0m"
 		continue
 	fi
 	sizemin=$(echo ${#username})
 	[[ $sizemin -lt 2 ]] && {
-		echo -e "\n${cor1}Nombre de usuario demasiado corto (mínimo 2 caracteres).${scor}\n"
+		local_err="${cor1}Nombre de usuario demasiado corto (mínimo 2 caracteres).${scor}"
 		continue
 	}
 	sizemax=$(echo ${#username})
 	[[ $sizemax -gt 25 ]] && {
-		echo -e "\n${cor1}Nombre de usuario demasiado largo (máximo 25 caracteres).${scor}\n"
+		local_err="${cor1}Nombre de usuario demasiado largo (máximo 25 caracteres).${scor}"
 		continue
 	}
 	break
 done
+clear
+tput setaf 7;tput setab 4;tput bold;printf '%30s%s%-15s\n' "CREAR USUARIO SSH";tput sgr0
+echo -e "\033[1;32mUSUARIO:\033[1;37m $username"
 echo -ne "\033[1;32mCONTRASEÑA:\033[1;37m ";read password
 [[ -z $password ]] && {
 	echo -e "\n${cor1}Contraseña vacía o no válida.${scor}\n"

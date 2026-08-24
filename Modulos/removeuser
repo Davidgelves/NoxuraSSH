@@ -94,10 +94,16 @@ rm_one_menu() {
 		[[ "$opt" = "0" ]] && return
 		if [[ "$opt" =~ ^[0-9]+$ ]] && [[ "$opt" -ge 1 ]] && [[ "$opt" -le "${#RM_FILTERED[@]}" ]]; then
 			user="${RM_FILTERED[$((opt - 1))]}"
+			echo -ne "${DARK_GREEN}¿Eliminar al usuario ${NC}\033[1;37m$user${NC}${DARK_GREEN}? [s/n]:${NC} "
+			read -r confirm
+			[[ ! "$confirm" =~ ^[sS]$ ]] && { echo -e "\033[1;33mOperación cancelada.\033[0m"; sleep 1; rm_one_menu; return; }
 			rm_delete_user "$user"
 			echo -e "\n${GREEN}Usuario $user eliminado correctamente.${NC}"
 			sleep 2
 			return
+		else
+			echo -e "\033[1;31mOpción no valida!\033[0m"
+			sleep 1
 		fi
 	done
 }
@@ -108,7 +114,7 @@ rm_all_menu() {
 	rm_title "             ELIMINAR TODOS LOS USUARIOS?"
 	echo -ne "${DARK_GREEN}DESEA ELIMINAR TODOS LOS USUARIOS [s/n]:${NC} "
 	read -r opc
-	[[ "$opc" =~ ^[sS]$ ]] || return
+	[[ "$opc" =~ ^[sS]$ ]] || { echo -e "\033[1;33mOperación cancelada.\033[0m"; sleep 1; return; }
 	rm_load_users
 	for user in "${RM_FILTERED[@]}"; do
 		rm_delete_user "$user"
@@ -138,5 +144,6 @@ while true; do
 		1) rm_one_menu ;;
 		2) rm_all_menu ;;
 		3) exit ;;
+		*) echo -e "\033[1;31mOpción no valida!\033[0m"; sleep 1 ;;
 	esac
 done

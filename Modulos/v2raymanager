@@ -512,10 +512,6 @@ v2ray_ensure_legacy_config "$config_v2ray"
                     echo -e "\033[1;31mUUID no valido.\033[0m"
                     continue
                 fi
-                if grep -q "$UUID" /etc/SSHPlus/RegV2ray 2>/dev/null || grep -q "$UUID" "$cfg" 2>/dev/null; then
-                    echo -e "\033[1;31mYA HAY UN USUARIO CON ESTE UUID\033[0m"
-                    continue
-                fi
                 break
                 ;;
             *)
@@ -589,24 +585,22 @@ v2ray_ensure_legacy_config "$config_v2ray"
     # 7. Agregar al config.json
     cp "$cfg" "$cfg.bak-$(date +%s)"
     tmp="${cfg}.tmp"
-    local client_json
-    if [[ "$proto_tag" == "vless" ]]; then
-        client_json='{"id": $uuid}'
-    else
-        client_json='{"id": $uuid, "alterId": 0}'
-    fi
 
     if [[ "$apply_all" == true ]]; then
         jq --arg uuid "$UUID" --arg proto "$proto_tag" '
           .inbounds |= map(
             if ((.settings.clients? | type) == "array") then
-              .settings.clients += [(
-                if ($proto == "vless" or .protocol == "vless") then
-                  {"id": $uuid}
-                else
-                  {"id": $uuid, "alterId": 0}
-                end
-              )]
+              if (.settings.clients | any(.id == $uuid)) then
+                .
+              else
+                .settings.clients += [(
+                  if ($proto == "vless" or .protocol == "vless") then
+                    {"id": $uuid}
+                  else
+                    {"id": $uuid, "alterId": 0}
+                  end
+                )]
+              end
             else
               .
             end
@@ -617,15 +611,17 @@ v2ray_ensure_legacy_config "$config_v2ray"
         jq --arg uuid "$UUID" --argjson tgt "$tgt_p" --arg proto "$proto_tag" '
           .inbounds |= map(
             if (.port == $tgt and ((.settings.clients? | type) == "array")) then
-              .settings.clients += [(
-                if ($proto == "vless" or .protocol == "vless") then
-                  {"id": $uuid}
-                else
-                  {"id": $uuid, "alterId": 0}
-                end
-              )]
-            elif ((.settings.clients? | type) == "array" and .port == $tgt) then
-              .settings.clients += [{"id": $uuid, "alterId": 0}]
+              if (.settings.clients | any(.id == $uuid)) then
+                .
+              else
+                .settings.clients += [(
+                  if ($proto == "vless" or .protocol == "vless") then
+                    {"id": $uuid}
+                  else
+                    {"id": $uuid, "alterId": 0}
+                  end
+                )]
+              end
             else
               .
             end
@@ -635,7 +631,9 @@ v2ray_ensure_legacy_config "$config_v2ray"
 
     # 8. Registro y reinicio
     mkdir -p /etc/SSHPlus/v2ray
-    echo "  $UUID | $nick | $valid " >> /etc/SSHPlus/RegV2ray
+    if ! grep -q "$UUID.*$nick" /etc/SSHPlus/RegV2ray 2>/dev/null; then
+        echo "  $UUID | $nick | $valid " >> /etc/SSHPlus/RegV2ray
+    fi
     v2ray_restart_service
 
     # 9. Generar Enlace URI

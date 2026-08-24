@@ -985,6 +985,11 @@ v2ray_ensure_legacy_config "$config_v2ray"
     ajustes_v2ray
     }
 
+    # ==================== GESTION XRAY XHTTP ====================
+    xhttp_is_installed() {
+    [[ -f /usr/local/bin/xray && -f /usr/local/etc/xray/config.json ]]
+    }
+
     instalar_xray_xhttp() {
     local port path domain uuid user exp xray_url arch asset
     clear
@@ -994,7 +999,8 @@ v2ray_ensure_legacy_config "$config_v2ray"
     if ! v2ray_valid_port "$port"; then
     echo -e "\033[1;31mPuerto no valido. Use 1-65535.\033[0m"
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
+    return
     fi
     echo -ne "${SSHPLUS_DARK_GREEN}PATH XHTTP [Enter = /xhttp]:${SCOLOR} " && read path
     [[ -z "$path" ]] && path="/xhttp"
@@ -1002,7 +1008,7 @@ v2ray_ensure_legacy_config "$config_v2ray"
     echo -ne "${SSHPLUS_DARK_GREEN}DOMINIO/SNI [opcional]:${SCOLOR} " && read domain
     echo -ne "${SSHPLUS_DARK_GREEN}USUARIO [Enter = xhttp]:${SCOLOR} " && read user
     [[ -z "$user" ]] && user="xhttp"
-    uuid="$(uuidgen)"
+    uuid="$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid)"
     exp="$(date '+%Y-%m-%d' -d '+365 days' 2>/dev/null || date '+%Y-%m-%d')"
 
     mkdir -p /usr/local/etc/xray /etc/SSHPlus/v2ray /etc/SSHPlus
@@ -1010,14 +1016,14 @@ v2ray_ensure_legacy_config "$config_v2ray"
     case "$arch" in
     x86_64|amd64) asset="Xray-linux-64.zip" ;;
     aarch64|arm64) asset="Xray-linux-arm64-v8a.zip" ;;
-    *) echo -e "\033[1;31mArquitectura no soportada: $arch\033[0m"; pausa_v2ray; ajustes_v2ray ;;
+    *) echo -e "\033[1;31mArquitectura no soportada: $arch\033[0m"; pausa_v2ray; menu_xray_xhttp; return ;;
     esac
     xray_url="https://github.com/XTLS/Xray-core/releases/latest/download/${asset}"
     if command -v apt-get >/dev/null 2>&1; then
     apt-get update -y >/dev/null 2>&1 || true
-    apt-get install -y unzip curl wget ca-certificates jq >/dev/null 2>&1 || true
+    apt-get install -y unzip curl wget ca-certificates jq uuid-runtime >/dev/null 2>&1 || true
     fi
-    cd /tmp || { echo -e "\033[1;31mNo se pudo acceder a /tmp\033[0m"; pausa_v2ray; ajustes_v2ray; }
+    cd /tmp || { echo -e "\033[1;31mNo se pudo acceder a /tmp\033[0m"; pausa_v2ray; menu_xray_xhttp; return; }
     rm -rf xray-install xray.zip
     mkdir -p xray-install
     if command -v curl >/dev/null 2>&1; then
@@ -1025,8 +1031,8 @@ v2ray_ensure_legacy_config "$config_v2ray"
     else
     wget -O xray.zip "$xray_url"
     fi
-    unzip -o xray.zip -d xray-install >/dev/null 2>&1 || { echo -e "\033[1;31mNo se pudo descomprimir Xray.\033[0m"; pausa_v2ray; ajustes_v2ray; }
-    install -m 755 xray-install/xray /usr/local/bin/xray || { echo -e "\033[1;31mNo se pudo instalar /usr/local/bin/xray.\033[0m"; pausa_v2ray; ajustes_v2ray; }
+    unzip -o xray.zip -d xray-install >/dev/null 2>&1 || { echo -e "\033[1;31mNo se pudo descomprimir Xray.\033[0m"; pausa_v2ray; menu_xray_xhttp; return; }
+    install -m 755 xray-install/xray /usr/local/bin/xray || { echo -e "\033[1;31mNo se pudo instalar /usr/local/bin/xray.\033[0m"; pausa_v2ray; menu_xray_xhttp; return; }
 
     cat >/usr/local/etc/xray/config.json <<EOF
 {
@@ -1083,60 +1089,159 @@ EOF
     systemctl daemon-reload >/dev/null 2>&1
     systemctl enable xray >/dev/null 2>&1
     systemctl restart xray >/dev/null 2>&1
-    if ! v2ray_service_running; then
+    if ! systemctl is-active xray >/dev/null 2>&1; then
     echo -e "\033[1;31mXray no pudo iniciar. Revise: systemctl status xray\033[0m"
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
+    return
     fi
     [[ -f /etc/SSHPlus/RegV2ray ]] || touch /etc/SSHPlus/RegV2ray
     grep -q "$uuid" /etc/SSHPlus/RegV2ray 2>/dev/null || echo "  $uuid | $user | $exp " >> /etc/SSHPlus/RegV2ray
     echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
-    echo -e "\033[1;37mXRAY XHTTP INSTALADO\033[0m"
+    echo -e "\033[1;32m✓ XRAY XHTTP INSTALADO CORRECTAMENTE\033[0m"
     echo -e "${SSHPLUS_DARK_GREEN}PUERTO:${SCOLOR} \033[1;37m$port\033[0m"
     echo -e "${SSHPLUS_DARK_GREEN}PATH:${SCOLOR} \033[1;37m$path\033[0m"
     [[ -n "$domain" ]] && echo -e "${SSHPLUS_DARK_GREEN}DOMINIO:${SCOLOR} \033[1;37m$domain\033[0m"
     echo -e "${SSHPLUS_DARK_GREEN}UUID:${SCOLOR} \033[1;37m$uuid\033[0m"
     echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
     }
 
-    menu_usuarios_v2ray() {
+    info_xray_xhttp() {
     clear
-    v2ray_title "ADMINISTRAR USUARIOS V2RAY"
-    v2ray_opt "1" "CREAR USUARIO V2RAY"
-    v2ray_opt "2" "ELIMINAR USUARIO"
-    v2ray_opt "3" "MOSTRAR USUARIOS REGISTRADOS"
-    v2ray_opt "4" "INFORMACION DE CONEXION"
-    v2ray_opt "5" "ESTADISTICAS DE CONSUMO"
-    v2ray_opt "6" "LIMITAR USUARIO POR CONSUMO"
-    v2ray_opt "7" "ELIMINAR VENCIDOS" "$statgen"
-    v2ray_line
-    v2ray_opt "0" "VOLVER"
-    v2ray_line
-    selection=$(selection_fun 7)
-    case ${selection} in
-    1)addusr ;;
-    2)delusr ;;
-    3)mosusr_kk ;;
-    4)infocuenta ;;
-    5)stats ;;
-    6)lim_port ;;
-    7)limpiador_activador ;;
-    0)fun_v2raymanager ;;
-    esac
+    v2ray_title "INFORMACION XRAY XHTTP"
+    local cfg="/usr/local/etc/xray/config.json"
+    if [[ ! -f "$cfg" ]]; then
+    echo -e "\033[1;31mNo se encontro config.json de Xray.\033[0m"
+    pausa_v2ray
+    menu_xray_xhttp
+    return
+    fi
+    local port path uuid ip host
+    port="$(jq -r '.inbounds[0].port // "8443"' "$cfg" 2>/dev/null)"
+    path="$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/xhttp"' "$cfg" 2>/dev/null)"
+    uuid="$(jq -r '.inbounds[0].settings.clients[0].id // ""' "$cfg" 2>/dev/null)"
+    ip="$(cat /etc/SSHPlus/IP 2>/dev/null || v2ray_public_ip)"
+    host="${ip}"
+    [[ -s /etc/SSHPlus/Dominio ]] && host="$(cat /etc/SSHPlus/Dominio | head -1 | tr -d ' ')"
+
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    echo -e "${SSHPLUS_DARK_GREEN}IP / HOST :${SCOLOR} \033[1;37m$host\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}PUERTO    :${SCOLOR} \033[1;37m$port\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}PROTOCOLO :${SCOLOR} \033[1;37mVLESS\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}NETWORK   :${SCOLOR} \033[1;37mxhttp\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}PATH      :${SCOLOR} \033[1;37m$path\033[0m"
+    echo -e "${SSHPLUS_DARK_GREEN}UUID      :${SCOLOR} \033[1;37m$uuid\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    echo -e "\033[1;33mLINK VLESS (Directo / Sin TLS):\033[0m"
+    echo -e "\033[1;37mvless://${uuid}@${host}:${port}?security=none&type=xhttp&path=${path}#NoxuraSSH-XHTTP\033[0m"
+    echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
+    pausa_v2ray
+    menu_xray_xhttp
+    }
+
+    cambiar_puerto_xhttp() {
+    clear
+    v2ray_title "CAMBIAR PUERTO XRAY XHTTP"
+    local cfg="/usr/local/etc/xray/config.json"
+    local cur_port="$(jq -r '.inbounds[0].port // "8443"' "$cfg" 2>/dev/null)"
+    echo -e "${SSHPLUS_DARK_GREEN}PUERTO ACTUAL:${SCOLOR} \033[1;37m$cur_port\033[0m"
+    echo -ne "${SSHPLUS_DARK_GREEN}NUEVO PUERTO [1-65535]:${SCOLOR} " && read new_port
+    [[ -z "$new_port" ]] && menu_xray_xhttp && return
+    if ! v2ray_valid_port "$new_port"; then
+    echo -e "\033[1;31mPuerto no valido.\033[0m"
+    pausa_v2ray
+    menu_xray_xhttp
+    return
+    fi
+    local tmp="${cfg}.tmp"
+    jq --argjson p "$new_port" '.inbounds[0].port = $p' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
+      rm -f "$tmp"
+      echo -e "\033[1;31mError al actualizar config.json.\033[0m"
+      pausa_v2ray
+      menu_xray_xhttp
+      return
+    }
+    systemctl restart xray >/dev/null 2>&1
+    echo ""
+    echo -e "\033[1;32m✓ Puerto cambiado a $new_port y servicio reiniciado.\033[0m"
+    pausa_v2ray
+    menu_xray_xhttp
+    }
+
+    cambiar_path_xhttp() {
+    clear
+    v2ray_title "CAMBIAR PATH XRAY XHTTP"
+    local cfg="/usr/local/etc/xray/config.json"
+    local cur_path="$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/xhttp"' "$cfg" 2>/dev/null)"
+    echo -e "${SSHPLUS_DARK_GREEN}PATH ACTUAL:${SCOLOR} \033[1;37m$cur_path\033[0m"
+    echo -ne "${SSHPLUS_DARK_GREEN}NUEVO PATH [ej: /mipath]:${SCOLOR} " && read new_path
+    [[ -z "$new_path" ]] && menu_xray_xhttp && return
+    [[ "$new_path" != /* ]] && new_path="/$new_path"
+    local tmp="${cfg}.tmp"
+    jq --arg p "$new_path" '.inbounds[0].streamSettings.xhttpSettings.path = $p' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
+      rm -f "$tmp"
+      echo -e "\033[1;31mError al actualizar config.json.\033[0m"
+      pausa_v2ray
+      menu_xray_xhttp
+      return
+    }
+    systemctl restart xray >/dev/null 2>&1
+    echo ""
+    echo -e "\033[1;32m✓ Path cambiado a $new_path y servicio reiniciado.\033[0m"
+    pausa_v2ray
+    menu_xray_xhttp
+    }
+
+    cambiar_uuid_xhttp() {
+    clear
+    v2ray_title "CAMBIAR UUID XRAY XHTTP"
+    local cfg="/usr/local/etc/xray/config.json"
+    local cur_uuid="$(jq -r '.inbounds[0].settings.clients[0].id // ""' "$cfg" 2>/dev/null)"
+    echo -e "${SSHPLUS_DARK_GREEN}UUID ACTUAL:${SCOLOR} \033[1;37m$cur_uuid\033[0m"
+    echo -ne "${SSHPLUS_DARK_GREEN}NUEVO UUID [Enter = generar automatico]:${SCOLOR} " && read new_uuid
+    [[ -z "$new_uuid" ]] && new_uuid="$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid)"
+    local tmp="${cfg}.tmp"
+    jq --arg u "$new_uuid" '.inbounds[0].settings.clients[0].id = $u' "$cfg" > "$tmp" && mv "$tmp" "$cfg" || {
+      rm -f "$tmp"
+      echo -e "\033[1;31mError al actualizar config.json.\033[0m"
+      pausa_v2ray
+      menu_xray_xhttp
+      return
+    }
+    [[ -f /etc/SSHPlus/RegV2ray ]] && sed -i "s/$cur_uuid/$new_uuid/g" /etc/SSHPlus/RegV2ray
+    systemctl restart xray >/dev/null 2>&1
+    echo ""
+    echo -e "\033[1;32m✓ UUID actualizado a: $new_uuid\033[0m"
+    pausa_v2ray
+    menu_xray_xhttp
+    }
+
+    reiniciar_xray_xhttp() {
+    clear
+    v2ray_title "REINICIAR XRAY XHTTP"
+    systemctl restart xray >/dev/null 2>&1
+    if systemctl is-active xray >/dev/null 2>&1; then
+      echo -e "\033[1;32m✓ Servicio Xray reiniciado correctamente.\033[0m"
+    else
+      echo -e "\033[1;31m✗ Error al iniciar servicio Xray. Revise: systemctl status xray\033[0m"
+    fi
+    pausa_v2ray
+    menu_xray_xhttp
     }
 
     desinstalar_xray_xhttp() {
     clear
     v2ray_title "DESINSTALAR XRAY XHTTP"
-    if ! systemctl is-active xray >/dev/null 2>&1 && [[ ! -f /usr/local/bin/xray ]]; then
+    if ! xhttp_is_installed; then
     echo -e "\033[1;31mXray XHTTP no esta instalado.\033[0m"
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
+    return
     fi
     echo -ne "${SSHPLUS_DARK_GREEN}CONFIRMAR DESINSTALACION XRAY XHTTP [s/n]:${SCOLOR} " && read resp
-    [[ ! "$resp" =~ ^[sS]$ ]] && ajustes_v2ray
+    [[ ! "$resp" =~ ^[sS]$ ]] && menu_xray_xhttp && return
     systemctl stop xray >/dev/null 2>&1 || true
     systemctl disable xray >/dev/null 2>&1 || true
     rm -f /etc/systemd/system/xray.service
@@ -1157,9 +1262,9 @@ EOF
     local cfg="/usr/local/etc/xray/config.json"
     if [[ ! -f "$cfg" ]]; then
     echo -e "\033[1;31mNo se encontro config.json de Xray XHTTP.\033[0m"
-    echo -e "\033[1;37mInstale primero Xray XHTTP desde el menu de configuracion.\033[0m"
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
+    return
     fi
     if command -v nano >/dev/null 2>&1; then
     nano "$cfg"
@@ -1169,7 +1274,8 @@ EOF
     echo -e "\033[1;31mNo se encontro editor (nano/vi).\033[0m"
     echo -e "\033[1;37mEdite manualmente: $cfg\033[0m"
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
+    return
     fi
     echo -ne "${SSHPLUS_DARK_GREEN}Reiniciar Xray ahora? [s/n]:${SCOLOR} " && read resp
     if [[ "$resp" =~ ^[sS]$ ]]; then
@@ -1177,7 +1283,49 @@ EOF
     echo -e "\033[1;32mXray XHTTP reiniciado.\033[0m"
     fi
     pausa_v2ray
-    ajustes_v2ray
+    menu_xray_xhttp
+    }
+
+    menu_xray_xhttp() {
+    clear
+    if ! xhttp_is_installed; then
+    v2ray_title "GESTION XRAY XHTTP [NO INSTALADO]"
+    v2ray_opt "1" "INSTALAR XRAY XHTTP"
+    v2ray_line
+    v2ray_opt "0" "VOLVER"
+    v2ray_line
+    selection=$(selection_fun 1)
+    case ${selection} in
+      1)instalar_xray_xhttp ;;
+      0)ajustes_v2ray ;;
+    esac
+    else
+    local xport="$(jq -r '.inbounds[0].port // "8443"' /usr/local/etc/xray/config.json 2>/dev/null)"
+    local xstatus="ACTIVO"
+    systemctl is-active xray >/dev/null 2>&1 || xstatus="DETENIDO"
+    v2ray_title "GESTION XRAY XHTTP [$xstatus - PUERTO: $xport]"
+    v2ray_opt "1" "VER DATOS DE CONEXION / LINK VLESS"
+    v2ray_opt "2" "CAMBIAR PUERTO XHTTP"
+    v2ray_opt "3" "CAMBIAR PATH XHTTP"
+    v2ray_opt "4" "CAMBIAR UUID / CLIENTE"
+    v2ray_opt "5" "REINICIAR SERVICIO XRAY"
+    v2ray_opt "6" "MODIFICAR JSON MANUALMENTE (nano/vi)"
+    v2ray_opt "7" "DESINSTALAR XRAY XHTTP"
+    v2ray_line
+    v2ray_opt "0" "VOLVER"
+    v2ray_line
+    selection=$(selection_fun 7)
+    case ${selection} in
+      1)info_xray_xhttp ;;
+      2)cambiar_puerto_xhttp ;;
+      3)cambiar_path_xhttp ;;
+      4)cambiar_uuid_xhttp ;;
+      5)reiniciar_xray_xhttp ;;
+      6)editar_json_xhttp ;;
+      7)desinstalar_xray_xhttp ;;
+      0)ajustes_v2ray ;;
+    esac
+    fi
     }
 
     ajustes_v2ray() {
@@ -1190,13 +1338,11 @@ EOF
     v2ray_opt "5" "MODIFICAR UUID V2RAY"
     v2ray_opt "6" "MODIFICAR PATH V2RAY"
     v2ray_opt "7" "AGREGAR PUERTO V2RAY"
-    v2ray_opt "8" "INSTALAR XRAY XHTTP"
-    v2ray_opt "9" "MODIFICAR JSON XRAY XHTTP"
-    v2ray_opt "10" "DESINSTALAR XRAY XHTTP"
+    v2ray_opt "8" "GESTION XRAY XHTTP"
     v2ray_line
     v2ray_opt "0" "VOLVER"
     v2ray_line
-    selection=$(selection_fun 10)
+    selection=$(selection_fun 8)
     case ${selection} in
     1)protocolv2ray ;;
     2)tls ;;
@@ -1205,9 +1351,7 @@ EOF
     5)modificar_uuid_v2ray ;;
     6)modificar_path_v2ray ;;
     7)agregar_puerto_v2ray ;;
-    8)instalar_xray_xhttp ;;
-    9)editar_json_xhttp ;;
-    10)desinstalar_xray_xhttp ;;
+    8)menu_xray_xhttp ;;
     0)fun_v2raymanager ;;
     esac
     }

@@ -1253,7 +1253,7 @@ EOF
     echo -e "\e[92m       XRAY XHTTP DESINSTALADO CORRECTAMENTE "
     echo -e "${SSHPLUS_CYAN}============================================================${SCOLOR}"
     pausa_v2ray
-    ajustes_v2ray
+    fun_v2raymanager
     }
 
     editar_json_xhttp() {
@@ -1297,7 +1297,7 @@ EOF
     selection=$(selection_fun 1)
     case ${selection} in
       1)instalar_xray_xhttp ;;
-      0)ajustes_v2ray ;;
+      0)fun_v2raymanager ;;
     esac
     else
     local xport="$(jq -r '.inbounds[0].port // "8443"' /usr/local/etc/xray/config.json 2>/dev/null)"
@@ -1323,7 +1323,7 @@ EOF
       5)reiniciar_xray_xhttp ;;
       6)editar_json_xhttp ;;
       7)desinstalar_xray_xhttp ;;
-      0)ajustes_v2ray ;;
+      0)fun_v2raymanager ;;
     esac
     fi
     }
@@ -1338,11 +1338,10 @@ EOF
     v2ray_opt "5" "MODIFICAR UUID V2RAY"
     v2ray_opt "6" "MODIFICAR PATH V2RAY"
     v2ray_opt "7" "AGREGAR PUERTO V2RAY"
-    v2ray_opt "8" "GESTION XRAY XHTTP"
     v2ray_line
     v2ray_opt "0" "VOLVER"
     v2ray_line
-    selection=$(selection_fun 8)
+    selection=$(selection_fun 7)
     case ${selection} in
     1)protocolv2ray ;;
     2)tls ;;
@@ -1351,7 +1350,6 @@ EOF
     5)modificar_uuid_v2ray ;;
     6)modificar_path_v2ray ;;
     7)agregar_puerto_v2ray ;;
-    8)menu_xray_xhttp ;;
     0)fun_v2raymanager ;;
     esac
     }
@@ -1371,8 +1369,7 @@ EOF
     }
 
     fun_v2raymanager() {
-        while true $x != "ok"; do
-            [[ ! -e '/home/sshplus' ]] && exit 0
+        while true; do
             clear
             v2ray_title "V2RAY"
             if v2ray_service_running; then
@@ -1395,13 +1392,15 @@ EOF
             if [[ "$v2ray_running" = "1" ]]; then
                 v2ray_opt "1" "ADMINISTRAR USUARIOS V2RAY"
                 v2ray_opt "2" "CONFIGURACION DE V2RAY"
-                v2ray_opt "3" "REINICIAR SERVICIO V2RAY"
-                v2ray_opt "4" "REINSTALAR V2RAY" "$xv2ray"
-                v2ray_opt "5" "DESINSTALAR V2RAY"
-                v2ray_opt "6" "VOLVER <<<"
+                v2ray_opt "3" "GESTION XRAY XHTTP"
+                v2ray_opt "4" "REINICIAR SERVICIO V2RAY"
+                v2ray_opt "5" "REINSTALAR V2RAY" "$xv2ray"
+                v2ray_opt "6" "DESINSTALAR V2RAY"
+                v2ray_opt "0" "VOLVER"
             else
                 v2ray_opt "1" "INSTALAR V2RAY" "$xv2ray"
-                v2ray_opt "0" "VOLVER <<<"
+                v2ray_opt "2" "GESTION XRAY XHTTP"
+                v2ray_opt "0" "VOLVER"
             fi
             v2ray_line
             tput civis
@@ -1413,6 +1412,9 @@ EOF
                 case $x in
                 1 | 01)
                     intallv2ray
+                    ;;
+                2 | 02)
+                    menu_xray_xhttp
                     ;;
                 0 | 00)
                     connection
@@ -1426,9 +1428,6 @@ EOF
                 continue
             fi
             case $x in
-            4 | 04)
-                intallv2ray
-                ;;
             1 | 01)
                 menu_usuarios_v2ray
                 ;;
@@ -1436,20 +1435,20 @@ EOF
                 ajustes_v2ray
                 ;;
             3 | 03)
+                menu_xray_xhttp
+                ;;
+            4 | 04)
                 reiniciar_v2ray
                 ;;
             5 | 05)
-                unistallv2
+                intallv2ray
                 ;;
             6 | 06)
-                connection
-                exit;
+                unistallv2
                 ;;
             0 | 00)
-                echo -e "\033[1;31mVolviendo al menu...\033[0m"
-                sleep 2
-                clear
-                menu
+                connection
+                exit
                 ;;
             *)
                 echo -e "\033[1;31mOpcion no valida!\033[0m"

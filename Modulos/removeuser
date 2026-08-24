@@ -125,25 +125,20 @@ rm_all_menu() {
 	sleep 2
 }
 
-[[ ! -e /usr/lib/sshplus ]] && {
-	echo -e "\n${RED}Licencia/entorno no valido. Operacion cancelada.${NC}"
-	sleep 2
-	menu
-}
-
 while true; do
 	clear
 	rm_title "              REMOVER USUARIO SSH Y HYSTERIA"
 	rm_opt "1" "ELIMINAR USUARIO"
 	rm_opt "2" "ELIMINAR TODOS LOS USUARIOS"
-	rm_opt "3" "VOLVER"
+	rm_opt "0" "VOLVER"
 	rm_line
 	rm_prompt
 	read -r resp
 	case "$resp" in
 		1) rm_one_menu ;;
 		2) rm_all_menu ;;
-		3) exit ;;
+		0 | 00 | 3) exit ;;
 		*) echo -e "\033[1;31mOpción no valida!\033[0m"; sleep 1 ;;
 	esac
 done
+

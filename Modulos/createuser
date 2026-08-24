@@ -3,7 +3,7 @@
 #====================================================
 #	@ogeniohacker 
 #====================================================
-IP=$(cat /etc/IP)
+IP=$(cat /etc/IP 2>/dev/null || cat /etc/SSHPlus/IP 2>/dev/null || ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7}' || echo "")
 cor1='\033[41;1;37m'
 cor2='\033[44;1;37m'
 scor='\033[0m'
@@ -254,13 +254,7 @@ fun_bar() {
         fun_edithost
     fi
 }
-[[ ! -e /usr/lib/sshplus ]] && exit 0
 tput setaf 7;tput setab 4;tput bold;printf '%30s%s%-15s\n' "CREAR USUARIO SSH";tput sgr0
-#echo -ne "\033[1;32mNOME:\033[1;37m ";read namee
-#[[ -z $namee ]] && {
-#	echo -e "\n${cor1}Nome vazio ou invalido!${scor}\n"
-#	exit 1
-#}
 while true; do
 	echo -ne "\033[1;32mUSUARIO:\033[1;37m ";read username
 	[[ -z $username ]] && {

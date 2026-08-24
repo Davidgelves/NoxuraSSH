@@ -246,18 +246,6 @@ _sshplus_user_menu() {
 		_sshplus_pair "01" "${L_M01:-CREAR USUARIO}" "06" "${L_M06:-CAMBIAR LIMITE}"
 		_sshplus_pair "02" "${L_M02:-CREAR PRUEBA}" "07" "${L_M07:-CAMBIAR CLAVE}"
 		_sshplus_pair "03" "${L_M03:-ELIMINAR USUARIO}" "08" "${L_M09:-INFORME DE USUARIOS}"
-_sshplus_user_menu() {
-	local opt title
-	title="${L_USER_ADMIN:-ADMINISTRAR USUARIOS}"
-	while true; do
-		_sshplus_clear
-		_sshplus_box_top
-		_sshplus_frame_pre
-		printf '\033[1;34m%*s\033[0m%s\n' $(( (_SSHPLUS_IW + ${#title}) / 2 )) "$title" "$_sshplus_K"
-		_sshplus_box_sep
-		_sshplus_pair "01" "${L_M01:-CREAR USUARIO}" "06" "${L_M06:-CAMBIAR LIMITE}"
-		_sshplus_pair "02" "${L_M02:-CREAR PRUEBA}" "07" "${L_M07:-CAMBIAR CLAVE}"
-		_sshplus_pair "03" "${L_M03:-ELIMINAR USUARIO}" "08" "${L_M09:-INFORME DE USUARIOS}"
 		_sshplus_pair "04" "${L_M04:-MONITOR ONLINE}" "09" "${L_M08:-ELIMINAR CADUCADOS}"
 		_sshplus_pair "05" "${L_M05:-CAMBIAR FECHA}" "00" "${L2_33:-VOLVER}"
 		_sshplus_box_bot

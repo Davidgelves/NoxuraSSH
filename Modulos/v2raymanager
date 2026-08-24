@@ -1,9 +1,8 @@
 #!/bin/bash
-# lang=es v2raymanager
+# lang=es v2raymanager v3-2026
 #====================================================
 #
 #====================================================
-[[ -e /home/sshplus ]] && {
 cor1='\033[41;1;37m'
 cor2='\033[44;1;37m'
 scor='\033[0m'
@@ -1461,6 +1460,7 @@ EOF
       0)fun_v2raymanager ;;
     esac
     fi
+    }
     menu_usuarios_v2ray() {
         while true; do
             clear
@@ -1624,4 +1624,4 @@ EOF
     }
     fun_v2raymanager
 
-}
+

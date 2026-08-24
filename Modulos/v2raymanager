@@ -520,42 +520,60 @@ v2ray_ensure_legacy_config "$config_v2ray"
         esac
     done
 
-    # 5. Activar TLS o NO
-    local tls_opt="1" tls_mode="none" sni_domain=""
+    # 5. Activar TLS / Modo de conexion
+    local tls_opt="1" tls_mode="none" add_host="" host_header="" sni_host="" ext_port="$selected_port"
     local cur_domain="$(cat /etc/SSHPlus/v2ray/domain 2>/dev/null || cat /etc/xray/domain 2>/dev/null || cat /etc/v2ray/domain 2>/dev/null || echo "")"
+    local vps_ip="$(cat /etc/IP 2>/dev/null || echo "$IP")"
+
     while true; do
         echo ""
-        echo -e "\033[1;37m¿ACTIVAR SEGURIDAD TLS?\033[0m"
-        v2ray_opt "1" "NO  (security=none - HTTP / CDN Cloudflare)"
-        v2ray_opt "2" "SÍ  (security=tls - HTTPS / Certificado SSL)"
+        echo -e "\033[1;37mMODO DE CONEXION / SEGURIDAD TLS:\033[0m"
+        v2ray_opt "1" "DIRECTO A IP (Sin TLS / HTTP WS - Puerto $selected_port)"
+        v2ray_opt "2" "CLOUDFLARE CDN (Con TLS / Dominio - Puerto 443 + SNI Bug)"
         v2ray_prompt "Opcion:" && read tls_opt
         case "$tls_opt" in
             1)
                 tls_mode="none"
-                sni_domain="$(cat /etc/IP 2>/dev/null || echo "$IP")"
-                [[ -z "$sni_domain" ]] && sni_domain="$cur_domain"
+                add_host="$vps_ip"
+                ext_port="$selected_port"
+                host_header=""
+                sni_host=""
                 break
                 ;;
             2)
                 tls_mode="tls"
+                ext_port="443"
                 echo ""
+                # Dominio / Cloudflare Add
                 if [[ -n "$cur_domain" ]]; then
-                    v2ray_prompt "DOMINIO / SNI (actual: $cur_domain) [Enter para usar]:"
+                    v2ray_prompt "DOMINIO / HOST ADD (actual: $cur_domain) [Enter para usar]:"
                     read user_domain
-                    [[ -n "$user_domain" ]] && sni_domain="$user_domain" || sni_domain="$cur_domain"
+                    [[ -n "$user_domain" ]] && add_host="$user_domain" || add_host="$cur_domain"
                 else
                     while true; do
-                        v2ray_prompt "DOMINIO / SNI (ej: midominio.com):"
+                        v2ray_prompt "DOMINIO / HOST ADD (ej: midominio.com):"
                         read user_domain
                         if [[ -z "$user_domain" ]]; then
-                            echo -e "\033[1;31mDebe ingresar un dominio para TLS.\033[0m"
+                            echo -e "\033[1;31mDebe ingresar un dominio.\033[0m"
                             continue
                         fi
-                        sni_domain="$user_domain"
+                        add_host="$user_domain"
                         mkdir -p /etc/SSHPlus/v2ray
-                        echo "$sni_domain" > /etc/SSHPlus/v2ray/domain
+                        echo "$add_host" > /etc/SSHPlus/v2ray/domain
                         break
                     done
+                fi
+
+                # SNI / Bug Host (ej: m.nequi.co)
+                echo ""
+                v2ray_prompt "SNI / BUG HOST (ej: m.nequi.co) [Enter para usar $add_host]:"
+                read user_sni
+                if [[ -n "$user_sni" ]]; then
+                    sni_host="$user_sni"
+                    host_header="$user_sni"
+                else
+                    sni_host="$add_host"
+                    host_header="$add_host"
                 fi
                 break
                 ;;
@@ -637,11 +655,8 @@ v2ray_ensure_legacy_config "$config_v2ray"
     v2ray_restart_service
 
     # 9. Generar Enlace URI
-    local server_host="$(cat /etc/IP 2>/dev/null || echo "$IP")"
-    [[ -z "$server_host" ]] && server_host="$sni_domain"
-    local net_type="$(jq -r --argjson p "${selected_port:-80}" '.inbounds[]? | select(.port == $p) | .streamSettings.network // "ws"' "$cfg" 2>/dev/null)"
-    [[ -z "$net_type" || "$net_type" == "null" ]] && net_type="ws"
-    local path_ws="$(jq -r --argjson p "${selected_port:-80}" '.inbounds[]? | select(.port == $p) | .streamSettings.wsSettings.path // .streamSettings.xhttpSettings.path // "/v2ray"' "$cfg" 2>/dev/null)"
+    local path_ws="$(jq -r --argjson p "${selected_port:-80}" '.inbounds[]? | select(.port == $p) | .streamSettings.wsSettings.path // .streamSettings.xhttpSettings.path // ""' "$cfg" 2>/dev/null)"
+    [[ -z "$path_ws" || "$path_ws" == "null" ]] && path_ws="$(jq -r '.inbounds[0].streamSettings.wsSettings.path // .inbounds[0].streamSettings.xhttpSettings.path // "/v2ray"' "$cfg" 2>/dev/null)"
     [[ -z "$path_ws" || "$path_ws" == "null" ]] && path_ws="/v2ray"
 
     local uri=""
@@ -651,17 +666,19 @@ v2ray_ensure_legacy_config "$config_v2ray"
 {
   "v": "2",
   "ps": "$nick",
-  "add": "${server_host}",
-  "port": "${selected_port}",
+  "add": "${add_host}",
+  "port": "${ext_port}",
   "id": "$UUID",
   "aid": "0",
   "scy": "auto",
-  "net": "${net_type}",
-  "type": "none",
-  "host": "${sni_domain}",
+  "net": "ws",
+  "type": "",
+  "host": "${host_header}",
   "path": "${path_ws}",
   "tls": "${tls_mode}",
-  "sni": "${sni_domain}"
+  "sni": "${sni_host}",
+  "alpn": "",
+  "fp": ""
 }
 EOF
 )
@@ -670,9 +687,9 @@ EOF
     else
         local enc_path="$(printf '%s' "$path_ws" | sed 's/\//%2F/g')"
         if [[ "$tls_mode" == "tls" ]]; then
-            uri="vless://${UUID}@${server_host}:${selected_port}?type=${net_type}&security=tls&sni=${sni_domain}&host=${sni_domain}&path=${enc_path}#${nick}"
+            uri="vless://${UUID}@${add_host}:${ext_port}?type=ws&security=tls&sni=${sni_host}&host=${host_header}&path=${enc_path}#${nick}"
         else
-            uri="vless://${UUID}@${server_host}:${selected_port}?type=${net_type}&security=none&path=${enc_path}&host=${sni_domain}#${nick}"
+            uri="vless://${UUID}@${add_host}:${ext_port}?type=ws&security=none&path=${enc_path}#${nick}"
         fi
     fi
 
@@ -682,10 +699,12 @@ EOF
     v2ray_line
     printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "USUARIO:" "$nick"
     printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PROTOCOLO:" "$proto_name"
-    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PUERTO(S):" "$selected_ports_disp"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PUERTO(S) VPS:" "$selected_ports_disp"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PUERTO CONEXION:" "$ext_port"
     printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "UUID / ID:" "$UUID"
     printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "SEGURIDAD TLS:" "$tls_mode"
-    [[ "$tls_mode" == "tls" ]] && printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "DOMINIO / SNI:" "$sni_domain"
+    printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "SERVIDOR (ADD):" "$add_host"
+    [[ "$tls_mode" == "tls" ]] && printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "SNI / BUG HOST:" "$sni_host"
     printf "\033[1;32m%-22s\033[0m \033[1;37m%s\033[0m\n" "PATH:" "$path_ws"
     printf "\033[1;32m%-22s\033[0m \033[1;37m%s (%s dias)\033[0m\n" "EXPIRA:" "$datexp" "$diasuser"
     v2ray_line

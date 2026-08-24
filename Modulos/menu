@@ -556,21 +556,6 @@ _sshplus_ram_used_pct() {
 			if (t+0 <= 0) exit 1
 			if (ha) printf "%.1f%%", (t - a) * 100 / t
 			else if (hf) printf "%.1f%%", (t - f) * 100 / t
-_sshplus_ram_used_pct() {
-	local o
-	o="$(LC_ALL=C LANG=C free 2>/dev/null | awk '$1 == "Mem:" && ($2+0) > 0 { printf "%.1f%%", ($3/$2)*100; exit 0 }')"
-	[[ -n "${o// }" ]] && {
-		printf '%s' "$o"
-		return
-	}
-	o="$(awk '
-		/^MemTotal:/ { t=$2 }
-		/^MemAvailable:/ { a=$2; ha=1 }
-		/^MemFree:/ { f=$2; hf=1 }
-		END {
-			if (t+0 <= 0) exit 1
-			if (ha) printf "%.1f%%", (t - a) * 100 / t
-			else if (hf) printf "%.1f%%", (t - f) * 100 / t
 			else exit 1
 		}
 	' /proc/meminfo 2>/dev/null)"

@@ -246,6 +246,18 @@ _sshplus_user_menu() {
 		_sshplus_pair "01" "${L_M01:-CREAR USUARIO}" "06" "${L_M06:-CAMBIAR LIMITE}"
 		_sshplus_pair "02" "${L_M02:-CREAR PRUEBA}" "07" "${L_M07:-CAMBIAR CLAVE}"
 		_sshplus_pair "03" "${L_M03:-ELIMINAR USUARIO}" "08" "${L_M09:-INFORME DE USUARIOS}"
+_sshplus_user_menu() {
+	local opt title
+	title="${L_USER_ADMIN:-ADMINISTRAR USUARIOS}"
+	while true; do
+		_sshplus_clear
+		_sshplus_box_top
+		_sshplus_frame_pre
+		printf '\033[1;34m%*s\033[0m%s\n' $(( (_SSHPLUS_IW + ${#title}) / 2 )) "$title" "$_sshplus_K"
+		_sshplus_box_sep
+		_sshplus_pair "01" "${L_M01:-CREAR USUARIO}" "06" "${L_M06:-CAMBIAR LIMITE}"
+		_sshplus_pair "02" "${L_M02:-CREAR PRUEBA}" "07" "${L_M07:-CAMBIAR CLAVE}"
+		_sshplus_pair "03" "${L_M03:-ELIMINAR USUARIO}" "08" "${L_M09:-INFORME DE USUARIOS}"
 		_sshplus_pair "04" "${L_M04:-MONITOR ONLINE}" "09" "${L_M08:-ELIMINAR CADUCADOS}"
 		_sshplus_pair "05" "${L_M05:-CAMBIAR FECHA}" "00" "${L2_33:-VOLVER}"
 		_sshplus_box_bot
@@ -264,8 +276,8 @@ _sshplus_user_menu() {
 				;;
 			3 | 03)
 				clear
+				_sshplus_sync_removeuser
 				removeuser
-				sleep 3
 				;;
 			4 | 04)
 				clear
@@ -273,10 +285,12 @@ _sshplus_user_menu() {
 				;;
 			5 | 05)
 				clear
+				_sshplus_sync_changedate
 				changedate
 				;;
 			6 | 06)
 				clear
+				_sshplus_sync_changelimit
 				changelimit
 				;;
 			7 | 07)
@@ -554,6 +568,21 @@ _sshplus_ram_used_pct() {
 			if (t+0 <= 0) exit 1
 			if (ha) printf "%.1f%%", (t - a) * 100 / t
 			else if (hf) printf "%.1f%%", (t - f) * 100 / t
+_sshplus_ram_used_pct() {
+	local o
+	o="$(LC_ALL=C LANG=C free 2>/dev/null | awk '$1 == "Mem:" && ($2+0) > 0 { printf "%.1f%%", ($3/$2)*100; exit 0 }')"
+	[[ -n "${o// }" ]] && {
+		printf '%s' "$o"
+		return
+	}
+	o="$(awk '
+		/^MemTotal:/ { t=$2 }
+		/^MemAvailable:/ { a=$2; ha=1 }
+		/^MemFree:/ { f=$2; hf=1 }
+		END {
+			if (t+0 <= 0) exit 1
+			if (ha) printf "%.1f%%", (t - a) * 100 / t
+			else if (hf) printf "%.1f%%", (t - f) * 100 / t
 			else exit 1
 		}
 	' /proc/meminfo 2>/dev/null)"
@@ -561,37 +590,55 @@ _sshplus_ram_used_pct() {
 }
 # Si el modulo en /bin es antiguo (portugues), bajar la version del repo una vez.
 _sshplus_sync_criarteste() {
-	if ! grep -q 'lang=es' /bin/createtest 2>/dev/null; then
+	if ! grep -q 'lang=es createtest' /bin/createtest 2>/dev/null; then
 		wget -qO /bin/createtest "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/createtest" && chmod +x /bin/createtest
 	fi
 	[[ -e /bin/criarteste ]] || ln -s /bin/createtest /bin/criarteste 2>/dev/null || cp -f /bin/createtest /bin/criarteste
 }
 _sshplus_sync_criarusuario() {
-	if ! grep -q 'lang=es createuser' /bin/createuser 2>/dev/null; then
+	if ! grep -q 'lang=es createuser v3-2026' /bin/createuser 2>/dev/null; then
 		wget -qO /bin/createuser "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/createuser" && chmod +x /bin/createuser
 	fi
 	[[ -e /bin/criarusuario ]] || ln -s /bin/createuser /bin/criarusuario 2>/dev/null || cp -f /bin/createuser /bin/criarusuario
+	cp -f /bin/createuser /bin/criarusuario 2>/dev/null || true
+	cp -f /bin/createuser /usr/bin/createuser 2>/dev/null || true
+	cp -f /bin/createuser /usr/bin/criarusuario 2>/dev/null || true
 }
 _sshplus_sync_alterarsenha() {
-	if ! grep -q 'lang=es changepass' /bin/changepass 2>/dev/null; then
+	if ! grep -q 'lang=es changepass v3-2026' /bin/changepass 2>/dev/null; then
 		wget -qO /bin/changepass "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/changepass" && chmod +x /bin/changepass
 	fi
 	[[ -e /bin/alterarsenha ]] || ln -s /bin/changepass /bin/alterarsenha 2>/dev/null || cp -f /bin/changepass /bin/alterarsenha
+	cp -f /bin/changepass /bin/alterarsenha 2>/dev/null || true
+	cp -f /bin/changepass /usr/bin/changepass 2>/dev/null || true
+	cp -f /bin/changepass /usr/bin/alterarsenha 2>/dev/null || true
 }
-_sshplus_sync_expcleaner() {
-	if ! grep -q 'lang=es expcleaner' /bin/expcleaner 2>/dev/null; then
-		wget -qO /bin/expcleaner "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/expcleaner" && chmod +x /bin/expcleaner
+_sshplus_sync_removeuser() {
+	if ! grep -q 'lang=es removeuser v3-2026' /bin/removeuser 2>/dev/null; then
+		wget -qO /bin/removeuser "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/removeuser" && chmod +x /bin/removeuser
 	fi
+	[[ -e /bin/remover ]] || ln -s /bin/removeuser /bin/remover 2>/dev/null || cp -f /bin/removeuser /bin/remover
+	cp -f /bin/removeuser /bin/remover 2>/dev/null || true
+	cp -f /bin/removeuser /usr/bin/removeuser 2>/dev/null || true
+	cp -f /bin/removeuser /usr/bin/remover 2>/dev/null || true
 }
-_sshplus_sync_infousers() {
-	if ! grep -q 'lang=es infousers' /bin/infousers 2>/dev/null; then
-		wget -qO /bin/infousers "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/infousers" && chmod +x /bin/infousers
+_sshplus_sync_changedate() {
+	if ! grep -q 'lang=es changedate v3-2026' /bin/changedate 2>/dev/null; then
+		wget -qO /bin/changedate "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/changedate" && chmod +x /bin/changedate
 	fi
+	[[ -e /bin/alterardata ]] || ln -s /bin/changedate /bin/alterardata 2>/dev/null || cp -f /bin/changedate /bin/alterardata
+	cp -f /bin/changedate /bin/alterardata 2>/dev/null || true
+	cp -f /bin/changedate /usr/bin/changedate 2>/dev/null || true
+	cp -f /bin/changedate /usr/bin/alterardata 2>/dev/null || true
 }
-_sshplus_sync_swapmemory() {
-	if ! grep -q 'lang=es swapmemory' /bin/swapmemory 2>/dev/null; then
-		wget -qO /bin/swapmemory "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/swapmemory" && chmod +x /bin/swapmemory
+_sshplus_sync_changelimit() {
+	if ! grep -q 'lang=es changelimit v3-2026' /bin/changelimit 2>/dev/null; then
+		wget -qO /bin/changelimit "https://raw.githubusercontent.com/Davidgelves/NoxuraSSH/main/Modulos/changelimit" && chmod +x /bin/changelimit
 	fi
+	[[ -e /bin/alterarlimite ]] || ln -s /bin/changelimit /bin/alterarlimite 2>/dev/null || cp -f /bin/changelimit /bin/alterarlimite
+	cp -f /bin/changelimit /bin/alterarlimite 2>/dev/null || true
+	cp -f /bin/changelimit /usr/bin/changelimit 2>/dev/null || true
+	cp -f /bin/changelimit /usr/bin/alterarlimite 2>/dev/null || true
 }
 _sshplus_sync_gltunnel() {
 	if ! grep -q 'lang=es gltunnel' /bin/gltunnel 2>/dev/null; then

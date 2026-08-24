@@ -564,9 +564,9 @@ v2ray_ensure_legacy_config "$config_v2ray"
                     done
                 fi
 
-                # SNI / Bug Host (ej: m.nequi.co)
+                # SNI / Bug Host (ej: bug.operadora.com)
                 echo ""
-                v2ray_prompt "SNI / BUG HOST (ej: m.nequi.co) [Enter para usar $add_host]:"
+                v2ray_prompt "SNI / BUG HOST (ej: bug.operadora.com) [Enter para usar $add_host]:"
                 read user_sni
                 if [[ -n "$user_sni" ]]; then
                     sni_host="$user_sni"
